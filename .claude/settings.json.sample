@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "SessionStart":       [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/session_start   >/dev/null 2>&1 || true" }] }],
+    "SessionEnd":         [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/session_end     >/dev/null 2>&1 || true" }] }],
+    "Stop":               [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/stop            >/dev/null 2>&1 || true" }] }],
+    "StopFailure":        [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/stop_failure    >/dev/null 2>&1 || true" }] }],
+    "UserPromptSubmit":   [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/user_prompt     >/dev/null 2>&1 || true" }] }],
+    "Notification":       [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/notification    >/dev/null 2>&1 || true" }] }],
+    "PreToolUse":         [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/pre_tool        >/dev/null 2>&1 || true" }] }],
+    "PostToolUse":        [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/post_tool       >/dev/null 2>&1 || true" }] }],
+    "PostToolUseFailure": [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/post_tool_fail  >/dev/null 2>&1 || true" }] }],
+    "SubagentStart":      [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/subagent_start  >/dev/null 2>&1 || true" }] }],
+    "SubagentStop":       [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/subagent_stop   >/dev/null 2>&1 || true" }] }],
+    "PreCompact":         [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/pre_compact     >/dev/null 2>&1 || true" }] }],
+    "PostCompact":        [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/post_compact    >/dev/null 2>&1 || true" }] }],
+    "TaskCreated":        [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/task_new        >/dev/null 2>&1 || true" }] }],
+    "TaskCompleted":      [{ "matcher": "", "hooks": [{ "type": "command", "command": "curl -sX POST http://127.0.0.1:9292/event/task_done       >/dev/null 2>&1 || true" }] }]
+  }
+}

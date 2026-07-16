@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# JetBrains IDE
+.idea/
+
+# Claude Code : on ignore les settings locaux (personnels), mais on commit
+# les settings projet (dont les hooks) et le modèle d'exemple.
+.claude/*
+!.claude/settings.json
+!.claude/settings.json.sample
+
+# Ruby / Bundler
+/.bundle/
+/vendor/bundle/
+*.gem
