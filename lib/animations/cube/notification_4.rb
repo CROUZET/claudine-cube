@@ -3,16 +3,16 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Notification : clignotement ambre franc (demande d'attention). N'allume
-      # que l'anneau extérieur (d=0) et le 3e anneau (d=2) de chaque face, en
-      # cible/deux cadres concentriques — les anneaux d=1 et d=3 restent éteints.
-      # Signature : clignotement carré rapide (on/off net), très différent des
-      # respirations et fondus.
-      class Notification < CubeBase
+      # Notification (variante complémentaire de Notification) : n'allume que le
+      # 2e anneau (d=1) et le 4e anneau central (d=3) de chaque face — le négatif
+      # exact de Notification (d=0 + d=2), soit deux cadres concentriques
+      # imbriqués dans les vides de l'originale.
+      # Signature : clignotement carré rapide et net (cible « en creux »).
+      class Notification4 < CubeBase
         MIN_DURATION = 0.9
         RATE  = 3.0             # clignotements par seconde (approx)
         COLOR = [255, 130, 0]
-        RINGS = [0, 2]          # anneau extérieur + 3e anneau
+        RINGS = [1, 3]          # 2e anneau + 4e anneau (central)
 
         def render(t, panel)
           panel.clear
