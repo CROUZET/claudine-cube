@@ -37,7 +37,7 @@ module Claudine
           4.times do |i|
             base = i * SIDE + BASE_X          # colonne de départ du lapin i
             col, by = pose(t, base)
-            BODY.each { |dx, dy| plot(panel, col + dx, by + dy, COLOR) }
+            BODY.each { |dx, dy| plot(panel, col + dx, by + dy, self.class::COLOR) }
           end
         end
 
