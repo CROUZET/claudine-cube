@@ -62,6 +62,7 @@ module Claudine
       @background_activated = nil
       @overlay              = false  # is @current a transient overlay?
       @overlay_until        = nil    # time at which the overlay reverts to @background
+      @idle_off_at          = nil    # time at which the idle plays-once ends → cube off
     end
 
     def handle(event, t)
@@ -102,6 +103,15 @@ module Claudine
 
       enter_idle(t, panel) if idle_due?(t)
 
+      # The idle animation plays once; when its lifetime ends, turn the cube off
+      # and stop rendering (the blank frame keeps being pushed by the Runner).
+      if @idle_off_at && t >= @idle_off_at
+        panel.clear
+        @current     = nil
+        @idle_off_at = nil
+        Claudine.logger.info 'AnimationManager: idle animation done → cube off'
+      end
+
       return unless @current
       @current.render(t - @activated, panel)
     end
@@ -112,6 +122,7 @@ module Claudine
       anim = klass.new(event.payload || {})
       dur  = klass.const_defined?(:MIN_DURATION) ? klass::MIN_DURATION : Settings::MIN_ANIMATION_DURATION
       @is_idle      = false
+      @idle_off_at  = nil
       @current      = anim
       @activated    = t
       @min_duration = dur
@@ -150,10 +161,13 @@ module Claudine
         @current      = klass.new({})
         @activated    = t
         @min_duration = klass.const_defined?(:MIN_DURATION) ? klass::MIN_DURATION : Settings::MIN_ANIMATION_DURATION
+        # Plays once: schedule the cube to turn off after the idle's lifetime.
+        @idle_off_at  = klass.const_defined?(:DURATION) ? t + klass::DURATION : nil
         Claudine.logger.info "AnimationManager: idle after #{Settings::IDLE_TIMEOUT}s → #{klass.name}"
       else
-        @current   = nil
-        @activated = t
+        @current     = nil
+        @activated   = t
+        @idle_off_at = nil
         panel.clear
         Claudine.logger.info "AnimationManager: idle after #{Settings::IDLE_TIMEOUT}s (no system_idle in set '#{@set}') → panel cleared"
       end
