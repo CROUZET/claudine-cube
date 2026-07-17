@@ -37,15 +37,19 @@ begin
   hooks.each do |hook|
     variants = registry[hook]
     next if variants.nil? || variants.empty?
-    klass = variants.first
-    puts format('▶  %-16s %s', hook, klass.name.split('::').last)
-    anim = klass.new({})
-    t = 0.0
-    while t < DUR
-      anim.render(t, panel)
-      panel.show
-      sleep DT
-      t += DT
+    # Joue TOUTES les variantes du hook (pas seulement la première), pour
+    # pouvoir les comparer. En fonctionnement, le manager en tire une au hasard.
+    variants.each do |klass|
+      label = variants.size > 1 ? "#{hook} (#{klass.name.split('::').last})" : hook.to_s
+      puts format('▶  %-28s', label)
+      anim = klass.new({})
+      t = 0.0
+      while t < DUR
+        anim.render(t, panel)
+        panel.show
+        sleep DT
+        t += DT
+      end
     end
   end
   puts "\nAperçu terminé."
