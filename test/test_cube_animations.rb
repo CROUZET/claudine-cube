@@ -29,7 +29,7 @@ class FakePanel
   end
 end
 
-ENV['CLAUDINE_ANIMATION_SET'] = 'cube'
+ENV['CLAUDINE_ANIMATION_SET'] ||= 'cube'   # surchargeable : CLAUDINE_ANIMATION_SET=bunny ruby ...
 manager  = Claudine::AnimationManager.new
 registry = manager.instance_variable_get(:@registry)
 
