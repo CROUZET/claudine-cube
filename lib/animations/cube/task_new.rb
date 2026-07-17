@@ -17,7 +17,7 @@ module Claudine
           outer = (t / PHASE).to_i.even?     # true : anneaux extérieurs ; false : intérieurs
           rings = outer ? [0, 1] : [2, 3]
           ALL_FACES.each do |face|
-            rings.each { |d| face_ring(panel, face, d, COLOR) }
+            rings.each { |d| face_ring(panel, face, d, self.class::COLOR) }
           end
         end
       end
