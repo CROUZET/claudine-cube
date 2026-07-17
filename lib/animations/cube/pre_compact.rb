@@ -3,30 +3,24 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Avant compaction : sur chaque face, deux fines lignes partent des bords
-      # (haut et bas) et CONVERGENT vers le centre, sans laisser de trace derrière
-      # elles ; brève disparition en fondu quand elles se rejoignent.
-      # Signature : convergence éphémère vers le centre.
+      # Avant compaction : un damier de carrés 2×2 sur les 5 faces, qui s'inverse
+      # à intervalle régulier (les carrés allumés et éteints échangent leur
+      # place). Signature : damier clignotant qui alterne sur tout le cube.
       class PreCompact < CubeBase
         MIN_DURATION = 1.0
-        DUR    = 0.8            # durée de la convergence
-        FADE   = 0.3            # fondu final
-        SPREAD = 1.3            # épaisseur des lignes
-        COLOR  = [210, 210, 210]
+        PHASE  = 0.3             # durée d'une phase avant inversion du damier
+        SQUARE = 2               # côté d'un carré (px)
+        COLOR  = [210, 210, 210] # gris neutre
 
         def render(t, panel)
           panel.clear
-          return if t > DUR + FADE
-          prog = [t / DUR, 1.0].min
-          pos  = prog * 3.5                       # bords (0) -> centre (3.5)
-          tail = t > DUR ? [1.0 - (t - DUR) / FADE, 0.0].max : 1.0
-          ALL_FACES.each do |f|
-            SIDE.times do |y|
-              d = [(y - pos).abs, (y - (7 - pos)).abs].min
-              k = (1.0 - d / SPREAD) * tail
-              next if k <= 0
-              c = dim(COLOR, k)
-              SIDE.times { |x| px(panel, f, x, y, c) }
+          lit = (t / PHASE).to_i.even? ? 0 : 1   # quelle parité est allumée
+          ALL_FACES.each do |face|
+            SIDE.times do |x|
+              SIDE.times do |y|
+                next unless (x / SQUARE + y / SQUARE) % 2 == lit
+                px(panel, face, x, y, self.class::COLOR)
+              end
             end
           end
         end
