@@ -1,19 +1,17 @@
-require_relative '_base'
+require_relative 'session_start'
 
 module Claudine
   module Animations
     module Cube
-      # Extinction : le cube s'éteint en fondu du blanc vers le noir.
-      # Signature : fondu descendant monotone (pas de rebond).
-      class SessionEnd < CubeBase
-        MIN_DURATION = 1.6
-        DUR  = 1.5
-        BASE = [140, 140, 140]
-
-        def render(t, panel)
-          k = [1.0 - t / DUR, 0.0].max
-          fill(panel, dim(BASE, k))
-        end
+      # Fin de session : même vague diagonale que l'ouverture (montée puis
+      # reflux jusqu'à extinction), mais en couleurs froides. Ouverture et
+      # fermeture partagent le geste ; la température de la palette les oppose
+      # (chaud à l'éveil, froid à la fin).
+      class SessionEnd < SessionStart
+        # Froid, plage large pour plus de variété : vert-jaune (0.25) → vert →
+        # cyan → bleu → indigo → violet (0.85).
+        HUE0 = 0.25
+        HUE1 = 0.85
       end
     end
   end
