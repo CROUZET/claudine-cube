@@ -170,6 +170,13 @@ Tout le découplage source ↔ rendu de Claudine est conservé. Ce qui a changé
    `top_edge_px` pour le pourtour du dessus).
    ⚠️ **L'utilisateur est légèrement daltonien** : chaque event est distinguable
    par le **mouvement/forme/luminosité**, pas seulement la couleur.
+   Un second set **`bunny`** (lapins, `lib/animations/bunny/`) est **en cours** :
+   il réutilise la géométrie du cube (`Cube::CubeBase`, via `bunny/_base.rb`) et
+   contient pour l'instant `session_start`/`session_end` (lapins qui s'éveillent
+   puis s'endorment, arc-en-ciel chaud/froid) et `user_prompt` (lapins bleu clair
+   qui sautillent autour du cube, débordant sur le dessus aux grands sauts).
+   Choisi via `CLAUDINE_ANIMATION_SET=bunny`. Charte couleur du set : début =
+   clair (blanc/bleu clair), fin = jaune, erreur = rouge.
 4. **Modèle deux couches dans `AnimationManager`** : un event de **fond**
    (`user_prompt`) démarre une boucle « au travail » qui persiste (indicateur de
    thinking) ; les events **ponctuels** (`pre_tool`, `post_tool`, …) sont des
@@ -209,6 +216,7 @@ ruby test/test_cube_preview.rb   # regarder les animations tourner
 
 - `lib/cube_mapping.rb` — `CubeMapping.index(face, x, y)` + auto-test. Fondation.
 - `lib/animations/cube/` — set par défaut (16 hooks + `_base.rb`).
+- `lib/animations/bunny/` — set « lapins » (en cours ; réutilise `Cube::CubeBase`).
 - `docs/HARDWARE.md` — matériel complet.
 - `docs/SOFTWARE.md` — architecture daemon + firmware (référence logicielle,
   mise à jour pour le cube).
@@ -225,5 +233,8 @@ ruby test/test_cube_preview.rb   # regarder les animations tourner
 - Découplage source ↔ rendu : ajouter une source ne touche jamais le rendu.
 - Ruby 4.0.5 (rbenv, `.ruby-version`), `bundle install`, `ruby claudine.rb`.
 - Fermer le moniteur série de l'IDE Arduino avant de lancer (« port busy »).
-- `CLAUDINE_ANIMATION_SET` choisit le set ; `CLAUDINE_LOG_LEVEL=DEBUG` pour les
-  logs verbeux.
+- `CLAUDINE_ANIMATION_SET` choisit le set (`cube` par défaut, `bunny` en cours) —
+  surchargeable aussi dans `test/test_cube_preview.rb` et `test_cube_animations.rb`.
+- `CLAUDINE_BRIGHTNESS` surcharge la luminosité globale (défaut 0,08 ; monter
+  augmente courant/chaleur, garder le jack DC branché).
+- `CLAUDINE_LOG_LEVEL=DEBUG` pour les logs verbeux.

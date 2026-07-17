@@ -33,6 +33,7 @@ module Claudine
     # 0.0–1.0 factor applied on the Ruby side (the firmware runs at 255).
     # ~0.08 (≈20/255) is the working brightness: ~1.5 A total on the cube,
     # natural convection is enough. Raise cautiously (thermal / power).
-    BRIGHTNESS = 0.08
+    # Surchargeable pour tester : CLAUDINE_BRIGHTNESS=0.12 ruby ...
+    BRIGHTNESS = (ENV['CLAUDINE_BRIGHTNESS'] || '0.08').to_f
   end
 end

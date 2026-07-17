@@ -436,7 +436,9 @@ ruby claudine.rb
 ```
 
 Env vars: `CLAUDINE_LOG_LEVEL=DEBUG` (default `INFO`), `CLAUDINE_ANIMATION_SET`
-(default `cube`). Clean shutdown `Ctrl-C` (blanks the cube then closes the port).
+(default `cube`; `bunny` in progress), `CLAUDINE_BRIGHTNESS` (overrides
+`Settings::BRIGHTNESS`, default `0.08`). Clean shutdown `Ctrl-C` (blanks the cube
+then closes the port).
 
 ### Project layout
 

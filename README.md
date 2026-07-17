@@ -142,14 +142,18 @@ curl -sX POST http://127.0.0.1:9292/event/task_done
 ```
 
 Verbose logs: `CLAUDINE_LOG_LEVEL=DEBUG ruby claudine.rb`.
+Brightness override (test different levels): `CLAUDINE_BRIGHTNESS=0.12 ruby claudine.rb`
+(default `0.08`; higher draws more current/heat — keep the DC jack plugged in).
 
 ### Animation sets
 
 Each set is a directory under `lib/animations/` with one file per Claude Code
-hook, chosen with `CLAUDINE_ANIMATION_SET` (default `cube`). Only the `cube`
-set ships today — it's text-free and volumetric (the flat Claudine sets were
-removed). Each event has a distinct **motion signature**, not just a color
-(the maintainer is mildly colorblind).
+hook, chosen with `CLAUDINE_ANIMATION_SET` (default `cube`). The `cube` set is
+text-free and volumetric (the flat Claudine sets were removed); each event has a
+distinct **motion signature**, not just a color (the maintainer is mildly
+colorblind). A second set, `bunny` (rabbits), is in progress — it reuses the
+cube geometry (`Cube::CubeBase`) and currently covers `session_start`,
+`session_end` and `user_prompt`.
 
 ---
 
