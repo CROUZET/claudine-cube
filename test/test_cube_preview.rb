@@ -40,11 +40,14 @@ begin
     # Joue TOUTES les variantes du hook (pas seulement la première), pour
     # pouvoir les comparer. En fonctionnement, le manager en tire une au hasard.
     variants.each do |klass|
+      # Une anim qui déclare sa propre durée de vie (ex. system_idle) est jouée
+      # en entier, sinon on la boucle sur DUR secondes pour l'aperçu.
+      dur = klass.const_defined?(:DURATION) ? [DUR, klass::DURATION].max : DUR
       label = variants.size > 1 ? "#{hook} (#{klass.name.split('::').last})" : hook.to_s
-      puts format('▶  %-28s', label)
+      puts format('▶  %-28s %.1fs', label, dur)
       anim = klass.new({})
       t = 0.0
-      while t < DUR
+      while t < dur
         anim.render(t, panel)
         panel.show
         sleep DT
