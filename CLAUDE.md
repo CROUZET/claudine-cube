@@ -142,9 +142,13 @@ Le point autrefois ouvert est **résolu**. La continuité avant→dessus a été
 sur matériel (`test/test_cube_edge.rb`) : le coin avant-haut-gauche coïncide avec
 le coin proche-gauche du dessus, `x` aligné, sans miroir, et monter sur l'avant
 (`y`→7) se prolonge sur le dessus en `y` croissant (proche→fond). **`top_local`
-est correct tel quel, aucun offset.** (Les 3 autres arêtes latérales↔dessus
-— droite/arrière/gauche — ne sont pas encore calées ; utile seulement pour de
-futurs effets qui les traversent, cf. `top_edge_px` dans les animations.)
+est correct tel quel, aucun offset.**
+
+**Les 8 arêtes sont désormais validées sur matériel** (`test/test_cube_edge.rb`,
+qui allume les 8 arêtes partagées, pixels 2→6 des deux côtés) : les 3 arêtes
+dessus↔latérales restantes (droite/arrière/gauche→dessus) sont **continues et
+alignées telles quelles, aucun offset à appliquer**. Les effets qui traversent
+ces arêtes (cf. `top_edge_px` et le serpent de `pre_tool`) sont donc corrects.
 
 ---
 
