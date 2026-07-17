@@ -468,9 +468,7 @@ claudine-cube/
 │     └─ flashing_colors.ino    # cycles colors over all 320 LEDs (no serial)
 └─ test/
    ├─ test_cube_faces.rb        # one color per face (order + mapping)
-   ├─ test_cube_edge.rb         # front→top edge continuity (top rotation)
-   ├─ test_cube_chain.rb        # raw-index chain (fault localization)
-   ├─ test_cube_solid.rb        # whole cube one color
+   ├─ test_cube_edge.rb         # all 8 shared edges, both sides (edge calibration)
    ├─ test_cube_preview.rb      # play the animations on the cube
    ├─ test_cube_animations.rb   # dry-run all animations (no hardware)
    └─ test_manager_states.rb    # two-layer background/overlay model (no hardware)

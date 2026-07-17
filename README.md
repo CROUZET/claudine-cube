@@ -129,8 +129,7 @@ ruby test/test_cube_animations.rb              # dry-run, no hardware (CI-friend
 ```
 
 Geometry checks: `test/test_cube_faces.rb` (one color per face),
-`test/test_cube_edge.rb` (front→top continuity), `test/test_cube_chain.rb`
-(raw-index chain), `test/test_cube_solid.rb` (whole cube one color).
+`test/test_cube_edge.rb` (all shared edges, both sides, one color each).
 
 ### Testing hooks manually
 

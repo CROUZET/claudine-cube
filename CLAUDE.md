@@ -186,9 +186,7 @@ faudrait le porter à l'API par face pour dessiner du texte sur une face 8×8).
 | Fichier | Rôle | Matériel |
 |---|---|---|
 | `test_cube_faces.rb` | 1 couleur/face (ordre + mapping) | oui |
-| `test_cube_edge.rb` | calage arête avant→dessus | oui |
-| `test_cube_chain.rb` | chaîne par index brut (localiser une panne) | oui |
-| `test_cube_solid.rb` | cube d'une couleur unie | oui |
+| `test_cube_edge.rb` | calage/vérif des 8 arêtes (pixels 2→6 des 2 côtés) | oui |
 | `test_cube_preview.rb [hooks…]` | aperçu des animations sur le cube | oui |
 | `test_cube_animations.rb` | dry-run de toutes les anims (panel factice) | non |
 | `test_manager_states.rb` | modèle deux couches (fond/overlay) du manager | non |
