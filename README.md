@@ -151,9 +151,9 @@ Each set is a directory under `lib/animations/` with one file per Claude Code
 hook, chosen with `CLAUDINE_ANIMATION_SET` (default `cube`). The `cube` set is
 text-free and volumetric (the flat Claudine sets were removed); each event has a
 distinct **motion signature**, not just a color (the maintainer is mildly
-colorblind). A second set, `bunny` (rabbits), is in progress — it reuses the
-cube geometry (`Cube::CubeBase`) and currently covers `session_start`,
-`session_end` and `user_prompt`.
+colorblind). A second, complete set, `bunny` (rabbits, all 16 hooks), reuses the
+cube geometry (`Cube::CubeBase`) and stages rabbits for every hook (rainbow
+wake-up, hops around the ring, dances, waving, an angry rabbit, sleep, etc.).
 
 ---
 
