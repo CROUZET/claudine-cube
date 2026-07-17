@@ -6,8 +6,9 @@ module Claudine
       # Après un outil (succès) : bref flash bleu du cube entier qui décroît.
       # Signature : flash global unique, décroissance douce.
       class PostTool < CubeBase
-        DUR   = 0.5
-        COLOR = [0, 120, 255]
+        DUR          = 0.5
+        MIN_DURATION = DUR      # le flash est terminé à DUR
+        COLOR        = [0, 120, 255]
 
         def render(t, panel)
           fill(panel, dim(COLOR, [1.0 - t / DUR, 0.0].max))

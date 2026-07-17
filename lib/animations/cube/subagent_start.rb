@@ -6,8 +6,9 @@ module Claudine
       # Un sous-agent démarre : un point violet orbite vite autour du cube
       # (bande centrale), avec traînée. Signature : point qui tourne (orbite).
       class SubagentStart < CubeBase
-        SPEED = 30.0            # colonnes par seconde
-        COLOR = [160, 0, 220]
+        MIN_DURATION = 0.6     # lock court (= défaut, explicité)
+        SPEED        = 30.0    # colonnes par seconde
+        COLOR        = [160, 0, 220]
 
         def render(t, panel)
           panel.clear

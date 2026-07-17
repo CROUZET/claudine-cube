@@ -31,32 +31,35 @@ def step(mgr, panel, t, event = nil)
 end
 
 def check(label, got, expected)
-  good = (got == expected)
+  good = expected.is_a?(Array) ? expected.include?(got) : (got == expected)
   puts format('%s %-52s got=%s', good ? 'ok ' : 'XX ', label, got.inspect)
   good
 end
 
+# La famille user_prompt a plusieurs variantes tirées au hasard par le manager.
+USER_PROMPT = %w[UserPrompt UserPrompt2].freeze
+
 # Scénario : prompt → thinking → outil → thinking → outil → stop → nouveau prompt
 ok &= check('user_prompt active la boucle de fond',
-            step(mgr, panel, 0.0, :user_prompt), 'UserPrompt')
+            step(mgr, panel, 0.0, :user_prompt), USER_PROMPT)
 ok &= check('fond persiste pendant le thinking',
-            step(mgr, panel, 0.3), 'UserPrompt')
+            step(mgr, panel, 0.3), USER_PROMPT)
 ok &= check('pre_tool = overlay ponctuel',
             step(mgr, panel, 1.0, :pre_tool), 'PreTool')
 ok &= check('overlay pre_tool encore visible avant expiration',
             step(mgr, panel, 1.3), 'PreTool')
 ok &= check('après le pre_tool, retour au fond user_prompt',
-            step(mgr, panel, 1.7), 'UserPrompt')
+            step(mgr, panel, 1.7), USER_PROMPT)
 ok &= check('post_tool = overlay ponctuel',
             step(mgr, panel, 2.0, :post_tool), 'PostTool')
 ok &= check('après le post_tool, retour au fond user_prompt',
-            step(mgr, panel, 2.7), 'UserPrompt')
+            step(mgr, panel, 2.7), USER_PROMPT)
 ok &= check('stop coupe le fond et s\'affiche',
             step(mgr, panel, 3.0, :stop), 'Stop')
 ok &= check('stop persiste (fond coupé, pas d\'overlay)',
             step(mgr, panel, 5.0), 'Stop')
 ok &= check('nouveau user_prompt relance la boucle de fond',
-            step(mgr, panel, 6.0, :user_prompt), 'UserPrompt')
+            step(mgr, panel, 6.0, :user_prompt), USER_PROMPT)
 
 # Le fond doit bien être nul après stop, et rétabli après le nouveau prompt.
 bg = mgr.instance_variable_get(:@background)

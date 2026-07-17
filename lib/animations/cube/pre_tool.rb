@@ -8,8 +8,9 @@ module Claudine
       # derrière elle (marqueur synchronisé, même traînée que la colonne).
       # Signature : colonne verticale qui tourne, prolongée sur le pourtour du dessus.
       class PreTool < CubeBase
-        SPEED = 26.0            # colonnes par seconde
-        COLOR = [220, 120, 0]
+        MIN_DURATION = 0.6     # event fréquent : lock court (= défaut, explicité)
+        SPEED        = 26.0    # colonnes par seconde
+        COLOR        = [220, 120, 0]
 
         def render(t, panel)
           panel.clear
