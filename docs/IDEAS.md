@@ -34,9 +34,13 @@
   POSTs them. This ties into the "payload-conditioned mapping" track of
   [`INTENTIONS.md`](INTENTIONS.md) (a source that emits a single `stop` with a
   success/failure flag → `stop` vs `fail`).
-- **Bring back text** on a single face by porting `lib/text/renderer.rb` to the
-  per-face API (`panel.set(face:, x:, y:, …)`) — it still uses the old
-  positional signature.
+- **Scrolling text around the ring** — a short word or message scrolling across
+  the 32-column lateral ring (`ring_px`), the only text format legible on a cube
+  this small (a static 3×5 glyph on one 8×8 face is unreadable). The 3×5 bitmap
+  font in `lib/text/font_3x5.rb` is the reusable starting point (height 5 fits in
+  8 rows); `lib/text/renderer.rb` would need porting from its old positional
+  `panel.set(x, y, …)` signature to the ring/per-face API. A natural basis for a
+  text-driven animation set.
 
 ## Reconsidered / obsolete (kept for the record)
 
