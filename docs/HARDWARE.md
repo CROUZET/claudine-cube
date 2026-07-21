@@ -200,6 +200,13 @@ meeting).
   the level shifter → 74AHCT125 mandatory (same as Claudine).
 - USB power alone cannot sustain full-white on 320 LEDs → external supply
   **mandatory** for real use; USB-only is fine only for low-brightness tests.
+  Measured with `test/test_cube_stress.rb` (2026-07): with the DC jack in,
+  **full-white 100 % on all 320 LEDs holds with no visible artifact** (no hue
+  shift, flicker, or ESP brownout) — the ~19 A theoretical worst case is very
+  pessimistic, the 10 A supply copes cleanly. On **USB only** (no jack), white
+  is fine at ~8 % but the ESP browns out (LEDs blink) **between 20 % and 25 %**
+  white — i.e. the USB source caps out around ~4 A worst-case-theoretical.
+  Practical display limit is thermal (sustained use), not display integrity.
 - **Star power topology** was chosen over daisy-chaining the faces: each face
   gets its 5 V/GND straight from the PCB, guaranteeing uniform color even if
   brightness is raised later.
