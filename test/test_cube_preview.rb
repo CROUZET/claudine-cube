@@ -4,6 +4,8 @@
 #
 #   ruby test/test_cube_preview.rb
 #   ruby test/test_cube_preview.rb finish think   # only those intentions
+#   CLAUDINE_PREVIEW_REALTIME=1 ruby test/test_cube_preview.rb retry fail
+#                                    # play each at its real on-cube lifetime
 #
 # Close the serial monitor of the Arduino IDE before launching ("port busy").
 require 'logger'
@@ -28,23 +30,36 @@ wanted = ARGV.map(&:to_sym)
 hooks  = (ORDER + registry.keys).uniq
 hooks &= wanted unless wanted.empty?
 
-FPS = 30
-DT  = 1.0 / FPS
-DUR = 2.5
+FPS      = 30
+DT       = 1.0 / FPS
+DUR      = 2.5
+# CLAUDINE_PREVIEW_REALTIME=1 plays each animation for its real on-cube lifetime
+# (DURATION if it declares one, else its overlay MIN_DURATION) instead of the
+# fixed inspection window — so short/long overlays (e.g. retry vs fail) feel as
+# they do in operation. Default: fixed DUR window, better for judging shape.
+REALTIME = ENV['CLAUDINE_PREVIEW_REALTIME'] == '1'
 
 panel = Claudine::Panel.new
 begin
-  hooks.each do |hook|
-    variants = registry[hook]
+  hooks.each do |intention|
+    variants = registry[intention]
     next if variants.nil? || variants.empty?
-    # Plays ALL the variants of the hook (not just the first), so
-    # they can be compared. In operation, the manager picks one at random.
+    # Plays ALL the variants of an intention (not just the first), so they can
+    # be compared. In operation, the manager picks one at random.
     variants.each do |klass|
-      # An animation that declares its own lifetime (e.g. system_idle) is played
-      # in full, otherwise we loop it over DUR seconds for the preview.
-      dur = klass.const_defined?(:DURATION) ? [DUR, klass::DURATION].max : DUR
-      label = variants.size > 1 ? "#{hook} (#{klass.name.split('::').last})" : hook.to_s
-      puts format('▶  %-28s %.1fs', label, dur)
+      dur =
+        if REALTIME
+          if    klass.const_defined?(:DURATION)     then klass::DURATION
+          elsif klass.const_defined?(:MIN_DURATION) then klass::MIN_DURATION
+          else  DUR
+          end
+        else
+          # An animation with its own lifetime (e.g. sleep) plays in full;
+          # otherwise we loop it over DUR seconds for the preview.
+          klass.const_defined?(:DURATION) ? [DUR, klass::DURATION].max : DUR
+        end
+      label = variants.size > 1 ? "#{intention} (#{klass.name.split('::').last})" : intention.to_s
+      puts format('▶  %-28s %.2fs%s', label, dur, REALTIME ? ' (realtime)' : '')
       anim = klass.new({})
       t = 0.0
       while t < dur

@@ -3,12 +3,13 @@ require_relative '_base'
 module Claudine
   module Animations
     module Bunny
-      # Failure (tool in error): a bunny shakes with anger on the 4 lateral
-      # faces, in red. Animation shared with stop_failure (end of turn in
-      # failure).
-      # Signature: bunny shaking, red.
+      # retry (recoverable tool error): the bunny shakes with anger on the 4
+      # lateral faces, in red -- kept SHORT, since a recoverable error is minor.
+      # The `fail` intention reuses this shake but sustains it much longer
+      # (rarer, graver -- see fail.rb).
+      # Signature: bunny shaking red, brief blip.
       class Retry < BunnyBase
-        MIN_DURATION = 1.0
+        MIN_DURATION = 0.5
         COLOR = [255, 0, 0]        # red (error)
         SHAKE = 1.0                # amplitude of the shaking (px)
         FREQ  = 5.0                # frequency of the shaking (Hz) -- anger
