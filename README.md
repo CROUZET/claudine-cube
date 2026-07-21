@@ -1,5 +1,7 @@
 # Claudine Cube — event-reactive LED cube
 
+![demo](/docs/assets/demo_picture.png)
+
 Five 8×8 addressable LED panels (320 pixels total) arranged as a **cube**,
 driven by a XIAO ESP32-S3, displaying a short animated reaction for each
 Claude Code lifecycle event: session start/end, tool use, subagents, task
