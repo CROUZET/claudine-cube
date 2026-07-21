@@ -162,30 +162,41 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    (plus `fill`, `clear`, `set_raw`, `show`, `close`).
 2. **`Settings`** (`config/settings.rb`): `WIDTH=8`, `HEIGHT=8`, `FACES=5`,
    `NUM_LEDS=320`, `PORT='/dev/cu.usbmodem11201'` (XIAO). `FLIP_X/FLIP_Y` removed.
-3. **`cube` animation set** (default, `lib/animations/cube/`): Claudine's flat
+3. **Intention layer** (`lib/intentions.rb` + `lib/profiles/claude_code.rb`):
+   animations are indexed by **intention** (neutral state verbs: `think`,
+   `start`, `fork`…), not by hook. A **profile** (data) maps Claude Code hooks
+   onto the 16 intentions; the manager translates. This decouples the cube from
+   Claude Code (any source is just a new profile) and moves the temporal role
+   out of the manager. Frozen V1 spec + rationale: `docs/INTENTIONS.md`.
+4. **`cube` animation set** (default, `lib/animations/cube/`): Claudine's flat
    sets (`default`/`fancy`/`abstract`/`bunny`) and `EventLabel` have
    been **removed** (3×5 text unsuitable for the cube). The new set is **without
-   text**, designed for volume: 16 hooks + `_base.rb` (helpers `ring_px`/`ring_row`
-   around the 4 side faces, `face_ring`/`top_ring` concentric rings,
-   `top_edge_px` for the perimeter of the top).
-   ⚠️ **The user is slightly colorblind**: each event is distinguishable
+   text**, designed for volume: 16 intentions + `_base.rb` (helpers
+   `ring_px`/`ring_row` around the 4 side faces, `face_ring`/`top_ring`
+   concentric rings, `top_edge_px` for the perimeter of the top). Files are named
+   by intention (`think.rb`, `start.rb`, …).
+   ⚠️ **The user is slightly colorblind**: each state is distinguishable
    by **motion/shape/brightness**, not by color alone.
    A second set, **`bunny`** (bunnies, `lib/animations/bunny/`), is **complete**
-   (all 16 hooks): it reuses the cube geometry (`Cube::CubeBase`, via
+   (all 16 intentions): it reuses the cube geometry (`Cube::CubeBase`, via
    `bunny/_base.rb`) and stages bunnies (rainbow wake-up, jumps
    around the ring, dances, peekaboo, angry bunny, falling asleep, merging
    heads, etc.). Selected via `CLAUDINE_ANIMATION_SET=bunny`. Color scheme of the
    set: start = light (white/light blue), end = yellow, error = red.
-4. **Two-layer model in `AnimationManager`**: a **background** event
-   (`user_prompt`) starts a "working" loop that persists (thinking
-   indicator); the **one-shot** events (`pre_tool`, `post_tool`, …) are
-   **overlays** that play once (their `MIN_DURATION`) then hand back to the
-   background; the **terminal** events (`stop`, `stop_failure`, `session_end`,
-   `session_start`) cut the background. The background loops until the terminal or idle.
-   Verified by `test/test_manager_states.rb`.
-5. **Unchanged**: EventBus, Runner (30 fps), Claude Code connector
-   (HTTP 127.0.0.1:9292, 15 hooks + `system_idle`), display lock (0.6 s,
-   latest-wins), idle (`system_idle` after 90 s), Adalight protocol.
+5. **Intention-driven `AnimationManager`**: the temporal role comes from the
+   intention's `kind` (`Intentions.kind`). An **ambient** intention (`think`)
+   starts a "working" loop that persists (thinking indicator); **pulse**
+   intentions (`start`, `finish`, `fork`, …) are **overlays** that play once
+   (their `MIN_DURATION`) then hand back to the background; **boundary**
+   intentions (`welcome`, `stop`, `fail`, `bye`) cut the background; the
+   **dormant** intention (`sleep`) is the idle animation. If the set lacks a
+   resolved intention, the manager walks the vocabulary fallback chain. The
+   background loops until a boundary or idle. Verified by
+   `test/test_manager_states.rb`.
+6. **Unchanged**: EventBus, Runner (30 fps), Claude Code connector
+   (HTTP 127.0.0.1:9292, pushes raw hooks — the profile translates), display
+   lock (0.6 s, latest-wins), idle (`sleep` intention after 90 s), Adalight
+   protocol.
 
 The `lib/text/` folder (3×5 font, renderer) is kept from Claudine but **not
 used** by the cube set (the renderer uses the old positional `set`; it
@@ -197,7 +208,7 @@ would need to be ported to the per-face API to draw text on an 8×8 face).
 |---|---|---|
 | `test_cube_faces.rb` | 1 color/face (order + mapping) | yes |
 | `test_cube_edge.rb` | calibration/check of the 8 edges (pixels 2→6 on both sides) | yes |
-| `test_cube_preview.rb [hooks…]` | preview of the animations on the cube | yes |
+| `test_cube_preview.rb [intentions…]` | preview of the animations on the cube | yes |
 | `test_cube_animations.rb` | dry-run of all the animations (fake panel) | no |
 | `test_manager_states.rb` | two-layer model (background/overlay) of the manager | no |
 
@@ -223,10 +234,10 @@ ruby test/test_cube_preview.rb   # watch the animations run
 - `docs/IDEAS.md` — **single index of evolutions** (nothing built), organized
   by maturity; the big work items are linked (marketplace) and the small ideas
   inline. Every evolution idea goes here, not in the README nor `SOFTWARE.md`.
-- `docs/INTENTIONS.md` — intention vocabulary (V1 frozen, not yet
-  implemented): a source ↔ rendering contract that decouples the cube from Claude Code
-  (the animations target states "think/start/fork…", a profile maps the
-  hooks onto them). Next concrete work item.
+- `docs/INTENTIONS.md` — intention vocabulary (V1, **implemented**): the
+  source ↔ rendering contract that decouples the cube from Claude Code (the
+  animations target states "think/start/fork…", a profile maps the hooks onto
+  them). See `lib/intentions.rb`, `lib/profiles/claude_code.rb`.
 - `docs/MARKETPLACE.md` — vision of a marketplace of shareable animations
   (design exploration): third-party code execution security, compilation
   to WASM, creator journey.

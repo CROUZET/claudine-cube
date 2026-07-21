@@ -36,20 +36,20 @@ registry = manager.instance_variable_get(:@registry)
 TIMES = [0.0, 0.05, 0.2, 0.5, 1.0, 2.0, 5.0, 12.0]
 ok = true
 
-registry.sort_by { |hook, _| hook.to_s }.each do |hook, variants|
+registry.sort_by { |intention, _| intention.to_s }.each do |intention, variants|
   variants.each do |klass|
     begin
       anim = klass.new({})
       panel = FakePanel.new
       TIMES.each { |t| anim.render(t, panel) }
-      puts format('ok  %-16s %-28s (%d writes)', hook, klass.name.split('::').last, panel.writes)
+      puts format('ok  %-16s %-28s (%d writes)', intention, klass.name.split('::').last, panel.writes)
     rescue => e
       ok = false
-      puts format('XX  %-16s %-28s -> %s', hook, klass.name.split('::').last, e.message)
+      puts format('XX  %-16s %-28s -> %s', intention, klass.name.split('::').last, e.message)
     end
   end
 end
 
-puts "\n#{registry.size} hook(s) loaded."
+puts "\n#{registry.size} intention(s) loaded."
 puts ok ? "ALL ANIMATIONS PASS ✅" : "FAILURE: see above ❌"
 exit(ok ? 0 : 1)

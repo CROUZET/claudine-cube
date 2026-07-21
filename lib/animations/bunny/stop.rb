@@ -1,5 +1,5 @@
 require_relative '_base'
-require_relative 'user_prompt'
+require_relative 'think'
 
 module Claudine
   module Animations
@@ -12,10 +12,10 @@ module Claudine
       class Stop < BunnyBase
         COLOR   = [255, 200, 0]           # yellow (end)
         SPEED   = 16.0                    # columns/second (running)
-        HOP_LEN = UserPrompt::HOP_LEN     # same jump as user_prompt
+        HOP_LEN = Think::HOP_LEN     # same jump as user_prompt
         HOP_H   = [3.0, 5.0, 4.0].freeze  # varied jump heights
         NB      = HOP_H.size
-        RUN     = UserPrompt::RABBIT       # running sprite (profile) from user_prompt
+        RUN     = Think::RABBIT       # running sprite (profile) from user_prompt
 
         T_RUN  = 2.0                       # duration of the running
         T_FADE = 2.0                       # duration of the fade (after the stop)

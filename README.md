@@ -125,8 +125,8 @@ unplugged.
 ### Preview the animations without Claude Code
 
 ```bash
-ruby test/test_cube_preview.rb                 # all hooks in sequence, on the cube
-ruby test/test_cube_preview.rb user_prompt task_done   # only these
+ruby test/test_cube_preview.rb                 # all intentions in sequence, on the cube
+ruby test/test_cube_preview.rb think handled   # only these intentions
 ruby test/test_cube_animations.rb              # dry-run, no hardware (CI-friendly)
 ```
 
@@ -149,46 +149,53 @@ Brightness override (test different levels): `CLAUDINE_BRIGHTNESS=0.12 ruby clau
 
 ### Animation sets
 
-Each set is a directory under `lib/animations/` with one file per Claude Code
-hook, chosen with `CLAUDINE_ANIMATION_SET` (default `cube`). The `cube` set is
-text-free and volumetric (the flat Claudine sets were removed); each event has a
+Each set is a directory under `lib/animations/` with one file per **intention**
+(neutral state verbs — see [docs/INTENTIONS.md](docs/INTENTIONS.md)), chosen with
+`CLAUDINE_ANIMATION_SET` (default `cube`). A profile maps Claude Code hooks onto
+those intentions, so animations aren't tied to Claude Code. The `cube` set is
+text-free and volumetric (the flat Claudine sets were removed); each state has a
 distinct **motion signature**, not just a color (the maintainer is mildly
-colorblind). A second, complete set, `bunny` (rabbits, all 16 hooks), reuses the
-cube geometry (`Cube::CubeBase`) and stages rabbits for every hook (rainbow
-wake-up, hops around the ring, dances, waving, an angry rabbit, sleep, etc.).
+colorblind). A second, complete set, `bunny` (rabbits, all 16 intentions), reuses
+the cube geometry (`Cube::CubeBase`) and stages rabbits for every intention
+(rainbow wake-up, hops around the ring, dances, waving, an angry rabbit, sleep,
+etc.).
 
 ---
 
 ## The `cube` animation set
 
-| Hook | Rendu | Motion signature |
+Indexed by intention (the Claude Code hook that maps to each is in parentheses;
+full mapping in [docs/INTENTIONS.md](docs/INTENTIONS.md)):
+
+| Intention | Rendering | Motion signature |
 |---|---|---|
-| `session_start` | green breathing, whole cube | global breathe |
-| `session_end` | white→black fade | monotone fade-out |
-| `user_prompt` | wave rises the 4 sides, then rings inward on top — **loops** while thinking | repeating rising crest |
-| `pre_tool` | amber column orbiting, extended onto the top rim | rotating column |
-| `post_tool` | single blue flash | one decaying flash |
-| `post_tool_fail` | **double** red blink | two sharp blinks |
-| `stop` | calm blue breathing | slow, never fully off |
-| `stop_failure` | ample red pulse | steady insistent pulse |
-| `subagent_start` | purple dot orbiting | fast orbit |
-| `subagent_stop` | central ring fading | full ring fade |
-| `pre_compact` | thin lines converge to center (ephemeral) | converge |
-| `post_compact` | thin lines expand from center (ephemeral) | expand |
-| `notification` | amber square blink | crisp on/off |
-| `task_new` | outer/inner rings alternate on all 5 faces | alternating rings |
-| `task_done` | green wave rises + fills top inward | rising fill → inward rings |
-| `system_idle` | dim night-blue breathe + slow orbiting spark | very slow, very dim |
+| `welcome` (session_start) | green breathing, whole cube | global breathe |
+| `bye` (session_end) | white→black fade | monotone fade-out |
+| `think` (user_prompt) | wave rises the 4 sides, then rings inward on top — **loops** while thinking | repeating rising crest |
+| `start` (pre_tool) | amber column orbiting, extended onto the top rim | rotating column |
+| `finish` (post_tool) | single blue flash | one decaying flash |
+| `retry` (post_tool_fail) | **double** red blink | two sharp blinks |
+| `stop` (stop) | calm blue breathing | slow, never fully off |
+| `fail` (stop_failure) | ample red pulse | steady insistent pulse |
+| `fork` (subagent_start) | purple dot orbiting | fast orbit |
+| `join` (subagent_stop) | central ring fading | full ring fade |
+| `save` (pre_compact) | thin lines converge to center (ephemeral) | converge |
+| `saved` (post_compact) | thin lines expand from center (ephemeral) | expand |
+| `wait` (notification) | amber square blink | crisp on/off |
+| `handle` (task_new) | outer/inner rings alternate on all 5 faces | alternating rings |
+| `handled` (task_done) | green wave rises + fills top inward | rising fill → inward rings |
+| `sleep` (system_idle) | dim night-blue breathe + slow orbiting spark | very slow, very dim |
 
 `lib/animations/cube/_base.rb` provides the shared volumetric helpers
 (`ring_px`, `ring_row`, `face_ring`, `top_ring`, `top_edge_px`). Tuning knobs
 live as constants at the top of each animation.
 
-**Working-state model.** `user_prompt` starts a persistent "busy/working" loop
-that keeps playing (the thinking indicator); `pre_tool` / `post_tool` and the
-other momentary events overlay it for a beat then hand back to the loop; `stop`
-(and `stop_failure` / `session_end`) ends it. So the cube stays alive from
-prompt to stop instead of going dark between events. See
+**Working-state model.** The `think` intention (ambient) starts a persistent
+"busy/working" loop that keeps playing (the thinking indicator); pulse intentions
+(`start` / `finish` and the other momentary ones) overlay it for a beat then hand
+back to the loop; boundary intentions (`stop` / `fail` / `bye`) end it. So the
+cube stays alive from prompt to stop instead of going dark between events. The
+temporal role comes from each intention's `kind`. See
 [SOFTWARE.md](docs/SOFTWARE.md#working-state-model-background--overlays).
 
 ---
@@ -203,7 +210,7 @@ claudine-cube/
 │  ├─ cube_mapping.rb       # (face,x,y) → chain index (+ self-test)
 │  ├─ panel.rb              # per-face API via CubeMapping (no serpentine/FLIP)
 │  ├─ animation_manager.rb  # loads the active set, dispatches events
-│  ├─ animations/cube/      # default set: 16 hooks + _base.rb (volumetric)
+│  ├─ animations/cube/      # default set: 16 intentions + _base.rb (volumetric)
 │  └─ …                     # Runner, EventBus, Event, connectors, logger
 ├─ sketch_firmware/         # XIAO firmware (NeoPixel, DATA_PIN 1, NUM_LEDS 320)
 └─ test/                    # cube geometry + animation tests
@@ -216,10 +223,11 @@ claudine-cube/
 The evolution backlog lives in one place: **[docs/IDEAS.md](docs/IDEAS.md)**,
 organized by maturity —
 
-- the **intention layer** (decided, frozen spec): decouples the cube from Claude
-  Code, animations target neutral states (`think`, `start`, `fork`…) — see
-  [docs/INTENTIONS.md](docs/INTENTIONS.md);
 - the **animation marketplace** (vision): safe sharing of third-party
   animations — see [docs/MARKETPLACE.md](docs/MARKETPLACE.md);
 - smaller near-term ideas (random variants, more event sources, cross-face
-  effects, payload-aware animations, text on a face).
+  effects, payload-aware animations, scrolling text around the ring).
+
+The **intention layer** (which decouples the cube from Claude Code — animations
+target neutral states like `think`/`start`/`fork`) is **shipped**; see
+[docs/INTENTIONS.md](docs/INTENTIONS.md).

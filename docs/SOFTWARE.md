@@ -39,7 +39,7 @@ flowchart LR
     CC -->|push Event| BUS
     RUNNER -->|drain| BUS
     RUNNER -->|handle event, t| MGR
-    MGR -->|instantiate hook class| ANIM
+    MGR -->|instantiate intention class| ANIM
     RUNNER -->|render t - t_activation| ANIM
     ANIM -->|"set(face:,x:,y:…)/clear/fill/fill_face"| PANEL
     RUNNER -->|show| PANEL
@@ -55,7 +55,7 @@ sequenceDiagram
     participant Bus as EventBus
     participant Runner
     participant Mgr as AnimationManager
-    participant Anim as Hook animation
+    participant Anim as Intention animation
     participant Panel
     participant ESP as ESP32
 
@@ -64,8 +64,8 @@ sequenceDiagram
     Runner->>Bus: drain
     Bus-->>Runner: [Event, ...]
     Runner->>Mgr: handle(event, t)
-    Note over Mgr: lock check —<br/>activate or buffer
-    Mgr->>Anim: SessionStart.new(payload)
+    Note over Mgr: resolve hook→intention,<br/>lock check — activate or buffer
+    Mgr->>Anim: Welcome.new(payload)
     Runner->>Anim: render(t - t_activation, panel)
     Anim->>Panel: clear + set(face:,x:,y:,r:,g:,b:)…
     Runner->>Panel: show
@@ -83,11 +83,13 @@ sequenceDiagram
 | `Claudine::Runner` | `lib/runner.rb` | Fixed-cadence render loop, drains the bus, calls `manager.render` then `panel.show`, handles Ctrl-C |
 | `Claudine::EventBus` | `lib/event_bus.rb` | Thread-safe event queue (`Queue`): connectors `push`, the Runner `drain`s |
 | `Claudine::Event` | `lib/event.rb` | Immutable value object `Data.define(:type, :payload)` |
-| `Claudine::AnimationManager` | `lib/animation_manager.rb` | Loads the active set at startup (`CLAUDINE_ANIMATION_SET`, default `cube`), builds a `hook_type => [Class,…]` registry, instantiates a fresh animation per event, applies the display lock and idle switch |
+| `Claudine::AnimationManager` | `lib/animation_manager.rb` | Loads the active set at startup (`CLAUDINE_ANIMATION_SET`, default `cube`), builds an `intention => [Class,…]` registry; on an event it maps the raw hook type → intention via the active profile, resolves the intention against the set (walking `Intentions.resolve`'s fallback chain if absent), instantiates a fresh animation, and applies the display lock and idle switch |
 | `Claudine::Animations::Base` | `lib/animations/base.rb` | Contract `render(t, panel)` where `t` is time-since-activation |
 | `Claudine::Animations::Cube::CubeBase` | `lib/animations/cube/_base.rb` | Shared volumetric helpers for the cube set (see below) |
-| `Claudine::Animations::Cube::<Hook>` | `lib/animations/cube/<hook>.rb` | One file per Claude Code hook (e.g. `session_start.rb` → `Cube::SessionStart`) |
-| `Claudine::Connectors::ClaudeCode` | `lib/connectors/claude_code.rb` | Small local HTTP server, pushes the raw hook type onto the bus |
+| `Claudine::Animations::Cube::<Intention>` | `lib/animations/cube/<intention>.rb` | One file per intention (e.g. `think.rb` → `Cube::Think`, `welcome.rb` → `Cube::Welcome`) |
+| `Claudine::Intentions` | `lib/intentions.rb` | The 16-intention `VOCAB` (each mapped to a `kind` + `fallback`), the mandatory `CORE = %i[think stop sleep]`, and helpers `kind` / `fallback` / `resolve(intention, available)` (cycle-safe fallback walk) |
+| `Claudine::Profiles::CLAUDE_CODE` | `lib/profiles/claude_code.rb` | Data hash mapping the 16 Claude Code hook types 1:1 to intentions (e.g. `session_start → welcome`, `user_prompt → think`, `stop → stop`) |
+| `Claudine::Connectors::ClaudeCode` | `lib/connectors/claude_code.rb` | Small local HTTP server, pushes the raw hook type onto the bus (the profile does the hook→intention translation, in the manager) |
 | `Claudine::Settings` | `config/settings.rb` | Config constants (port, baud, 8×8×5 size, faces, brightness) |
 | `Claudine::Logger` | `lib/logger.rb` | Simple logger, level via `CLAUDINE_LOG_LEVEL` |
 | Arduino firmware | `sketch_firmware/sketch_firmware.ino` | Decodes Adalight, pushes to the chain via Adafruit NeoPixel |
@@ -228,9 +230,15 @@ the Runner ticks.
 ## Animation sets
 
 An **animation set** is a directory under `lib/animations/` with one `.rb` file
-per Claude Code hook. The filename matches the hook name and the class is its
-CamelCase form: `session_start.rb` → `SessionStart`. The active set is picked at
-startup via `CLAUDINE_ANIMATION_SET` (default `cube`).
+per **intention** (not per Claude Code hook). The filename matches the intention
+and the class is its CamelCase form: `think.rb` → `Think`, `welcome.rb` →
+`Welcome`, `sleep.rb` → `Sleep`. The active set is picked at startup via
+`CLAUDINE_ANIMATION_SET` (default `cube`).
+
+The 16 intentions and their temporal roles live in `lib/intentions.rb`
+(`Claudine::Intentions::VOCAB`); the full vocabulary is documented in
+[INTENTIONS.md](INTENTIONS.md). A **profile** (`lib/profiles/claude_code.rb`)
+maps a source's raw events to intentions, so a set never mentions a hook name.
 
 Only the **`cube`** set ships today. The flat Claudine sets
 (`default`/`fancy`/`abstract`/`bunny`) and the `EventLabel` text base were
@@ -240,35 +248,37 @@ removed: they assume a 16×16 plane and the 3×5 font doesn't fit an 8×8 face.
 lib/animations/
   base.rb            # Base contract: render(t, panel)
   cube/              # default set — text-free, volumetric
-    _base.rb         # Cube::CubeBase — shared helpers (not a hook)
-    session_start.rb # Cube::SessionStart
-    user_prompt.rb
-    pre_tool.rb
-    post_tool.rb
-    post_tool_fail.rb
+    _base.rb         # Cube::CubeBase — shared helpers (not an intention)
+    welcome.rb       # Cube::Welcome
+    think.rb         # Cube::Think
+    start.rb
+    finish.rb
+    handle.rb
+    handled.rb
+    fork.rb
+    join.rb
+    wait.rb
+    retry.rb
+    save.rb
+    saved.rb
     stop.rb
-    stop_failure.rb
-    subagent_start.rb
-    subagent_stop.rb
-    pre_compact.rb
-    post_compact.rb
-    notification.rb
-    task_new.rb
-    task_done.rb
-    session_end.rb
-    system_idle.rb   # system animation (idle) — see Idle mode
+    fail.rb
+    bye.rb
+    sleep.rb         # dormant idle intention — see Idle mode
 ```
 
-**Loader conventions** (unchanged from Claudine):
+**Loader conventions**:
 
 - Files whose basename starts with `_` (e.g. `_base.rb`) are set-internal
   helpers: `require`d so their constants/methods are available, but NOT
-  registered as hooks.
-- Files whose basename starts with `system_` (e.g. `system_idle.rb`) register
-  under `:system_idle` and are triggered by the manager, not by a connector.
-- Files ending in `_<digits>` (e.g. `post_tool_2.rb`) are extra **variations**
-  of the base hook; the manager picks one at random per activation. None ship
-  yet, but this is how frequent events (`post_tool`) can avoid looking identical.
+  registered as intentions.
+- `sleep` is a normal intention (kind `dormant`); the manager triggers it
+  internally on idle rather than from a connector. There is no longer any
+  `system_` filename convention.
+- Files ending in `_<digits>` (e.g. `wait_2.rb`, `think_2.rb`) are extra
+  **variations** of the base intention; the manager picks one at random per
+  activation. This is how frequent intentions (`start` / `finish`) can avoid
+  looking identical.
 
 ### `CubeBase` helpers
 
@@ -292,15 +302,15 @@ Constants: `ALL_FACES`, `LATERAL` (the 4 sides), `SIDE` (8), `RING` (32).
 
 The maintainer is mildly colorblind, so **every event is distinguishable by
 motion / shape / brightness, not color alone** (no red↔green or yellow↔green
-distinctions). E.g. `post_tool` is a single flash while `post_tool_fail` is a
-double blink; `pre_compact` converges while `post_compact` expands.
+distinctions). E.g. `finish` is a single flash while `retry` is a
+double blink; `save` converges while `saved` expands.
 
 ### Example animations
 
 Whole-cube breathing:
 
 ```ruby
-class SessionStart < CubeBase
+class Welcome < CubeBase
   PERIOD = 3.0
   BASE   = [0, 200, 0]
   def render(t, panel)
@@ -312,7 +322,7 @@ end
 A wave rising the 4 side faces, then closing inward on the top:
 
 ```ruby
-class UserPrompt < CubeBase
+class Think < CubeBase
   SPEED = 16.0; SPREAD = 2.0; COLOR = [0, 180, 220]
   def render(t, panel)
     panel.clear
@@ -332,8 +342,8 @@ would thrash. `AnimationManager` applies a **display lock**:
 - After activating an animation at time `t`, it refuses to activate a new one
   until `MIN_DURATION` seconds have elapsed (default
   `Settings::MIN_ANIMATION_DURATION` = 0.6 s; overridable per class via a
-  `MIN_DURATION` constant — used by `PostToolFail`, `StopFailure`,
-  `SessionEnd`, the compaction animations, so their gesture plays through).
+  `MIN_DURATION` constant — used by `Retry`, `Fail`,
+  `Bye`, the save/saved animations, so their gesture plays through).
 - Events during the lock are **buffered in one slot** (latest wins, older
   dropped). When the lock expires the pending event is applied.
 - The connector never blocks: it always accepts POSTs and pushes onto the bus.
@@ -344,51 +354,62 @@ Tuning: `config/settings.rb → MIN_ANIMATION_DURATION` (global) and per-class
 ### Working-state model (background + overlays)
 
 A single "one animation at a time" model left the cube dark during *thinking*:
-after `user_prompt` played its wave once, nothing was active until the next
+after `think` played its wave once, nothing was active until the next
 event (or idle at 90 s). To fix that, `AnimationManager` runs a **two-layer
-model** keyed on the event type:
+model** driven by each intention's **kind** (from `Intentions.kind`, not a
+hardcoded event list — the old `BACKGROUND_EVENTS` / `CLEAR_EVENTS` constants
+are gone). The four kinds are:
 
-- **Background events** (`BACKGROUND_EVENTS = [:user_prompt]`) start a
-  persistent "busy/working" loop. `user_prompt` loops its wave and keeps
-  playing — this is the thinking indicator.
-- **Clear events** (`CLEAR_EVENTS = [:stop, :stop_failure, :session_end,
-  :session_start]`) end the background and display their own thing (e.g. `stop`
-  breathes until the next prompt).
-- **Everything else is a transient overlay**: it plays once for its
+- **ambient** (`think`) starts a persistent "busy/working" loop. `think` loops
+  its wave and keeps playing — this is the thinking indicator.
+- **boundary** (`welcome` / `stop` / `fail` / `bye`) is terminal: it ends the
+  background and displays its own thing (e.g. `stop` breathes until the next
+  prompt).
+- **pulse** (everything else) is a transient overlay: it plays once for its
   `MIN_DURATION`, then `render` reverts `@current` to the background loop
   (resuming it continuously from `@background_activated`, so the wave doesn't
-  restart). `pre_tool` / `post_tool` are therefore brief one-shot markers over
+  restart). `start` / `finish` are therefore brief one-shot markers over
   the working loop.
+- **dormant** (`sleep`) is the idle animation (see Idle mode).
 
-So a typical turn looks like: `user_prompt` (loop starts) → `pre_tool` (overlay
-0.6 s) → back to loop → `post_tool` (overlay) → back to loop → … → `stop` (loop
+So a typical turn looks like: `think` (loop starts) → `start` (overlay
+0.6 s) → back to loop → `finish` (overlay) → back to loop → … → `stop` (loop
 ends). Going idle also clears the background. The display lock still governs how
 fast a *new* event can take over; the overlay→background revert is internal (not
 an event) and needs no lock. Verified by `test/test_manager_states.rb`.
 
-Which events are background / clear / transient is a small edit to those two
-constants in `lib/animation_manager.rb`.
+Which temporal role an intention has is data: its `kind` in
+`Intentions::VOCAB` (`lib/intentions.rb`), not a per-set or per-manager list.
 
 ### Idle mode
 
 After `Settings::IDLE_TIMEOUT` seconds without any event (default **90 s**;
-`nil` to disable), the manager switches to the `:system_idle` animation.
+`nil` to disable), the manager triggers the `sleep` intention (kind `dormant`).
 
-- The `cube` set ships `system_idle.rb` (dim night-blue breathing with a slow
-  orbiting spark). Optional variants `system_idle_2.rb`, … would be picked at
+- The `cube` set ships `sleep.rb` (dim night-blue breathing with a slow
+  orbiting spark). Optional variants `sleep_2.rb`, … would be picked at
   random.
-- If a set had no `system_idle`, the manager just `panel.clear`s once at timeout.
+- If a set has no `sleep`, the manager just `panel.clear`s once at timeout
+  (unchanged behavior).
 - The display lock is **bypassed while idle**: any incoming event wakes the cube
   instantly.
 
 Tuning: `config/settings.rb → IDLE_TIMEOUT`.
 
-### Extensibility: adding a connector
+### Extensibility: adding a source
 
-A new connector just has to (1) receive the bus in its constructor, (2) push a
-`Claudine::Event` with the hook type as `:type` on an external event, and (3)
-ensure the active set has a file for that hook. No change needed in the Runner,
-the Panel, or the AnimationManager.
+Adding a source is now **data + a connector**, with zero changes to the render
+path:
+
+1. Write a **profile** (like `lib/profiles/claude_code.rb`) — a data hash
+   mapping the source's raw event types to intentions from the vocabulary.
+2. Write a **connector** that (a) receives the bus in its constructor and
+   (b) pushes a `Claudine::Event` with the raw event type as `:type`.
+
+The manager translates event → intention via the profile and resolves it
+against the active set (falling back along `Intentions.resolve` if the set lacks
+that intention). No per-source animation files are needed, and no change is
+needed in the Runner, the Panel, or the AnimationManager.
 
 ---
 
@@ -436,7 +457,7 @@ ruby claudine.rb
 ```
 
 Env vars: `CLAUDINE_LOG_LEVEL=DEBUG` (default `INFO`), `CLAUDINE_ANIMATION_SET`
-(default `cube`; `bunny` complete — all 16 hooks), `CLAUDINE_BRIGHTNESS` (overrides
+(default `cube`; `bunny` complete — all 16 intentions), `CLAUDINE_BRIGHTNESS` (overrides
 `Settings::BRIGHTNESS`, default `0.08`). Clean shutdown `Ctrl-C` (blanks the cube
 then closes the port).
 
@@ -452,15 +473,18 @@ claudine-cube/
 │  ├─ runner.rb                 # 30 fps loop, bus drain, Ctrl-C
 │  ├─ event.rb                  # Data.define(:type, :payload)
 │  ├─ event_bus.rb              # Thread-safe Queue (push / drain)
-│  ├─ animation_manager.rb      # Loads active set, dispatches to per-hook classes
+│  ├─ intentions.rb             # VOCAB (16 intentions: kind + fallback), CORE, resolve
+│  ├─ profiles/
+│  │  └─ claude_code.rb         # CLAUDE_CODE: hook type → intention (data)
+│  ├─ animation_manager.rb      # Loads active set, maps hook→intention, dispatches per intention
 │  ├─ logger.rb                 # Simple logger (CLAUDINE_LOG_LEVEL)
 │  ├─ rubyserial_patch.rb       # Extends rubyserial's known baud rates
 │  ├─ animations/
 │  │  ├─ base.rb                # Contract: render(t, panel)
 │  │  └─ cube/                  # default set (text-free, volumetric)
-│  │     ├─ _base.rb            # CubeBase helpers (not a hook)
-│  │     ├─ session_start.rb
-│  │     └─ … (16 hook files incl. system_idle.rb)
+│  │     ├─ _base.rb            # CubeBase helpers (not an intention)
+│  │     ├─ think.rb
+│  │     └─ … (16 intention files incl. sleep.rb)
 │  ├─ text/                     # font_3x5 + renderer — retained, unused by cube set
 │  └─ connectors/
 │     └─ claude_code.rb         # HTTP 127.0.0.1:9292 → pushes raw hook type
@@ -499,14 +523,18 @@ sequenceDiagram
     Srv-->>Hook: 204 No Content
     Note over Bus,Cube: at the next frame (≤ 33 ms)
     Bus->>Mgr: handle(:session_start)
-    Mgr->>Mgr: registry[:session_start].sample.new(...)
+    Mgr->>Mgr: profile[:session_start] → :welcome
+    Mgr->>Mgr: registry[:welcome].sample.new(...)
     Mgr-->>Cube: (current animation renders)
 ```
 
-The hook name IS the event type; the connector holds no per-hook mapping. Which
-visual you get depends on the active set. The `cube` set's per-hook visuals and
-their motion signatures are tabulated in [README.md](../README.md#the-cube-animation-set).
-The last event received stays displayed until the next one (or until idle).
+The connector pushes the raw hook type onto the bus; it holds no mapping. In the
+manager, the active **profile** (`Profiles::CLAUDE_CODE`) maps that hook to an
+intention, and the active **set** provides the animation for that intention.
+Which visual you get therefore depends on both the profile and the set. The
+`cube` set's per-intention visuals and their motion signatures are tabulated in
+[README.md](../README.md#the-cube-animation-set). The last event received stays
+displayed until the next one (or until idle).
 
 ---
 

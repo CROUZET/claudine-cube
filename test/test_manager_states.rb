@@ -36,13 +36,14 @@ def check(label, got, expected)
   good
 end
 
-# The user_prompt family has several variants picked at random by the manager.
-USER_PROMPT = %w[UserPrompt UserPrompt2].freeze
+# The :think intention (← user_prompt) has several variants picked at random.
+THINK = %w[Think Think2].freeze
 
 # Real durations of the overlays, read on the classes (the scenario instants
 # are derived from them with margin, to stay valid if an animation is tweaked).
-PRE  = Claudine::Animations::Cube::PreTool::MIN_DURATION
-POST = Claudine::Animations::Cube::PostTool::MIN_DURATION
+# pre_tool → :start, post_tool → :finish (see lib/profiles/claude_code.rb).
+PRE  = Claudine::Animations::Cube::Start::MIN_DURATION
+POST = Claudine::Animations::Cube::Finish::MIN_DURATION
 
 # Scenario: prompt → thinking → tool → thinking → tool → stop → new prompt
 t_pre         = 1.0
@@ -52,25 +53,25 @@ t_post_revert = t_post + POST + 0.3
 t_stop        = t_post_revert + 0.5
 
 ok &= check('user_prompt activates the background loop',
-            step(mgr, panel, 0.0, :user_prompt), USER_PROMPT)
+            step(mgr, panel, 0.0, :user_prompt), THINK)
 ok &= check('background persists during thinking',
-            step(mgr, panel, 0.3), USER_PROMPT)
+            step(mgr, panel, 0.3), THINK)
 ok &= check('pre_tool = one-shot overlay',
-            step(mgr, panel, t_pre, :pre_tool), 'PreTool')
+            step(mgr, panel, t_pre, :pre_tool), 'Start')
 ok &= check('pre_tool overlay still visible before expiration',
-            step(mgr, panel, t_pre + PRE * 0.5), 'PreTool')
+            step(mgr, panel, t_pre + PRE * 0.5), 'Start')
 ok &= check('after the pre_tool, return to the user_prompt background',
-            step(mgr, panel, t_pre_revert), USER_PROMPT)
+            step(mgr, panel, t_pre_revert), THINK)
 ok &= check('post_tool = one-shot overlay',
-            step(mgr, panel, t_post, :post_tool), 'PostTool')
+            step(mgr, panel, t_post, :post_tool), 'Finish')
 ok &= check('after the post_tool, return to the user_prompt background',
-            step(mgr, panel, t_post_revert), USER_PROMPT)
+            step(mgr, panel, t_post_revert), THINK)
 ok &= check('stop cuts the background and displays itself',
             step(mgr, panel, t_stop, :stop), 'Stop')
 ok &= check('stop persists (background cut, no overlay)',
             step(mgr, panel, t_stop + 2.0), 'Stop')
 ok &= check('new user_prompt restarts the background loop',
-            step(mgr, panel, t_stop + 3.0, :user_prompt), USER_PROMPT)
+            step(mgr, panel, t_stop + 3.0, :user_prompt), THINK)
 
 # The background must indeed be nil after stop, and restored after the new prompt.
 bg = mgr.instance_variable_get(:@background)

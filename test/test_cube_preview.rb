@@ -1,9 +1,9 @@
 # Preview on HARDWARE of all animations in the 'cube' set.
-# Plays each hook ~2.5 s in sequence, at 30 fps, on the real cube.
+# Plays each intention ~2.5 s in sequence, at 30 fps, on the real cube.
 # Handy to judge the rendering without triggering the real Claude Code hooks.
 #
 #   ruby test/test_cube_preview.rb
-#   ruby test/test_cube_preview.rb post_tool user_prompt   # only those
+#   ruby test/test_cube_preview.rb finish think   # only those intentions
 #
 # Close the serial monitor of the Arduino IDE before launching ("port busy").
 require 'logger'
@@ -12,12 +12,12 @@ require_relative '../lib/animation_manager'
 
 Claudine.logger.level = ::Logger::WARN
 
-# Reading order (plausible life cycle); completed by any missing hook.
+# Reading order (plausible life cycle); completed by any missing intention.
 ORDER = %i[
-  session_start user_prompt pre_tool post_tool post_tool_fail
-  subagent_start subagent_stop task_new task_done
-  pre_compact post_compact notification stop stop_failure
-  system_idle session_end
+  welcome think start finish retry
+  fork join handle handled
+  save saved wait stop fail
+  sleep bye
 ]
 
 ENV['CLAUDINE_ANIMATION_SET'] ||= 'cube'   # overridable: CLAUDINE_ANIMATION_SET=bunny ruby ...

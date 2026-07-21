@@ -9,11 +9,10 @@
 
 ## Structural work items (dedicated files)
 
-- **Intention vocabulary** — *decided, frozen spec, next work item.*
-  Decouples the cube from Claude Code: animations target neutral states
-  (`think`, `start`, `fork`…), a profile (data) maps the hooks onto them, and the
-  temporal role (`kind`) migrates from the `AnimationManager` to the intention.
-  → **[`INTENTIONS.md`](INTENTIONS.md)**
+- **Intention vocabulary** — ✅ *shipped* (no longer a backlog item; kept here as
+  a pointer). Decouples the cube from Claude Code: animations target neutral
+  states (`think`, `start`, `fork`…), a profile (data) maps the hooks onto them,
+  and the temporal role (`kind`) lives on the intention. → **[`INTENTIONS.md`](INTENTIONS.md)**
 - **Animation marketplace** — *vision.* Public marketplace of shareable
   animations: safe third-party code execution (compilation to WASM,
   capabilities, photosensitivity/color-blindness lints), local creation studio,
