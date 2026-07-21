@@ -3,29 +3,29 @@ require_relative 'subagent_start'
 module Claudine
   module Animations
     module Bunny
-      # Fin d'un sous-agent : même geste que subagent_start mais en jaune et dans
-      # l'ordre inverse — les 4 lapins commencent par faire le tour du cube en
-      # sautant (4 sauts vers la droite), puis plongent dans leur terrier (pop
-      # vers le bas). Jaune (event de fin → jaune). Overlay.
-      # Signature : les lapins tournent en sautant puis disparaissent sous terre.
+      # Subagent stop: same gesture as subagent_start but in yellow and in
+      # reverse order -- the 4 bunnies start by going around the cube
+      # jumping (4 jumps to the right), then dive into their burrow (pop
+      # downward). Yellow (end event -> yellow). Overlay.
+      # Signature: the bunnies turn jumping then vanish underground.
       class SubagentStop < SubagentStart
-        COLOR = [255, 200, 0]   # jaune (fin)
+        COLOR = [255, 200, 0]   # yellow (end)
 
         private
 
-        # D'abord les sauts, puis la plongée dans le terrier.
+        # First the jumps, then the dive into the burrow.
         def pose(t, base)
           jt = JUMPS * JUMP_T
-          if t < jt                                  # tour du cube en sautant
+          if t < jt                                  # around the cube jumping
             total = t / JUMP_T
             p = total - total.floor
             [base + total * SIDE, Math.sin(Math::PI * p) * HOP_H]
-          elsif t < jt + POP                         # plongée au terrier (0 → -5)
+          elsif t < jt + POP                         # dive into the burrow (0 -> -5)
             p = (t - jt) / POP
             off = (-5 * (1.0 - ease_out_back(1.0 - p))).round
             [base + JUMPS * SIDE, off]
           else
-            [base + JUMPS * SIDE, -5]                 # sous terre
+            [base + JUMPS * SIDE, -5]                 # underground
           end
         end
       end

@@ -3,8 +3,8 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Un sous-agent se termine : l'anneau central violet complet s'illumine puis
-      # s'éteint en fondu (l'orbite se referme). Signature : anneau plein qui fade.
+      # A subagent finishes: the full central violet ring lights up then
+      # fades off (the orbit closes). Signature: a full ring that fades.
       class SubagentStop < CubeBase
         MIN_DURATION = 0.7
         DUR   = 0.7

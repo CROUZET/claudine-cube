@@ -3,9 +3,9 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Fin de tour (échec) : pulsation rouge lente et insistante (alerte posée).
-      # Signature : pulsation ample et régulière (distinct du double-flash sec de
-      # post_tool_fail) — le rythme, pas la couleur, porte l'info.
+      # End of turn (failure): slow, insistent red pulsing (a calm alert).
+      # Signature: broad, regular pulsing (distinct from the sharp double-flash of
+      # post_tool_fail) -- the rhythm, not the color, carries the info.
       class StopFailure < CubeBase
         MIN_DURATION = 1.0
         PERIOD = 1.2

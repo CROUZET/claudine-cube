@@ -1,8 +1,8 @@
-# Dry-run de toutes les animations du set 'cube' SANS matériel.
+# Dry-run of all animations in the 'cube' set with NO hardware.
 #
-# Charge le set via l'AnimationManager, instancie chaque hook et appelle
-# render(t, panel) sur un panel factice à plusieurs instants. Vérifie qu'aucune
-# animation ne lève d'exception et n'écrit hors bornes. Utile en CI / avant flash.
+# Loads the set via the AnimationManager, instantiates each hook and calls
+# render(t, panel) on a fake panel at several instants. Checks that no
+# animation raises an exception and does not write out of bounds. Useful in CI / before flashing.
 #
 #   ruby test/test_cube_animations.rb
 require 'logger'
@@ -10,7 +10,7 @@ require_relative '../lib/animation_manager'
 
 Claudine.logger.level = ::Logger::WARN
 
-# Panel factice : valide les bornes comme le vrai Panel/CubeMapping.
+# Fake panel: validates bounds like the real Panel/CubeMapping.
 class FakePanel
   FACES = %i[front right back left top]
   def initialize; @writes = 0; end
@@ -18,18 +18,18 @@ class FakePanel
   def clear; end
   def fill(_r, _g, _b); end
   def fill_face(face, _r, _g, _b)
-    raise "face invalide: #{face.inspect}" unless FACES.include?(face)
+    raise "invalid face: #{face.inspect}" unless FACES.include?(face)
   end
   def set(face:, x:, y:, r:, g:, b:)
-    raise "face invalide: #{face.inspect}" unless FACES.include?(face)
-    raise "x hors bornes: #{x.inspect}" unless x.is_a?(Integer) && (0..7).include?(x)
-    raise "y hors bornes: #{y.inspect}" unless y.is_a?(Integer) && (0..7).include?(y)
-    [r, g, b].each { |c| raise "couleur invalide: #{c.inspect}" unless c.is_a?(Integer) && (0..255).include?(c) }
+    raise "invalid face: #{face.inspect}" unless FACES.include?(face)
+    raise "x out of bounds: #{x.inspect}" unless x.is_a?(Integer) && (0..7).include?(x)
+    raise "y out of bounds: #{y.inspect}" unless y.is_a?(Integer) && (0..7).include?(y)
+    [r, g, b].each { |c| raise "invalid color: #{c.inspect}" unless c.is_a?(Integer) && (0..255).include?(c) }
     @writes += 1
   end
 end
 
-ENV['CLAUDINE_ANIMATION_SET'] ||= 'cube'   # surchargeable : CLAUDINE_ANIMATION_SET=bunny ruby ...
+ENV['CLAUDINE_ANIMATION_SET'] ||= 'cube'   # overridable: CLAUDINE_ANIMATION_SET=bunny ruby ...
 manager  = Claudine::AnimationManager.new
 registry = manager.instance_variable_get(:@registry)
 
@@ -42,7 +42,7 @@ registry.sort_by { |hook, _| hook.to_s }.each do |hook, variants|
       anim = klass.new({})
       panel = FakePanel.new
       TIMES.each { |t| anim.render(t, panel) }
-      puts format('ok  %-16s %-28s (%d écritures)', hook, klass.name.split('::').last, panel.writes)
+      puts format('ok  %-16s %-28s (%d writes)', hook, klass.name.split('::').last, panel.writes)
     rescue => e
       ok = false
       puts format('XX  %-16s %-28s -> %s', hook, klass.name.split('::').last, e.message)
@@ -50,6 +50,6 @@ registry.sort_by { |hook, _| hook.to_s }.each do |hook, variants|
   end
 end
 
-puts "\n#{registry.size} hook(s) chargé(s)."
-puts ok ? "TOUTES LES ANIMATIONS PASSENT ✅" : "ÉCHEC : voir ci-dessus ❌"
+puts "\n#{registry.size} hook(s) loaded."
+puts ok ? "ALL ANIMATIONS PASS ✅" : "FAILURE: see above ❌"
 exit(ok ? 0 : 1)

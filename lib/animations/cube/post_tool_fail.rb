@@ -3,9 +3,9 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Après un outil (échec) : DOUBLE clignotement rouge sec du cube entier.
-      # Signature : deux flashs brefs (distinct du flash unique de post_tool),
-      # lisible même sans percevoir la couleur.
+      # After a tool (failure): DOUBLE sharp red blink of the whole cube.
+      # Signature: two brief flashes (distinct from the single flash of
+      # post_tool), readable even without perceiving the color.
       class PostToolFail < CubeBase
         MIN_DURATION = 0.8
         COLOR = [255, 0, 0]

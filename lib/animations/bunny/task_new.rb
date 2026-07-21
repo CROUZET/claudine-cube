@@ -3,24 +3,24 @@ require_relative '_base'
 module Claudine
   module Animations
     module Bunny
-      # Nouvelle tâche : un lapin en gros plan (de profil) marche tranquillement
-      # autour du cube, le long de l'anneau des 4 faces latérales, avec un cycle
-      # de pattes. Traverse les arêtes sans couture (ring_px). Bleu clair (event
-      # de début → couleur claire). Overlay.
-      # Signature : un grand lapin qui fait le tour du cube au pas.
+      # New task: a close-up bunny (in profile) walks calmly
+      # around the cube, along the ring of the 4 lateral faces, with a
+      # paw cycle. Crosses the edges seamlessly (ring_px). Light blue (start
+      # event -> light color). Overlay.
+      # Signature: a big bunny walking around the cube at a steady pace.
       class TaskNew < BunnyBase
         MIN_DURATION = 3.6
-        DURATION     = 4.5        # durée complète (lue par l'aperçu)
-        COLOR = [120, 200, 255]   # bleu clair (début)
-        SPEED = 7.0               # colonnes/seconde (marche tranquille)
-        STEP  = 4                 # colonnes par pas (alternance des pattes)
+        DURATION     = 4.5        # full duration (read by the preview)
+        COLOR = [120, 200, 255]   # light blue (start)
+        SPEED = 7.0               # columns/second (calm walk)
+        STEP  = 4                 # columns per step (paw alternation)
 
-        # Lapin de profil, tourné vers la marche (dx croissant = avant). dy=0=bas.
-        # Œil = creux en (5,4). Grand plan (7 px de large, 7 de haut).
-        #   . . . # # . .   oreille
+        # Profile bunny, turned toward the walk (increasing dx = front). dy=0=bottom.
+        # Eye = hollow at (5,4). Close-up (7 px wide, 7 tall).
+        #   . . . # # . .   ear
         #   . . . . # # .
-        #   . . # # # . #   tête (œil en creux) + dos
-        #   . # # # # # #   corps
+        #   . . # # # . #   head (hollow eye) + back
+        #   . # # # # # #   body
         #   # # # # # # .
         #   . # # # # # .
         BODY = [
@@ -31,8 +31,8 @@ module Claudine
           [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2],
                   [1, 1], [2, 1], [3, 1], [4, 1], [5, 1],
         ].freeze
-        LEGS_A = [[1, 0], [4, 0]].freeze   # pas 1
-        LEGS_B = [[2, 0], [5, 0]].freeze   # pas 2 (alternance)
+        LEGS_A = [[1, 0], [4, 0]].freeze   # step 1
+        LEGS_B = [[2, 0], [5, 0]].freeze   # step 2 (alternation)
 
         def render(t, panel)
           panel.clear

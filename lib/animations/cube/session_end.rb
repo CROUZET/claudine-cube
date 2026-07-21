@@ -3,13 +3,13 @@ require_relative 'session_start'
 module Claudine
   module Animations
     module Cube
-      # Fin de session : même vague diagonale que l'ouverture (montée puis
-      # reflux jusqu'à extinction), mais en couleurs froides. Ouverture et
-      # fermeture partagent le geste ; la température de la palette les oppose
-      # (chaud à l'éveil, froid à la fin).
+      # End of session: same diagonal wave as the opening (rises then
+      # ebbs back until extinction), but in cool colors. Opening and
+      # closing share the gesture; the palette temperature opposes them
+      # (warm at wake-up, cool at the end).
       class SessionEnd < SessionStart
-        # Froid, plage large pour plus de variété : vert-jaune (0.25) → vert →
-        # cyan → bleu → indigo → violet (0.85).
+        # Cool, wide range for more variety: yellow-green (0.25) -> green ->
+        # cyan -> blue -> indigo -> violet (0.85).
         HUE0 = 0.25
         HUE1 = 0.85
       end

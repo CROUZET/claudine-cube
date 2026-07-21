@@ -3,16 +3,16 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Notification (variante complémentaire de Notification) : n'allume que le
-      # 2e anneau (d=1) et le 4e anneau central (d=3) de chaque face — le négatif
-      # exact de Notification (d=0 + d=2), soit deux cadres concentriques
-      # imbriqués dans les vides de l'originale.
-      # Signature : clignotement carré rapide et net (cible « en creux »).
+      # Notification (complementary variant of Notification): only lights up
+      # the 2nd ring (d=1) and the 4th central ring (d=3) of each face -- the
+      # exact negative of Notification (d=0 + d=2), i.e. two concentric frames
+      # nested in the gaps of the original.
+      # Signature: fast, crisp square blinking (a "hollow" target).
       class Notification4 < CubeBase
         MIN_DURATION = 0.9
-        RATE  = 3.0             # clignotements par seconde (approx)
+        RATE  = 3.0             # blinks per second (approx)
         COLOR = [255, 130, 0]
-        RINGS = [1, 3]          # 2e anneau + 4e anneau (central)
+        RINGS = [1, 3]          # 2nd ring + 4th ring (central)
 
         def render(t, panel)
           panel.clear

@@ -3,53 +3,53 @@ require_relative '_base'
 module Claudine
   module Animations
     module Bunny
-      # Avant un outil : un lapin joue sur les 4 faces latérales. Avant (1) : il
-      # traverse en sautant (gauche → droite → gauche) puis danse sur place
-      # (léger écrasement penché gauche / centre / droite / centre). Arrière (3) :
-      # idem en miroir (symétrie). Droite (2) + gauche (4) : la même animation
-      # inversée dans le temps (danse puis sauts), 4 en miroir de 2.
-      # Blanc bleuté (event de début → couleur claire). Overlay court.
-      # Signature : lapins qui sautent puis dansent tout autour de la façade.
+      # Before a tool: a bunny plays on the 4 lateral faces. Front (1): it
+      # crosses by jumping (left -> right -> left) then dances in place
+      # (slight leaning squash left / center / right / center). Back (3):
+      # same, mirrored (symmetry). Right (2) + left (4): the same animation
+      # reversed in time (dance then jumps), 4 mirroring 2.
+      # Bluish white (start event -> light color). Short overlay.
+      # Signature: bunnies jumping then dancing all around the facade.
       class PreTool < BunnyBase
-        COLOR  = [210, 232, 255]   # blanc bleuté (début)
-        T1     = 0.60              # fin du saut gauche → droite
-        T2     = 1.20              # fin du saut droite → gauche
-        DUR    = 2.30              # fin de la danse
+        COLOR  = [210, 232, 255]   # bluish white (start)
+        T1     = 0.60              # end of the left -> right jump
+        T2     = 1.20              # end of the right -> left jump
+        DUR    = 2.30              # end of the dance
         MIN_DURATION = DUR
-        HOP_H    = 3.0             # hauteur des sauts (px)
-        CENTER_X = 2.0             # bord gauche du sprite quand centré
-        SHEAR    = 2.0             # amplitude du penché (px en haut du sprite)
-        SQUASH   = 0.15            # écrasement vertical max pendant la danse (léger)
-        BLINK    = 0.25            # demi-période du clignotement du dessus (s)
+        HOP_H    = 3.0             # height of the jumps (px)
+        CENTER_X = 2.0             # left edge of the sprite when centered
+        SHEAR    = 2.0             # amplitude of the lean (px at the top of the sprite)
+        SQUASH   = 0.15            # max vertical squash during the dance (slight)
+        BLINK    = 0.25            # half-period of the top blinking (s)
 
-        # Dessus : 8 pixels (ligne×colonne → x,y), 2 le long de la diagonale de
-        # chaque coin, qui clignotent en rythme.
+        # Top: 8 pixels (row x column -> x,y), 2 along the diagonal of
+        # each corner, that blink in rhythm.
         TOP_DOTS = [
-          [1, 1], [2, 2], [5, 5], [6, 6],   # diagonale principale
-          [6, 1], [5, 2], [2, 5], [1, 6],   # anti-diagonale
+          [1, 1], [2, 2], [5, 5], [6, 6],   # main diagonal
+          [6, 1], [5, 2], [2, 5], [1, 6],   # anti-diagonal
         ].freeze
 
-        # Sprite lapin (dx, dy ; 0 = pattes). Forme fournie par l'utilisateur.
+        # Bunny sprite (dx, dy ; 0 = paws). Shape provided by the user.
         #   # . . #
         #   # . . #
         #   # # # #
         #   # . # #
         #   # # # #
         BODY = [
-          [0, 4],                 [3, 4],   # oreilles
+          [0, 4],                 [3, 4],   # ears
           [0, 3],                 [3, 3],
-          [0, 2], [1, 2], [2, 2], [3, 2],   # tête
-          [0, 1],         [2, 1], [3, 1],   # corps (patte repliée)
-          [0, 0], [1, 0], [2, 0], [3, 0],   # corps / pattes
+          [0, 2], [1, 2], [2, 2], [3, 2],   # head
+          [0, 1],         [2, 1], [3, 1],   # body (folded paw)
+          [0, 0], [1, 0], [2, 0], [3, 0],   # body / paws
         ].freeze
 
         def render(t, panel)
           panel.clear
-          draw_on(panel, :front, t,       false)   # 1 : sauts → danse
-          draw_on(panel, :back,  t,       true)    # 3 : symétrie miroir
-          draw_on(panel, :right, DUR - t, false)   # 2 : inversé (danse → sauts)
-          draw_on(panel, :left,  DUR - t, true)    # 4 : inversé + miroir
-          # Dessus : 8 pixels de coin qui clignotent en rythme.
+          draw_on(panel, :front, t,       false)   # 1 : jumps -> dance
+          draw_on(panel, :back,  t,       true)    # 3 : mirror symmetry
+          draw_on(panel, :right, DUR - t, false)   # 2 : reversed (dance -> jumps)
+          draw_on(panel, :left,  DUR - t, true)    # 4 : reversed + mirror
+          # Top: 8 corner pixels that blink in rhythm.
           if (t / BLINK).floor.even?
             TOP_DOTS.each { |x, y| px(panel, :top, x, y, COLOR) }
           end
@@ -57,22 +57,22 @@ module Claudine
 
         private
 
-        # Dessine le lapin sur une face à l'instant tt (miroir horizontal option.).
+        # Draws the bunny on a face at time tt (optional horizontal mirror).
         def draw_on(panel, face, tt, mirror)
           bx, by, lean = pose(tt.clamp(0.0, DUR))
-          sy = 1.0 - SQUASH * lean.abs          # écrasement vertical quand penché
+          sy = 1.0 - SQUASH * lean.abs          # vertical squash when leaning
           BODY.each do |dx, dy|
-            x = bx + dx + lean * SHEAR * (dy / 4.0)   # penché : le haut décale plus
+            x = bx + dx + lean * SHEAR * (dy / 4.0)   # lean: the top shifts more
             y = by + dy * sy
             x = 7 - x if mirror
             px(panel, face, x, y, COLOR)
           end
         end
 
-        # Renvoie [base_x, base_y, lean] à l'instant t.
-        #  - t < T1 : saut gauche → droite (2 arcs)
-        #  - t < T2 : saut droite → gauche (2 arcs)
-        #  - sinon  : danse centrée, penché -1 (gauche) … +1 (droite)
+        # Returns [base_x, base_y, lean] at time t.
+        #  - t < T1 : left -> right jump (2 arcs)
+        #  - t < T2 : right -> left jump (2 arcs)
+        #  - otherwise : centered dance, lean -1 (left) ... +1 (right)
         def pose(t)
           if t < T1
             p = t / T1

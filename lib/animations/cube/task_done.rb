@@ -3,11 +3,11 @@ require_relative 'task_new'
 module Claudine
   module Animations
     module Cube
-      # Tâche terminée : même clignotement concentrique alterné que task_new
-      # (anneaux dedans / dehors sur les 5 faces), mais en jaune. task_new et
-      # task_done partagent le geste ; seule la couleur les distingue.
+      # Task done: same alternating concentric blinking as task_new
+      # (inside / outside rings on the 5 faces), but in yellow. task_new and
+      # task_done share the gesture; only the color distinguishes them.
       class TaskDone < TaskNew
-        COLOR = [235, 200, 0]   # jaune (vert pour task_new)
+        COLOR = [235, 200, 0]   # yellow (green for task_new)
       end
     end
   end

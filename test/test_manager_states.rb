@@ -1,6 +1,6 @@
-# Vérifie le modèle deux couches de l'AnimationManager (fond « au travail » +
-# overlays ponctuels), SANS matériel. Simule la séquence de hooks Claude Code et
-# contrôle quelle animation est active à chaque instant.
+# Checks the two-layer model of the AnimationManager (background "working" +
+# one-shot overlays), with NO hardware. Simulates the sequence of Claude Code hooks and
+# controls which animation is active at each instant.
 #
 #   ruby test/test_manager_states.rb
 require 'logger'
@@ -21,8 +21,8 @@ mgr   = Claudine::AnimationManager.new
 panel = StubPanel.new
 ok    = true
 
-# Joue un tick : émet éventuellement un event puis rend. Renvoie le nom court de
-# l'animation courante.
+# Plays one tick: possibly emits an event then renders. Returns the short name of
+# the current animation.
 def step(mgr, panel, t, event = nil)
   mgr.handle(Claudine::Event.new(type: event, payload: {}), t) if event
   mgr.render(t, panel)
@@ -36,45 +36,45 @@ def check(label, got, expected)
   good
 end
 
-# La famille user_prompt a plusieurs variantes tirées au hasard par le manager.
+# The user_prompt family has several variants picked at random by the manager.
 USER_PROMPT = %w[UserPrompt UserPrompt2].freeze
 
-# Durées réelles des overlays, lues sur les classes (les instants du scénario
-# en sont dérivés avec marge, pour rester valides si on retouche une anim).
+# Real durations of the overlays, read on the classes (the scenario instants
+# are derived from them with margin, to stay valid if an animation is tweaked).
 PRE  = Claudine::Animations::Cube::PreTool::MIN_DURATION
 POST = Claudine::Animations::Cube::PostTool::MIN_DURATION
 
-# Scénario : prompt → thinking → outil → thinking → outil → stop → nouveau prompt
+# Scenario: prompt → thinking → tool → thinking → tool → stop → new prompt
 t_pre         = 1.0
-t_pre_revert  = t_pre + PRE + 0.3          # après expiration de l'overlay pre_tool
+t_pre_revert  = t_pre + PRE + 0.3          # after expiration of the pre_tool overlay
 t_post        = t_pre_revert + 0.5
 t_post_revert = t_post + POST + 0.3
 t_stop        = t_post_revert + 0.5
 
-ok &= check('user_prompt active la boucle de fond',
+ok &= check('user_prompt activates the background loop',
             step(mgr, panel, 0.0, :user_prompt), USER_PROMPT)
-ok &= check('fond persiste pendant le thinking',
+ok &= check('background persists during thinking',
             step(mgr, panel, 0.3), USER_PROMPT)
-ok &= check('pre_tool = overlay ponctuel',
+ok &= check('pre_tool = one-shot overlay',
             step(mgr, panel, t_pre, :pre_tool), 'PreTool')
-ok &= check('overlay pre_tool encore visible avant expiration',
+ok &= check('pre_tool overlay still visible before expiration',
             step(mgr, panel, t_pre + PRE * 0.5), 'PreTool')
-ok &= check('après le pre_tool, retour au fond user_prompt',
+ok &= check('after the pre_tool, return to the user_prompt background',
             step(mgr, panel, t_pre_revert), USER_PROMPT)
-ok &= check('post_tool = overlay ponctuel',
+ok &= check('post_tool = one-shot overlay',
             step(mgr, panel, t_post, :post_tool), 'PostTool')
-ok &= check('après le post_tool, retour au fond user_prompt',
+ok &= check('after the post_tool, return to the user_prompt background',
             step(mgr, panel, t_post_revert), USER_PROMPT)
-ok &= check('stop coupe le fond et s\'affiche',
+ok &= check('stop cuts the background and displays itself',
             step(mgr, panel, t_stop, :stop), 'Stop')
-ok &= check('stop persiste (fond coupé, pas d\'overlay)',
+ok &= check('stop persists (background cut, no overlay)',
             step(mgr, panel, t_stop + 2.0), 'Stop')
-ok &= check('nouveau user_prompt relance la boucle de fond',
+ok &= check('new user_prompt restarts the background loop',
             step(mgr, panel, t_stop + 3.0, :user_prompt), USER_PROMPT)
 
-# Le fond doit bien être nul après stop, et rétabli après le nouveau prompt.
+# The background must indeed be nil after stop, and restored after the new prompt.
 bg = mgr.instance_variable_get(:@background)
-ok &= check('un fond est actif après le nouveau prompt', !bg.nil?, true)
+ok &= check('a background is active after the new prompt', !bg.nil?, true)
 
-puts ok ? "\nMODÈLE DE COUCHES OK ✅" : "\nÉCHEC ❌"
+puts ok ? "\nLAYER MODEL OK ✅" : "\nFAILURE ❌"
 exit(ok ? 0 : 1)

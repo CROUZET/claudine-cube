@@ -1,42 +1,42 @@
-# Validation géométrie du cube (CLAUDE.md §5.3).
+# Cube geometry validation (CLAUDE.md §5.3).
 #
-# Allume chaque face d'une couleur distincte pour confirmer :
-#   - l'ordre des faces dans la chaîne (front→right→back→left→top),
-#   - l'intégrité du mapping par face.
+# Lights each face with a distinct color to confirm:
+#   - the order of the faces in the chain (front→right→back→left→top),
+#   - the integrity of the per-face mapping.
 #
-# Attendu, cube posé sur la table, en tournant autour :
-#   AVANT   (front) → ROUGE
-#   DROITE  (right) → VERT
-#   ARRIÈRE (back)  → BLEU
-#   GAUCHE  (left)  → JAUNE
-#   DESSUS  (top)   → BLANC
+# Expected, cube sitting on the table, walking around it:
+#   FRONT   (front) → RED
+#   RIGHT   (right) → GREEN
+#   BACK    (back)  → BLUE
+#   LEFT    (left)  → YELLOW
+#   TOP     (top)   → WHITE
 #
-# Fermer le moniteur série de l'IDE Arduino avant de lancer (« port busy »).
+# Close the serial monitor of the Arduino IDE before launching ("port busy").
 require 'logger'
 require_relative '../lib/panel'
 
 Claudine.logger.level = ::Logger::DEBUG
 
 FACES = [
-  [:front, [80,  0,  0], 'AVANT',   'ROUGE'],
-  [:right, [ 0, 80,  0], 'DROITE',  'VERT'],
-  [:back,  [ 0,  0, 80], 'ARRIERE', 'BLEU'],
-  [:left,  [80, 80,  0], 'GAUCHE',  'JAUNE'],
-  [:top,   [80, 80, 80], 'DESSUS',  'BLANC'],
+  [:front, [80,  0,  0], 'FRONT',   'RED'],
+  [:right, [ 0, 80,  0], 'RIGHT',  'GREEN'],
+  [:back,  [ 0,  0, 80], 'BACK', 'BLUE'],
+  [:left,  [80, 80,  0], 'LEFT', 'YELLOW'],
+  [:top,   [80, 80, 80], 'TOP',  'WHITE'],
 ]
 
 panel = Claudine::Panel.new
 FACES.each { |face, (r, g, b), _, _| panel.fill_face(face, r, g, b) }
 panel.show
 
-puts "\nUne couleur par face — vérifier autour du cube :"
+puts "\nOne color per face — check around the cube:"
 FACES.each { |_, _, nom, couleur| puts format('  %-8s -> %s', nom, couleur) }
 puts <<~MSG
 
-  À confirmer :
-    - chaque face est bien d'UNE seule couleur, uniforme (mapping face OK) ;
-    - l'ordre correspond (sinon revoir l'ordre des faces dans la chaîne) ;
-    - le DESSUS est blanc uniforme (la rotation se cale avec test_cube_edge.rb).
+  To confirm:
+    - each face is indeed ONE single color, uniform (per-face mapping OK);
+    - the order matches (otherwise review the order of the faces in the chain);
+    - the TOP is uniform white (the rotation is calibrated with test_cube_edge.rb).
 MSG
 
 panel.close

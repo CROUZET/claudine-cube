@@ -3,16 +3,16 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Notification : clignotement ambre franc (demande d'attention). N'allume
-      # que l'anneau extérieur (d=0) et le 3e anneau (d=2) de chaque face, en
-      # cible/deux cadres concentriques — les anneaux d=1 et d=3 restent éteints.
-      # Signature : clignotement carré rapide (on/off net), très différent des
-      # respirations et fondus.
+      # Notification: bold amber blinking (attention request). Only lights up
+      # the outer ring (d=0) and the 3rd ring (d=2) of each face, as a
+      # target/two concentric frames -- rings d=1 and d=3 stay off.
+      # Signature: fast square blinking (crisp on/off), very different from the
+      # breathing and fades.
       class Notification < CubeBase
         MIN_DURATION = 0.9
-        RATE  = 3.0             # clignotements par seconde (approx)
+        RATE  = 3.0             # blinks per second (approx)
         COLOR = [255, 130, 0]
-        RINGS = [0, 2]          # anneau extérieur + 3e anneau
+        RINGS = [0, 2]          # outer ring + 3rd ring
 
         def render(t, panel)
           panel.clear

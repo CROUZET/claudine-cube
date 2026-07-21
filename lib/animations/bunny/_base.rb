@@ -2,13 +2,13 @@ require_relative '../cube/_base'
 
 module Claudine
   module Animations
-    # Set « bunny » (lapins). Même cube physique que le set `cube`, donc on
-    # réutilise sa géométrie et ses helpers de rendu (px, ring_px, face_ring,
-    # top_ring, ring_row, wave, dim, …) via Cube::CubeBase, plus les repères de
-    # faces. Les animations bunny héritent de BunnyBase.
+    # "bunny" set. Same physical cube as the `cube` set, so we reuse its
+    # geometry and its rendering helpers (px, ring_px, face_ring, top_ring,
+    # ring_row, wave, dim, ...) via Cube::CubeBase, plus the face references.
+    # The bunny animations inherit from BunnyBase.
     #
-    # Charte couleur (cf. mémoire projet) : début = clair (blanc / bleu clair),
-    # fin = jaune, erreur = rouge.
+    # Color chart (cf. project memory): start = light (white / light blue),
+    # end = yellow, error = red.
     module Bunny
       ALL_FACES = Cube::ALL_FACES
       LATERAL   = Cube::LATERAL

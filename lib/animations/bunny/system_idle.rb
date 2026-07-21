@@ -3,30 +3,30 @@ require_relative '_base'
 module Claudine
   module Animations
     module Bunny
-      # Veille (aucun event depuis IDLE_TIMEOUT) : sur les 4 faces latérales, un
-      # lapin en « pain » (loaf, oreilles repliées) dort en respirant doucement,
-      # avec des petites bulles qui remontent en zigzag et s'estompent au-dessus.
-      # Après HOLD, tout s'éteint en fondu ; le manager coupe le cube à DURATION.
-      # Signature : lapins endormis qui respirent, avec des bulles de sommeil.
+      # Idle (no event since IDLE_TIMEOUT): on the 4 lateral faces, a
+      # bunny in "loaf" form (loaf, ears folded) sleeps breathing gently,
+      # with little bubbles that rise in zigzag and fade away above.
+      # After HOLD, everything fades out; the manager cuts the cube at DURATION.
+      # Signature: sleeping bunnies breathing, with sleep bubbles.
       class SystemIdle < BunnyBase
-        PERIOD   = 2.6                  # période de respiration (s)
-        HOLD     = 4.0                  # sommeil visible avant le fondu
+        PERIOD   = 2.6                  # breathing period (s)
+        HOLD     = 4.0                  # visible sleep before the fade
         FADE     = 2.0                  # extinction
-        DURATION = HOLD + FADE          # durée de vie (lue par le manager)
-        COLOR    = [80, 150, 220]       # bleu doux (veille)
+        DURATION = HOLD + FADE          # lifetime (read by the manager)
+        COLOR    = [80, 150, 220]       # soft blue (idle)
         FACES    = %i[front right back left].freeze
 
-        # Bulles de sommeil : petits points qui remontent en zigzag et s'estompent.
-        NB_BUB = 3                      # nombre de bulles échelonnées
-        RISE   = 3.9                    # durée de montée d'une bulle (s)
-        AMP    = 1.0                    # amplitude du zigzag (px)
-        ZIG    = 2.0                    # nombre d'oscillations pendant la montée
-        BUB_X  = 6                      # colonne centrale des bulles (côté droit)
+        # Sleep bubbles: little dots that rise in zigzag and fade away.
+        NB_BUB = 3                      # number of staggered bubbles
+        RISE   = 3.9                    # rise duration of one bubble (s)
+        AMP    = 1.0                    # amplitude of the zigzag (px)
+        ZIG    = 2.0                    # number of oscillations during the rise
+        BUB_X  = 6                      # center column of the bubbles (right side)
 
-        # Lapin « loaf » (dx, dy ; 0 = bas) : forme ovale, oreilles repliées.
-        #   . . # . . # . .   oreilles repliées
+        # "Loaf" bunny (dx, dy; 0 = bottom): oval shape, ears folded.
+        #   . . # . . # . .   folded ears
         #   . # # # # # # .
-        #   # # # # # # # #   corps
+        #   # # # # # # # #   body
         #   # # # # # # # #
         #   . # # # # # # .
         LOAF = [
@@ -41,24 +41,24 @@ module Claudine
           panel.clear
           env    = t < HOLD ? 1.0 : (1.0 - (t - HOLD) / FADE).clamp(0.0, 1.0)
           return if env <= 0.0
-          breath = 0.35 + 0.35 * wave(t, PERIOD)     # respiration 0.35..0.70
+          breath = 0.35 + 0.35 * wave(t, PERIOD)     # breathing 0.35..0.70
           loaf_c = dim(COLOR, breath * env)
 
           FACES.each do |face|
             LOAF.each { |x, y| px(panel, face, x, y, loaf_c) }
             NB_BUB.times do |i|
-              ph = ((t / RISE) + i.to_f / NB_BUB) % 1.0        # 0..1 : la bulle monte
+              ph = ((t / RISE) + i.to_f / NB_BUB) % 1.0        # 0..1: the bubble rises
               bx = BUB_X + (AMP * Math.sin(ph * ZIG * 2 * Math::PI)).round  # zigzag
-              by = (5 + ph * 5).round                          # y de 5 à 10 (déborde sur le dessus)
-              bubble(panel, face, bx, by, dim(COLOR, (1.0 - ph) * env))     # s'estompe
+              by = (5 + ph * 5).round                          # y from 5 to 10 (overflows onto the top)
+              bubble(panel, face, bx, by, dim(COLOR, (1.0 - ph) * env))     # fades away
             end
           end
         end
 
         private
 
-        # Bulle : sur la face latérale ; au-delà du haut (y ≥ 8), passe sur le
-        # pourtour du dessus le long de l'arête (top_edge_px).
+        # Bubble: on the lateral face; beyond the top (y >= 8), moves onto the
+        # perimeter of the top along the edge (top_edge_px).
         def bubble(panel, face, x, y, color)
           if y <= 7
             px(panel, face, x, y, color)

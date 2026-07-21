@@ -3,55 +3,55 @@ require_relative '_base'
 module Claudine
   module Animations
     module Bunny
-      # Après un outil : un lapin sur chacune des 4 faces latérales fait une
-      # petite danse (déhanché gauche/droite), et le dessus reprend les 8 pixels
-      # de coin clignotants de pre_tool. Le tout s'éteint en fondu du début à la
-      # fin. Jaune (event de fin → jaune). Overlay court.
-      # Signature : lapins qui dansent, coins du dessus qui clignotent, puis tout
-      # s'estompe.
+      # After a tool: a bunny on each of the 4 lateral faces does a
+      # little dance (left/right hip sway), and the top reuses the 8 blinking
+      # corner pixels of pre_tool. All of it fades out from start to
+      # finish. Yellow (end event -> yellow). Short overlay.
+      # Signature: bunnies dancing, top corners blinking, then everything
+      # fades out.
       class PostTool < BunnyBase
-        COLOR  = [255, 200, 0]     # jaune (fin)
-        DUR    = 1.6               # durée de la danse + fondu
+        COLOR  = [255, 200, 0]     # yellow (end)
+        DUR    = 1.6               # duration of the dance + fade
         MIN_DURATION = DUR
-        SWAYS  = 3                 # nombre de déhanchés pendant la danse
-        BASE_X = 2                 # bord gauche du sprite (centré, 4 px de large)
-        SHEAR  = 1.0               # amplitude du penché (px en haut du sprite)
-        SQUASH = 0                 # écrasement vertical max (léger)
-        BLINK  = 0.25              # demi-période du clignotement du dessus (s)
+        SWAYS  = 3                 # number of hip sways during the dance
+        BASE_X = 2                 # left edge of the sprite (centered, 4 px wide)
+        SHEAR  = 1.0               # amplitude of the lean (px at the top of the sprite)
+        SQUASH = 0                 # max vertical squash (slight)
+        BLINK  = 0.25              # half-period of the top blinking (s)
 
-        # Décalage de phase de la danse par face latérale (danses staggerées).
+        # Phase offset of the dance per lateral face (staggered dances).
         FACE_PHASE = { front: 0.0, right: 0.2, back: 0.4, left: 0.6 }.freeze
 
-        # Dessus : 8 pixels de coin qui clignotent (mêmes qu'en pre_tool).
+        # Top: 8 corner pixels that blink (same as in pre_tool).
         TOP_DOTS = [
-          [1, 1], [2, 2], [5, 5], [6, 6],   # diagonale principale
-          [6, 1], [5, 2], [2, 5], [1, 6],   # anti-diagonale
+          [1, 1], [2, 2], [5, 5], [6, 6],   # main diagonal
+          [6, 1], [5, 2], [2, 5], [1, 6],   # anti-diagonal
         ].freeze
 
-        # Sprite lapin (dx, dy ; 0 = pattes).
+        # Bunny sprite (dx, dy ; 0 = paws).
         #   # . . #
         #   # . . #
         #   # # # #
         #   # . # #
         #   # # # #
         BODY = [
-          [0, 4],                 [3, 4],   # oreilles
+          [0, 4],                 [3, 4],   # ears
           [0, 3],                 [3, 3],
-          [0, 2], [1, 2], [2, 2], [3, 2],   # tête
-          [0, 1],         [2, 1], [3, 1],   # corps (patte repliée)
-          [0, 0], [1, 0], [2, 0], [3, 0],   # corps / pattes
+          [0, 2], [1, 2], [2, 2], [3, 2],   # head
+          [0, 1],         [2, 1], [3, 1],   # body (folded paw)
+          [0, 0], [1, 0], [2, 0], [3, 0],   # body / paws
         ].freeze
 
         def render(t, panel)
           panel.clear
           p    = [t / DUR, 1.0].min
-          fade = 1.0 - p                     # fondu progressif tout du long
+          fade = 1.0 - p                     # progressive fade all along
           return if fade <= 0.0
           FACE_PHASE.each do |face, off|
             lean = -Math.sin(2 * Math::PI * (SWAYS * p + off))
             draw(panel, face, lean, fade)
           end
-          # Dessus : 8 pixels de coin qui clignotent en rythme, en fondu.
+          # Top: 8 corner pixels that blink in rhythm, fading out.
           if (t / BLINK).floor.even?
             c = dim(COLOR, fade)
             TOP_DOTS.each { |x, y| px(panel, :top, x, y, c) }
@@ -61,7 +61,7 @@ module Claudine
         private
 
         def draw(panel, face, lean, fade)
-          sy    = 1.0 - SQUASH * lean.abs    # écrasement vertical quand penché
+          sy    = 1.0 - SQUASH * lean.abs    # vertical squash when leaning
           color = dim(COLOR, fade)
           BODY.each do |dx, dy|
             x = BASE_X + dx + lean * SHEAR * (dy / 4.0)

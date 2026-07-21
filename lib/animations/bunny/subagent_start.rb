@@ -3,25 +3,25 @@ require_relative '_base'
 module Claudine
   module Animations
     module Bunny
-      # Démarrage d'un sous-agent : un petit lapin surgit du bas (effet ressort)
-      # sur chacune des 4 faces latérales, puis les 4 lapins font le tour du cube
-      # en sautant vers la droite, chacun à la place du suivant, 4 fois (tour
-      # complet). Bleu clair (event de début → couleur claire). Overlay.
-      # Signature : les lapins jaillissent puis tournent autour du cube en sautant.
+      # Subagent start: a small bunny springs up from the bottom (spring effect)
+      # on each of the 4 lateral faces, then the 4 bunnies go around the cube
+      # jumping to the right, each to the next one's spot, 4 times (full
+      # turn). Light blue (start event -> light color). Overlay.
+      # Signature: the bunnies spring up then turn around the cube jumping.
       class SubagentStart < BunnyBase
-        COLOR  = [120, 200, 255]   # bleu clair (début)
-        POP    = 0.45              # durée du jaillissement (s)
-        JUMPS  = 4                 # nombre de sauts (tour complet)
-        JUMP_T = 1.0               # durée d'un saut (s)
-        HOP_H  = 3.0               # hauteur d'un saut (px)
-        BASE_X = 2                 # position du lapin dans sa face (centré, 4 px)
+        COLOR  = [120, 200, 255]   # light blue (start)
+        POP    = 0.45              # duration of the spring-up (s)
+        JUMPS  = 4                 # number of jumps (full turn)
+        JUMP_T = 1.0               # duration of one jump (s)
+        HOP_H  = 3.0               # height of one jump (px)
+        BASE_X = 2                 # position of the bunny in its face (centered, 4 px)
         MIN_DURATION = POP + JUMPS * JUMP_T
         DURATION     = MIN_DURATION
 
-        # Petit lapin (dx, dy ; 0 = pattes).
-        #   # . . #   oreilles
+        # Small bunny (dx, dy; 0 = paws).
+        #   # . . #   ears
         #   # . . #
-        #   # # # #   corps
+        #   # # # #   body
         #   # # # #
         #   # # # #
         BODY = [
@@ -35,7 +35,7 @@ module Claudine
         def render(t, panel)
           panel.clear
           4.times do |i|
-            base = i * SIDE + BASE_X          # colonne de départ du lapin i
+            base = i * SIDE + BASE_X          # starting column of bunny i
             col, by = pose(t, base)
             BODY.each { |dx, dy| plot(panel, col + dx, by + dy, self.class::COLOR) }
           end
@@ -43,30 +43,30 @@ module Claudine
 
         private
 
-        # Renvoie [colonne, décalage_vertical] du lapin à l'instant t.
+        # Returns [column, vertical_offset] of the bunny at time t.
         def pose(t, base)
-          if t < POP                          # jaillissement vertical, sur place
+          if t < POP                          # vertical spring-up, in place
             off = (-5 * (1.0 - ease_out_back(t / POP))).round
             [base, off]
           else
-            total = (t - POP) / JUMP_T         # progression en "sauts" (0..JUMPS)
+            total = (t - POP) / JUMP_T         # progress in "jumps" (0..JUMPS)
             if total >= JUMPS
-              [base + JUMPS * SIDE, 0]         # posé (= maison, modulo l'anneau)
+              [base + JUMPS * SIDE, 0]         # landed (= home, modulo the ring)
             else
-              p = total - total.floor          # phase du saut courant
+              p = total - total.floor          # phase of the current jump
               [base + total * SIDE, Math.sin(Math::PI * p) * HOP_H]
             end
           end
         end
 
-        # Ease-out « back » : dépasse 1 puis revient (effet ressort visible ~1 px).
+        # Ease-out "back": overshoots 1 then comes back (spring effect visible ~1 px).
         def ease_out_back(p)
           c1 = 3.2
           c3 = c1 + 1
           1 + c3 * (p - 1)**3 + c1 * (p - 1)**2
         end
 
-        # Pixel sur l'anneau ; débord sur le dessus si y ≥ 8 (cf. user_prompt).
+        # Pixel on the ring; overflows onto the top if y >= 8 (cf. user_prompt).
         def plot(panel, col, yy, rgb)
           yi = yy.to_i
           if yi <= 7

@@ -3,31 +3,31 @@ require_relative '../base'
 module Claudine
   module Animations
     module Cube
-      # Faces et repères géométriques partagés.
+      # Shared faces and geometric landmarks.
       ALL_FACES = %i[front right back left top].freeze
-      LATERAL   = %i[front right back left].freeze   # les 4 faces latérales
-      SIDE      = 8                                   # côté d'une face
-      RING      = LATERAL.size * SIDE                 # 32 colonnes autour du cube
+      LATERAL   = %i[front right back left].freeze   # the 4 side faces
+      SIDE      = 8                                   # side of a face
+      RING      = LATERAL.size * SIDE                 # 32 columns around the cube
 
-      # Base commune aux animations du cube. Fournit des helpers de rendu
-      # « volumétriques » : anneau autour des 4 faces latérales, pulsation,
-      # remplissage par face. Chaque animation raisonne en (face, x, y) via le
-      # Panel (le mapping physique est absorbé par CubeMapping).
+      # Common base for the cube animations. Provides "volumetric" rendering
+      # helpers: ring around the 4 side faces, pulsing, per-face fill. Each
+      # animation reasons in (face, x, y) via the Panel (the physical mapping
+      # is absorbed by CubeMapping).
       #
-      # Convention : x = colonne (0 gauche), y = ligne (0 bas). La face :top
-      # se raccorde à l'avant en y croissant (validé sur matériel).
+      # Convention: x = column (0 left), y = row (0 bottom). The :top face
+      # connects to the front in increasing y (validated on hardware).
       class CubeBase < Base
         def initialize(_payload = {})
         end
 
         private
 
-        # Sinusoïde 0..1 de période `period` secondes.
+        # Sine wave 0..1 with period `period` seconds.
         def wave(t, period)
           Math.sin(2 * Math::PI * t / period) * 0.5 + 0.5
         end
 
-        # Multiplie une couleur par un facteur 0..1 (arrondi, borné).
+        # Multiplies a color by a factor 0..1 (rounded, clamped).
         def dim(rgb, k)
           rgb.map { |c| (c * k).round.clamp(0, 255) }
         end
@@ -40,7 +40,7 @@ module Claudine
           panel.fill_face(face, rgb[0], rgb[1], rgb[2])
         end
 
-        # Un pixel logique sur une face (coordonnées coercées en entiers).
+        # A logical pixel on a face (coordinates coerced to integers).
         def px(panel, face, x, y, rgb)
           xi = x.to_i
           yi = y.to_i
@@ -48,22 +48,22 @@ module Claudine
           panel.set(face: face, x: xi, y: yi, r: rgb[0], g: rgb[1], b: rgb[2])
         end
 
-        # Pixel sur l'« anneau » des 4 faces latérales : col 0..31 fait le tour
-        # (front 0..7, right 8..15, back 16..23, left 24..31) et boucle.
+        # Pixel on the "ring" of the 4 side faces: col 0..31 goes around
+        # (front 0..7, right 8..15, back 16..23, left 24..31) and loops.
         def ring_px(panel, col, y, rgb)
           c = col.to_i % RING
           px(panel, LATERAL[c / SIDE], c % SIDE, y, rgb)
         end
 
-        # Remplit toute une ligne y de l'anneau (les 4 faces latérales).
+        # Fills an entire row y of the ring (the 4 side faces).
         def ring_row(panel, y, rgb)
           RING.times { |col| ring_px(panel, col, y, rgb) }
         end
 
-        # Correspondance colonne latérale -> pixel du bord du dessus.
-        # Pour une face latérale et sa colonne locale x (0..7), renvoie [tx, ty]
-        # sur l'anneau `ring` du dessus (0 = bordure, 1 = anneau intérieur).
-        # Le parcours des 4 faces trace un tour complet du périmètre du dessus.
+        # Mapping from a side column -> pixel on the top border.
+        # For a side face and its local column x (0..7), returns [tx, ty]
+        # on the top's `ring` (0 = border, 1 = inner ring).
+        # Traversing the 4 faces traces a full loop around the top's perimeter.
         def top_edge_px(face, x, ring)
           i = x.to_i
           if ring <= 0
@@ -85,8 +85,8 @@ module Claudine
           end
         end
 
-        # Anneau carré concentrique sur une face : d = distance au bord
-        # (0 = bordure extérieure … 3 = carré central 2×2).
+        # Concentric square ring on a face: d = distance to the border
+        # (0 = outer border ... 3 = central 2x2 square).
         def face_ring(panel, face, d, rgb)
           SIDE.times do |x|
             SIDE.times do |y|
@@ -96,7 +96,7 @@ module Claudine
           end
         end
 
-        # Idem sur la face du dessus (raccourci).
+        # Same on the top face (shortcut).
         def top_ring(panel, d, rgb)
           face_ring(panel, :top, d, rgb)
         end

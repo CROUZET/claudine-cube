@@ -1,36 +1,36 @@
-# Test de limite d'affichage — les 320 LEDs allumées, montée en luminosité.
+# Display limit test — all 320 LEDs lit, ramping up brightness.
 #
-# But : trouver la limite réelle du cube (alim 5 V / 10 A + thermique + intégrité
-# du flux série sur une trame « pleine ») en poussant TOUTES les LEDs à fond.
-# C'est volontairement le pire cas : blanc plein sur les 320 LEDs.
+# Goal: find the real limit of the cube (5 V / 10 A power supply + thermal + integrity
+# of the serial stream on a "full" frame) by pushing ALL the LEDs to max.
+# This is deliberately the worst case: full white on all 320 LEDs.
 #
-# ⚠️ SÉCURITÉ — à lire avant de lancer :
-#   - Le blanc plein (255,255,255) à brightness 1.0 sur 320 LEDs demande
-#     ~19 A en théorie (320 × 60 mA). L'alim ne fait que 10 A : elle va limiter
-#     (chute de tension → LEDs qui virent, brownout de l'ESP → reset). C'est
-#     précisément ce qu'on veut observer.
-#   - GARDER LE JACK DC BRANCHÉ. L'USB seul ne tient pas le blanc plein.
-#   - Ça CHAUFFE. Le test monte par PALIERS et attend une touche entre chaque
-#     pour pouvoir s'arrêter (Ctrl-C) dès que l'affichage déraille ou chauffe.
-#   - Ne pas laisser au max sans surveillance.
+# ⚠️ SAFETY — read before launching:
+#   - Full white (255,255,255) at brightness 1.0 on 320 LEDs draws
+#     ~19 A in theory (320 × 60 mA). The power supply is only 10 A: it will limit
+#     (voltage drop → LEDs shifting, ESP brownout → reset). This is
+#     precisely what we want to observe.
+#   - KEEP THE DC JACK PLUGGED IN. USB alone does not hold full white.
+#   - It HEATS UP. The test ramps up in STEPS and waits for a keypress between each
+#     so it can be stopped (Ctrl-C) as soon as the display goes off track or heats up.
+#   - Do not leave at max unattended.
 #
-# Le test contourne le scaling du Panel (@brightness) et pousse les octets bruts
-# vers le firmware : le palier affiché EST la valeur envoyée aux LEDs.
+# The test bypasses the Panel's scaling (@brightness) and pushes the raw bytes
+# to the firmware: the displayed step IS the value sent to the LEDs.
 #
-# RÉSULTATS MESURÉS (2026-07, cf. docs/HARDWARE.md « Hardware lessons ») :
-#   - Jack DC branché : blanc plein 100% sur les 320 LEDs → RAS, aucun artefact
-#     (pas de virage de teinte, pas de scintillement, pas de brownout ESP).
-#     Le ~19 A théorique est très pessimiste ; l'alim 10 A encaisse proprement.
-#   - USB seul (sans jack) : OK à ~8%, mais l'ESP brownout (LEDs qui clignotent)
-#     ENTRE 20% et 25% de blanc plein (source USB écrête ~4 A théo. pire-cas).
-#   → La limite pratique est thermique (usage prolongé), pas l'affichage.
+# MEASURED RESULTS (2026-07, cf. docs/HARDWARE.md "Hardware lessons"):
+#   - DC jack plugged in: full white 100% on all 320 LEDs → nothing to report, no artifact
+#     (no hue shift, no flicker, no ESP brownout).
+#     The ~19 A theoretical is very pessimistic; the 10 A power supply handles it cleanly.
+#   - USB alone (no jack): OK at ~8%, but the ESP browns out (LEDs blinking)
+#     BETWEEN 20% and 25% of full white (USB source caps at ~4 A theo. worst-case).
+#   → The practical limit is thermal (prolonged use), not the display.
 #
-# Fermer le moniteur série de l'IDE Arduino avant de lancer (« port busy »).
+# Close the serial monitor of the Arduino IDE before launching ("port busy").
 #
-# Options (env) :
-#   COLOR=white|red|green|blue    couleur du remplissage (défaut white)
-#   STEPS=0.08,0.25,0.5,0.75,1.0  paliers de luminosité (défaut ci-dessous)
-#   AUTO=1                        enchaîne les paliers sans attendre (3 s chacun)
+# Options (env):
+#   COLOR=white|red|green|blue    fill color (default white)
+#   STEPS=0.08,0.25,0.5,0.75,1.0  brightness steps (default below)
+#   AUTO=1                        chains the steps without waiting (3 s each)
 require 'logger'
 require_relative '../lib/panel'
 
@@ -43,28 +43,28 @@ COLORS = {
   'blue'  => [  0,   0, 255],
 }
 color_name = (ENV['COLOR'] || 'white').downcase
-base = COLORS[color_name] or abort "COLOR inconnue: #{color_name} (choix: #{COLORS.keys.join(', ')})"
+base = COLORS[color_name] or abort "unknown COLOR: #{color_name} (choices: #{COLORS.keys.join(', ')})"
 
 steps = (ENV['STEPS'] || '0.08,0.25,0.5,0.75,1.0').split(',').map(&:to_f)
 auto  = ENV['AUTO'] == '1'
 
-# Courant approx. par LED à blanc plein ≈ 60 mA ; on pondère par la fraction
-# de canaux allumés et par la luminosité du palier.
+# Approx. current per LED at full white ≈ 60 mA; we weight by the fraction
+# of channels lit and by the brightness of the step.
 channels_on = base.count(&:positive?) / 3.0
 def est_current(brightness, channels_on)
   Claudine::Panel::NUM_LEDS * 0.060 * channels_on * brightness
 end
 
 panel = Claudine::Panel.new
-panel.brightness = 1.0   # on gère la luminosité nous-mêmes, palier par palier
+panel.brightness = 1.0   # we manage the brightness ourselves, step by step
 
 puts <<~MSG
 
-  === TEST DE LIMITE D'AFFICHAGE ===
-  Couleur : #{color_name} #{base.inspect}   |   320 LEDs allumées
-  Paliers : #{steps.map { |s| (s * 100).round }.join('%, ')}%
-  Alim : 5 V / 10 A — au-delà de ~10 A l'alim limite (chute de tension attendue).
-  Ctrl-C pour couper à tout moment.
+  === DISPLAY LIMIT TEST ===
+  Color: #{color_name} #{base.inspect}   |   320 LEDs lit
+  Steps: #{steps.map { |s| (s * 100).round }.join('%, ')}%
+  Power supply: 5 V / 10 A — beyond ~10 A the power supply limits (expected voltage drop).
+  Ctrl-C to cut at any time.
 
 MSG
 
@@ -75,28 +75,28 @@ begin
     panel.show
 
     amps = est_current(b, channels_on)
-    warn_flag = amps > 10 ? '  ⚠️ >10 A : au-delà de la capacité alim' : ''
-    puts format('Palier %d/%d — luminosité %3d%% → octets %-15s ~%.1f A%s',
+    warn_flag = amps > 10 ? '  ⚠️ >10 A: beyond power supply capacity' : ''
+    puts format('Step %d/%d — brightness %3d%% → bytes %-15s ~%.1f A%s',
                 i + 1, steps.size, (b * 100).round, val.inspect, amps, warn_flag)
 
     if auto
       sleep 3
     else
-      print '  [Entrée] palier suivant, [Ctrl-C] arrêter… '
+      print '  [Enter] next step, [Ctrl-C] stop… '
       $stdin.gets
     end
   end
 
-  puts "\nMax atteint. Observer : blanc uniforme ? teinte qui vire ? scintillement ?"
-  puts "reset de l'ESP (brownout) ? LEDs de fin de chaîne qui décrochent ?"
+  puts "\nMax reached. Observe: uniform white? hue shift? flicker?"
+  puts "ESP reset (brownout)? end-of-chain LEDs dropping out?"
   unless auto
-    print 'Laisser allumé, [Entrée] pour éteindre… '
+    print 'Leave it on, [Enter] to turn off… '
     $stdin.gets
   else
     sleep 3
   end
 rescue Interrupt
-  puts "\nInterrompu."
+  puts "\nInterrupted."
 ensure
   panel.clear
   panel.show

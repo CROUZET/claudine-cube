@@ -1,28 +1,28 @@
-// Firmware Adalight — cube LED (5 × 8×8 = 320 WS2812B) sur Seeed XIAO ESP32-S3.
+// Adalight firmware — LED cube (5 x 8x8 = 320 WS2812B) on Seeed XIAO ESP32-S3.
 //
-// Sortie LED : Adafruit NeoPixel (et non FastLED).
-//   Sur ce couple FastLED 3.10 / ESP-IDF 5.x, aucun backend FastLED n'est
-//   fiable pour 320 WS2812B sur le S3 :
-//     - RMT5 (défaut) : plante sa synchro DMA (« esp_cache_msync invalid addr »)
-//       et corrompt la chaîne au-delà des ~128 premières LEDs ;
-//     - RMT4 legacy    : ne compile pas sur IDF5 (conflit neopixelWrite) ;
-//     - I2S            : driver « classic ESP32 » sans implémentation S3 (link) ;
-//     - SPI clockless  : met les trames en file sans les transmettre.
-//   Adafruit NeoPixel s'appuie sur le driver RMT natif du core Arduino-ESP32
-//   (celui de la LED RGB intégrée), éprouvé sur le XIAO S3.
+// LED output: Adafruit NeoPixel (not FastLED).
+//   On this FastLED 3.10 / ESP-IDF 5.x pairing, no FastLED backend is
+//   reliable for 320 WS2812B on the S3:
+//     - RMT5 (default): crashes its DMA sync ("esp_cache_msync invalid addr")
+//       and corrupts the chain beyond the first ~128 LEDs;
+//     - RMT4 legacy    : does not compile on IDF5 (neopixelWrite conflict);
+//     - I2S            : "classic ESP32" driver with no S3 implementation (link);
+//     - SPI clockless  : queues the frames without transmitting them.
+//   Adafruit NeoPixel relies on the native RMT driver of the Arduino-ESP32 core
+//   (the one for the built-in RGB LED), proven on the XIAO S3.
 //
-// Nécessite la bibliothèque « Adafruit NeoPixel » (Library Manager de l'IDE).
-// Le protocole Adalight et le reste du montage sont inchangés.
+// Requires the "Adafruit NeoPixel" library (IDE Library Manager).
+// The Adalight protocol and the rest of the setup are unchanged.
 #include <Adafruit_NeoPixel.h>
 
-#define NUM_LEDS   320   // 5 faces × 8×8 (cube)
+#define NUM_LEDS   320   // 5 faces x 8x8 (cube)
 #define DATA_PIN   1     // D0 on the Seeed XIAO ESP32-S3
 #define WIDTH      8
 #define HEIGHT     8
 #define BAUD       921600
 
-// NEO_GRB : les WS2812B attendent l'ordre GRB. Le Mac envoie des triplets R,G,B
-// et gère la luminosité ; on transmet donc à pleine échelle.
+// NEO_GRB: the WS2812B expect GRB order. The Mac sends R,G,B triplets
+// and handles brightness; we therefore transmit at full scale.
 Adafruit_NeoPixel strip(NUM_LEDS, DATA_PIN, NEO_GRB + NEO_KHZ800);
 
 // State of the state machine that reads the Adalight header
@@ -35,11 +35,11 @@ uint8_t byteInLed = 0;   // 0=R, 1=G, 2=B
 uint8_t r, g;
 
 void setup() {
-  // Pendant strip.show() (~10 ms pour 320 LEDs) la boucle ne lit pas le port :
-  // le Mac envoie déjà la trame suivante. Le buffer RX USB-CDC par défaut
-  // (256 o ≈ 85 LEDs) déborde alors et corrompt la fin de trame à une position
-  // variable. On l'agrandit pour contenir une trame entière (6 + 320×3 = 966 o).
-  // DOIT être appelé AVANT begin().
+  // During strip.show() (~10 ms for 320 LEDs) the loop does not read the port:
+  // the Mac is already sending the next frame. The default USB-CDC RX buffer
+  // (256 bytes ~ 85 LEDs) then overflows and corrupts the end of the frame at a
+  // variable position. We enlarge it to hold a full frame (6 + 320x3 = 966 bytes).
+  // MUST be called BEFORE begin().
   Serial.setRxBufferSize(4096);
   Serial.begin(BAUD);
   strip.begin();

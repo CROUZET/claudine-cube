@@ -4,29 +4,29 @@ require_relative 'user_prompt'
 module Claudine
   module Animations
     module Bunny
-      # Fin de tour (succès) : les lapins courent autour du cube (façon
-      # user_prompt) puis s'arrêtent et se tournent de face (un lapin frontal
-      # centré sur chaque face latérale), avant de s'éteindre en fondu. Jaune
-      # (event de fin → jaune).
-      # Signature : la course s'arrête, les lapins regardent, puis s'estompent.
+      # End of turn (success): the bunnies run around the cube (like
+      # user_prompt) then stop and turn to face front (a front bunny
+      # centered on each lateral face), before fading out. Yellow
+      # (end event -> yellow).
+      # Signature: the running stops, the bunnies look, then fade away.
       class Stop < BunnyBase
-        COLOR   = [255, 200, 0]           # jaune (fin)
-        SPEED   = 16.0                    # colonnes/seconde (course)
-        HOP_LEN = UserPrompt::HOP_LEN     # même saut que user_prompt
-        HOP_H   = [3.0, 5.0, 4.0].freeze  # hauteurs de saut variées
+        COLOR   = [255, 200, 0]           # yellow (end)
+        SPEED   = 16.0                    # columns/second (running)
+        HOP_LEN = UserPrompt::HOP_LEN     # same jump as user_prompt
+        HOP_H   = [3.0, 5.0, 4.0].freeze  # varied jump heights
         NB      = HOP_H.size
-        RUN     = UserPrompt::RABBIT       # sprite courant (profil) de user_prompt
+        RUN     = UserPrompt::RABBIT       # running sprite (profile) from user_prompt
 
-        T_RUN  = 2.0                       # durée de la course
-        T_FADE = 2.0                       # durée du fondu (après l'arrêt)
+        T_RUN  = 2.0                       # duration of the running
+        T_FADE = 2.0                       # duration of the fade (after the stop)
         DUR    = T_RUN + T_FADE
         MIN_DURATION = DUR
-        DURATION     = DUR                 # durée complète (lue par l'aperçu)
+        DURATION     = DUR                 # full duration (read by the preview)
 
-        # Petit lapin frontal (corps entier), 4 px de large ; centré via FRONT_X.
-        #   # . . #   oreilles
+        # Small front bunny (whole body), 4 px wide; centered via FRONT_X.
+        #   # . . #   ears
         #   # . . #
-        #   # # # #   corps
+        #   # # # #   body
         #   # # # #
         #   # # # #
         FRONT = [
@@ -36,7 +36,7 @@ module Claudine
           [0, 1], [1, 1], [2, 1], [3, 1],
           [0, 0], [1, 0], [2, 0], [3, 0],
         ].freeze
-        FRONT_X = 2                        # centre le sprite (4 px) sur la face
+        FRONT_X = 2                        # centers the sprite (4 px) on the face
         FRONT_FACES = %i[front right back left].freeze
 
         def render(t, panel)
@@ -53,7 +53,7 @@ module Claudine
 
         private
 
-        # Course : lapins qui sautent autour de l'anneau (comme user_prompt).
+        # Running: bunnies jumping around the ring (like user_prompt).
         def draw_run(panel, t)
           head = t * SPEED
           NB.times do |i|
@@ -64,7 +64,7 @@ module Claudine
           end
         end
 
-        # Pixel sur l'anneau ; débordement sur le dessus si y ≥ 8 (cf. user_prompt).
+        # Pixel on the ring; overflows onto the top if y >= 8 (cf. user_prompt).
         def plot(panel, col, yy, rgb)
           yi = yy.to_i
           if yi <= 7

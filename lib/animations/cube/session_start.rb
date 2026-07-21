@@ -3,27 +3,27 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Le cube s'éveille : un arc-en-ciel de couleurs chaudes balaie tout le
-      # volume en diagonale (coin bas-avant-gauche → coin haut-arrière-droit),
-      # atteint le plein, puis reflue et s'éteint depuis le coin opposé. Une
-      # vague montante puis descendante, sur les 5 faces.
+      # The cube wakes up: a rainbow of warm colors sweeps the whole
+      # volume diagonally (bottom-front-left corner -> top-back-right corner),
+      # reaches full, then ebbs back and turns off from the opposite corner. A
+      # wave rising then descending, across the 5 faces.
       #
-      # Signature (daltonien-safe) : la vague diagonale qui enveloppe puis vide
-      # tout le volume est unique ; la palette chaude (jaune→rouge→magenta) la
-      # distingue de session_end (froide) — mouvement ET température, pas la
-      # seule teinte.
+      # Signature (colorblind-safe): the diagonal wave that envelops then empties
+      # the whole volume is unique; the warm palette (yellow->red->magenta)
+      # distinguishes it from session_end (cool) -- movement AND temperature, not
+      # hue alone.
       class SessionStart < CubeBase
-        UP           = 2.4          # durée du remplissage (s)
-        DOWN         = 2.0          # durée du reflux (s)
-        MIN_DURATION = UP + DOWN    # tenir le lock pendant toute la vague
-        DURATION     = UP + DOWN    # durée de vie complète (lue par l'aperçu)
-        DMAX         = 21           # d max = (7 + 7 + 7), coin opposé
-        EDGE         = 3.5          # épaisseur du front lumineux (en unités de d)
+        UP           = 2.4          # fill duration (s)
+        DOWN         = 2.0          # ebb duration (s)
+        MIN_DURATION = UP + DOWN    # hold the lock for the whole wave
+        DURATION     = UP + DOWN    # full lifetime (read by the preview)
+        DMAX         = 21           # d max = (7 + 7 + 7), opposite corner
+        EDGE         = 3.5          # thickness of the light front (in units of d)
         SPAN         = DMAX + 2 * EDGE
 
-        # Plage de teintes (h 0..1) étalée le long de la diagonale d=0..DMAX.
-        # Chaud : jaune-orangé (0.15) → rouge (0.0) → magenta (-0.18 ≡ 0.82).
-        # La sous-classe SessionEnd surcharge ces bornes pour une palette froide.
+        # Hue range (h 0..1) spread along the diagonal d=0..DMAX.
+        # Warm: yellow-orange (0.15) -> red (0.0) -> magenta (-0.18 == 0.82).
+        # The SessionEnd subclass overrides these bounds for a cool palette.
         HUE0 = 0.15
         HUE1 = -0.18
 
@@ -37,7 +37,7 @@ module Claudine
                 wx, wy, wz = world(face, x, y)
                 d = wx + wy + wz
 
-                # Luminosité : plein derrière le front, fondu sur EDGE au front.
+                # Brightness: full behind the front, fade over EDGE at the front.
                 b = ((front - d) / EDGE).clamp(0.0, 1.0)
                 next if b <= 0.0
 
@@ -50,8 +50,8 @@ module Claudine
 
         private
 
-        # Position du front : monte de -EDGE à DMAX+EDGE sur UP (remplissage),
-        # puis redescend jusqu'à -EDGE sur DOWN (reflux, coin opposé d'abord).
+        # Front position: rises from -EDGE to DMAX+EDGE over UP (fill),
+        # then descends back down to -EDGE over DOWN (ebb, opposite corner first).
         def front_at(t)
           if t <= UP
             -EDGE + (t / UP).clamp(0.0, 1.0) * SPAN
@@ -60,8 +60,8 @@ module Claudine
           end
         end
 
-        # Coordonnées monde (X gauche→droite, Y avant→arrière, Z bas→haut),
-        # 0..7 sur chaque axe, à partir de (face, x=col, y=ligne).
+        # World coordinates (X left->right, Y front->back, Z bottom->top),
+        # 0..7 on each axis, from (face, x=col, y=row).
         def world(face, x, y)
           case face
           when :front then [x,     0,     y]
@@ -72,7 +72,7 @@ module Claudine
           end
         end
 
-        # HSV (h 0..1, s=v=1) -> [r, g, b] plein (0..255). Arc-en-ciel saturé.
+        # HSV (h 0..1, s=v=1) -> [r, g, b] full (0..255). Saturated rainbow.
         def hsv(h)
           i = (h * 6.0).floor
           f = h * 6.0 - i

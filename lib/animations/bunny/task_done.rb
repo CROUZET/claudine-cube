@@ -3,31 +3,31 @@ require_relative 'task_new'
 module Claudine
   module Animations
     module Bunny
-      # Tâche terminée : le même lapin que task_new (gros plan de profil) marche,
-      # mais en jaune, sur un demi-tour du cube seulement, en laissant un petit
-      # caca (brun) à sa position de départ ; puis tout s'éteint en fondu.
-      # Signature : le lapin fait demi-tour et laisse une crotte, puis s'estompe.
+      # Task done: the same bunny as task_new (close-up profile) walks,
+      # but in yellow, over only a half-turn of the cube, leaving a little
+      # dropping (brown) at its starting position; then everything fades out.
+      # Signature: the bunny does an about-turn and leaves a dropping, then fades away.
       class TaskDone < TaskNew
-        COLOR  = [255, 200, 0]     # jaune (fin)
-        CACA_C = [110, 55, 0]      # petit caca (brun)
-        HALF   = 16                # demi-tour (16 colonnes sur 32)
-        T_WALK = 2.5               # marche jusqu'au demi-tour puis s'arrête
+        COLOR  = [255, 200, 0]     # yellow (end)
+        CACA_C = [110, 55, 0]      # little dropping (brown)
+        HALF   = 16                # half-turn (16 columns out of 32)
+        T_WALK = 2.5               # walks up to the half-turn then stops
         T_FADE = 1.2               # extinction
         MIN_DURATION = T_WALK + T_FADE
         DURATION     = T_WALK + T_FADE
 
-        # Petit caca à la position de départ (face avant, révélé quand le lapin
-        # s'éloigne).
+        # Little dropping at the starting position (front face, revealed when the
+        # bunny moves away).
         CACA = [[1, 0], [2, 0], [3, 0], [2, 1]].freeze
 
         def render(t, panel)
           panel.clear
           fade = t < T_WALK ? 1.0 : (1.0 - (t - T_WALK) / T_FADE).clamp(0.0, 1.0)
           return if fade <= 0.0
-          col  = [t * SPEED, HALF].min                       # avance puis s'arrête à mi-tour
+          col  = [t * SPEED, HALF].min                       # advances then stops at half-turn
           legs = (col / STEP).floor.even? ? LEGS_A : LEGS_B
 
-          CACA.each { |x, y| px(panel, :front, x, y, dim(CACA_C, fade)) }   # crotte au départ
+          CACA.each { |x, y| px(panel, :front, x, y, dim(CACA_C, fade)) }   # dropping at the start
           (BODY + legs).each { |dx, dy| ring_px(panel, col + dx, dy, dim(COLOR, fade)) }
         end
       end

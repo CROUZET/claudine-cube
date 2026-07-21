@@ -3,36 +3,36 @@ require_relative 'session_start'
 module Claudine
   module Animations
     module Bunny
-      # Fin de session : les lapins s'endorment. Ils partent allumés (oreilles
-      # dressées) puis les oreilles s'abaissent, les yeux se ferment, et tout le
-      # cube (lapins + cadre du dessus) s'éteint en fondu progressif du début à
-      # la fin. Arc-en-ciel FROID. Miroir « sommeil » de l'éveil (session_start).
+      # End of session: the bunnies fall asleep. They start lit up (ears
+      # up) then the ears lower, the eyes close, and the whole
+      # cube (bunnies + top frame) fades out progressively from start to
+      # finish. COLD rainbow. "Sleep" mirror of the wake-up (session_start).
       class SessionEnd < SessionStart
-        HUE0 = 0.25               # froid : vert-jaune → … → violet
+        HUE0 = 0.25               # cold: yellow-green -> ... -> violet
         HUE1 = 0.85
-        DUR  = 2.6                # endormissement complet (fondu jusqu'au noir)
-        SINK = 0.8                # descente des oreilles (s)
+        DUR  = 2.6                # complete falling asleep (fade to black)
+        SINK = 0.8                # lowering of the ears (s)
         MIN_DURATION = DUR
-        DURATION     = DUR        # durée montrée par l'aperçu
+        DURATION     = DUR        # duration shown by the preview
 
-        EYES = [[2, 3], [5, 3]].freeze   # creux des yeux (mêmes positions A et B)
+        EYES = [[2, 3], [5, 3]].freeze   # eye gaps (same positions A and B)
 
         def render(t, panel)
           panel.clear
-          fade = [1.0 - t / DUR, 0.0].max        # fondu progressif tout du long
-          return if fade <= 0.0                  # endormi : cube éteint
-          ear_top = 7 - ([t / SINK, 1.0].min * 3).round   # oreilles 7 → 4
-          asleep  = t >= SINK                    # yeux fermés une fois assoupi
+          fade = [1.0 - t / DUR, 0.0].max        # progressive fade all along
+          return if fade <= 0.0                  # asleep: cube off
+          ear_top = 7 - ([t / SINK, 1.0].min * 3).round   # ears 7 -> 4
+          asleep  = t >= SINK                    # eyes closed once dozed off
 
-          # Modèle A : avant + arrière (miroir). Pas de clin d'œil (il dort).
+          # Model A: front + back (mirror). No wink (it's sleeping).
           draw_a(panel, :front, fade, ear_top, false, false)
           draw_a(panel, :back,  fade, ear_top, false, true)
-          # Modèle B : droite + gauche (miroir).
+          # Model B: right + left (mirror).
           blit(panel, :right, B_BODY, fade, false)
           blit(panel, :left,  B_BODY, fade, true)
-          # Yeux fermés (creux remplis) sur les 4 lapins une fois endormis.
+          # Closed eyes (gaps filled) on the 4 bunnies once asleep.
           close_eyes(panel, fade) if asleep
-          # Dessus : le cadre plein s'éteint en fondu avec le reste.
+          # Top: the full frame fades out with the rest.
           TOP_PATH.each { |x, y| px(panel, :top, x, y, warm(:top, x, y, fade)) }
         end
 

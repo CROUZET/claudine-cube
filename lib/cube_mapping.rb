@@ -1,30 +1,30 @@
 # ============================================================
-#  cube_mapping.rb  —  mapping logique du cube LED 5 x 8x8
+#  cube_mapping.rb  —  logical mapping of the 5 x 8x8 LED cube
 # ============================================================
 #
-#  Chaîne physique relevée sur le montage :
+#  Physical chain surveyed on the assembly:
 #
-#  Ordre des faces dans la chaîne :
-#     0 = avant, 1 = droite, 2 = arrière, 3 = gauche, 4 = dessus
-#  (64 LEDs par face : face F occupe les index 64*F .. 64*F+63)
+#  Order of faces in the chain:
+#     0 = front, 1 = right, 2 = back, 3 = left, 4 = top
+#  (64 LEDs per face: face F occupies indices 64*F .. 64*F+63)
 #
-#  Parcours DANS chaque face latérale (faces 0..3), identique :
-#     origine coin BAS-GAUCHE, on monte une colonne entière
-#     (row 0 -> 7), puis colonne suivante à droite.
+#  Path WITHIN each side face (faces 0..3), identical:
+#     origin BOTTOM-LEFT corner, climb a whole column
+#     (row 0 -> 7), then next column to the right.
 #       index_local = col * 8 + row
-#     avec row = 0 en bas, col = 0 à gauche.
+#     with row = 0 at the bottom, col = 0 on the left.
 #
-#  Parcours de la face du DESSUS (face 4) :
-#     origine coin HAUT-GAUCHE, on parcourt une ligne entière
-#     vers la droite (col 0 -> 7), puis ligne en dessous.
+#  Path of the TOP face (face 4):
+#     origin TOP-LEFT corner, run through a whole row
+#     to the right (col 0 -> 7), then the row below.
 #       index_local = (7 - row) * 8 + col
-#     avec row = 0 en bas, col = 0 à gauche (même repère logique).
+#     with row = 0 at the bottom, col = 0 on the left (same logical frame).
 #
-#  CONVENTION DE COORDONNÉES LOGIQUES (identique pour toutes les faces) :
-#     - x = colonne, 0 = gauche  .. 7 = droite
-#     - y = ligne,   0 = bas     .. 7 = haut
-#   Ainsi une animation peut raisonner en (face, x, y) sans se
-#   soucier du sens physique du câblage : tout est absorbé ici.
+#  LOGICAL COORDINATE CONVENTION (identical for all faces):
+#     - x = column, 0 = left  .. 7 = right
+#     - y = row,    0 = bottom .. 7 = top
+#   This way an animation can reason in (face, x, y) without
+#   worrying about the physical wiring direction: it is all absorbed here.
 # ============================================================
 
 module CubeMapping
@@ -34,39 +34,39 @@ module CubeMapping
   FACES       = 5
   NUM_LEDS    = PER_FACE * FACES    # 320
 
-  # Noms de faces -> numéro dans la chaîne
+  # Face names -> number in the chain
   FACE = {
-    front: 0,   # avant
-    right: 1,   # droite
-    back:  2,   # arrière
-    left:  3,   # gauche
-    top:   4,   # dessus
+    front: 0,   # front
+    right: 1,   # right
+    back:  2,   # back
+    left:  3,   # left
+    top:   4,   # top
   }.freeze
 
-  # Index local (0..63) dans une face latérale (faces 0..3).
-  # Colonne par colonne, chaque colonne de bas en haut.
-  #   x = colonne (0 gauche), y = ligne (0 bas)
+  # Local index (0..63) in a side face (faces 0..3).
+  # Column by column, each column from bottom to top.
+  #   x = column (0 left), y = row (0 bottom)
   def self.side_local(x, y)
     x * HEIGHT + y
   end
 
-  # Index local (0..63) dans la face du dessus (face 4).
-  # Ligne par ligne du haut vers le bas, chaque ligne de gauche à droite.
-  #   x = colonne (0 gauche), y = ligne (0 bas)
-  # La chaîne commence en HAUT (y = 7), d'où (7 - y).
+  # Local index (0..63) in the top face (face 4).
+  # Row by row from top to bottom, each row from left to right.
+  #   x = column (0 left), y = row (0 bottom)
+  # The chain starts at the TOP (y = 7), hence (7 - y).
   def self.top_local(x, y)
     (HEIGHT - 1 - y) * WIDTH + x
   end
 
-  # Point d'entrée : (face, x, y) -> index global 0..319
-  #   face : symbole (:front, :right, :back, :left, :top) ou entier 0..4
-  #   x    : colonne 0..7 (0 = gauche)
-  #   y    : ligne   0..7 (0 = bas)
+  # Entry point: (face, x, y) -> global index 0..319
+  #   face : symbol (:front, :right, :back, :left, :top) or integer 0..4
+  #   x    : column 0..7 (0 = left)
+  #   y    : row    0..7 (0 = bottom)
   def self.index(face, x, y)
     f = face.is_a?(Symbol) ? FACE.fetch(face) : face
-    raise ArgumentError, "face #{face} invalide"        unless (0..4).include?(f)
-    raise ArgumentError, "x=#{x} hors bornes"           unless (0...WIDTH).include?(x)
-    raise ArgumentError, "y=#{y} hors bornes"           unless (0...HEIGHT).include?(y)
+    raise ArgumentError, "face #{face} invalid"         unless (0..4).include?(f)
+    raise ArgumentError, "x=#{x} out of bounds"         unless (0...WIDTH).include?(x)
+    raise ArgumentError, "y=#{y} out of bounds"         unless (0...HEIGHT).include?(y)
 
     local = (f == FACE[:top]) ? top_local(x, y) : side_local(x, y)
     f * PER_FACE + local
@@ -74,31 +74,31 @@ module CubeMapping
 end
 
 # ------------------------------------------------------------
-#  Auto-test rapide : ruby cube_mapping.rb
-#  Vérifie la cohérence avec le relevé physique.
+#  Quick self-test: ruby cube_mapping.rb
+#  Checks consistency with the physical survey.
 # ------------------------------------------------------------
 if __FILE__ == $PROGRAM_NAME
   m = CubeMapping
 
   checks = [
-    # face avant : bas-gauche = 0, monte la 1re colonne, puis colonne suivante
+    # front face: bottom-left = 0, climbs the 1st column, then next column
     [:front, 0, 0,   0],
     [:front, 0, 1,   1],
     [:front, 0, 7,   7],
     [:front, 1, 0,   8],
     [:front, 7, 7,  63],
-    # face droite : décalée de 64
+    # right face: offset by 64
     [:right, 0, 0,  64],
     [:right, 7, 7, 127],
-    # face arrière
+    # back face
     [:back,  0, 0, 128],
-    # face gauche
+    # left face
     [:left,  0, 0, 192],
-    # face dessus : haut-gauche = premier index de la face (256)
-    [:top,   0, 7, 256],   # coin haut-gauche
-    [:top,   7, 7, 263],   # fin de la 1re ligne (haut-droite)
-    [:top,   0, 6, 264],   # ligne en dessous, à gauche
-    [:top,   7, 0, 319],   # coin bas-droite = dernière LED
+    # top face: top-left = first index of the face (256)
+    [:top,   0, 7, 256],   # top-left corner
+    [:top,   7, 7, 263],   # end of the 1st row (top-right)
+    [:top,   0, 6, 264],   # row below, on the left
+    [:top,   7, 0, 319],   # bottom-right corner = last LED
   ]
 
   ok = true
@@ -106,8 +106,8 @@ if __FILE__ == $PROGRAM_NAME
     got = m.index(face, x, y)
     status = (got == expected) ? "ok " : "XX "
     ok &&= (got == expected)
-    puts "#{status} (#{face}, x=#{x}, y=#{y}) -> #{got}  (attendu #{expected})"
+    puts "#{status} (#{face}, x=#{x}, y=#{y}) -> #{got}  (expected #{expected})"
   end
 
-  puts ok ? "\nTOUS LES TESTS PASSENT ✅" : "\nECHEC : revoir le mapping ❌"
+  puts ok ? "\nALL TESTS PASS ✅" : "\nFAILURE: review the mapping ❌"
 end

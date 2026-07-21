@@ -3,23 +3,23 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Fin de tour (succès) : le cube s'affiche d'abord moucheté de SHADES
-      # teintes de jaune (du clair au foncé, réparties aléatoirement), puis
-      # s'éteint par teinte — tous les pixels d'une même teinte disparaissent
-      # ensemble, à intervalle régulier (STEP), de la plus claire à la plus
-      # foncée, jusqu'à extinction complète.
-      # Signature : dissolution jaune par paliers, du clair vers le foncé.
+      # End of turn (success): the cube first appears speckled with SHADES
+      # shades of yellow (from light to dark, randomly distributed), then
+      # turns off shade by shade -- all pixels of the same shade disappear
+      # together, at a regular interval (STEP), from the lightest to the
+      # darkest, until fully off.
+      # Signature: yellow dissolve in steps, from light toward dark.
       class Stop < CubeBase
-        SHADES = 8                 # nombre de teintes (n), du clair au foncé
-        STEP   = 0.3               # intervalle entre deux extinctions (s)
-        LIGHT  = [255, 225, 70]    # jaune clair (première teinte, éteinte en 1er)
-        DARK   = [90, 55, 0]       # jaune foncé (dernière teinte, éteinte en dernier)
+        SHADES = 8                 # number of shades (n), from light to dark
+        STEP   = 0.3               # interval between two extinctions (s)
+        LIGHT  = [255, 225, 70]    # light yellow (first shade, turned off first)
+        DARK   = [90, 55, 0]       # dark yellow (last shade, turned off last)
 
-        MIN_DURATION = SHADES * STEP   # joue jusqu'à extinction complète
+        MIN_DURATION = SHADES * STEP   # plays until fully off
 
         def initialize(_payload = {})
-          # Palette clair → foncé, et affectation figée d'une teinte par pixel
-          # (une seule fois : sinon le moucheté scintillerait à chaque frame).
+          # Palette light -> dark, and fixed assignment of a shade per pixel
+          # (once only: otherwise the speckle would flicker on every frame).
           @palette = (0...SHADES).map { |i| mix(LIGHT, DARK, i.to_f / (SHADES - 1)) }
           @tint    = {}
           ALL_FACES.each do |face|
@@ -31,9 +31,9 @@ module Claudine
 
         def render(t, panel)
           panel.clear
-          gone = (t / STEP).floor   # teintes déjà éteintes (les plus claires d'abord)
+          gone = (t / STEP).floor   # shades already off (the lightest first)
           @tint.each do |(face, x, y), i|
-            next if i < gone        # cette teinte a disparu
+            next if i < gone        # this shade has disappeared
             rgb = @palette[i]
             px(panel, face, x, y, rgb)
           end
@@ -41,7 +41,7 @@ module Claudine
 
         private
 
-        # Interpolation linéaire entre deux couleurs (f : 0 → a, 1 → b).
+        # Linear interpolation between two colors (f: 0 -> a, 1 -> b).
         def mix(a, b, f)
           a.zip(b).map { |ca, cb| (ca + (cb - ca) * f).round.clamp(0, 255) }
         end

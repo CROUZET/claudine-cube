@@ -3,33 +3,33 @@ require_relative '_base'
 module Claudine
   module Animations
     module Bunny
-      # Échec (outil en erreur) : un lapin tremble de colère sur les 4 faces
-      # latérales, en rouge. Animation partagée avec stop_failure (fin de tour
-      # en échec).
-      # Signature : lapin qui tremble, rouge.
+      # Failure (tool in error): a bunny shakes with anger on the 4 lateral
+      # faces, in red. Animation shared with stop_failure (end of turn in
+      # failure).
+      # Signature: bunny shaking, red.
       class PostToolFail < BunnyBase
         MIN_DURATION = 1.0
-        COLOR = [255, 0, 0]        # rouge (erreur)
-        SHAKE = 1.0                # amplitude du tremblement (px)
-        FREQ  = 5.0                # fréquence du tremblement (Hz) — colère
-        BLINK = 0.2                # demi-période du clignotement du X (s)
+        COLOR = [255, 0, 0]        # red (error)
+        SHAKE = 1.0                # amplitude of the shaking (px)
+        FREQ  = 5.0                # frequency of the shaking (Hz) -- anger
+        BLINK = 0.2                # half-period of the X blinking (s)
 
-        # Dessus : gros X épais (2 px) — les 2 diagonales élargies.
+        # Top: big thick X (2 px) -- the 2 widened diagonals.
         X_TOP = (0..7).to_a.product((0..7).to_a)
                       .select { |x, y| (x - y).abs <= 1 || (x + y - 7).abs <= 1 }
                       .freeze
 
-        # Tête de lapin classique (dx, dy ; 0 = bas). Oreilles de 2 px, tête,
-        # yeux, corps simple. Occupe les colonnes 1..6, laissant 0 et 7 pour le
-        # tremblement.
-        #   . # # . . # # .   oreilles (2 px)
+        # Classic bunny head (dx, dy ; 0 = bottom). 2 px ears, head,
+        # eyes, simple body. Occupies columns 1..6, leaving 0 and 7 for the
+        # shaking.
+        #   . # # . . # # .   ears (2 px)
         #   . # # . . # # .
-        #   . # # # # # # .   tête
-        #   . # . # # . # .   yeux (creux en 2,5)
+        #   . # # # # # # .   head
+        #   . # . # # . # .   eyes (gaps at 2,5)
         #   . # # # # # # .
-        #   . . # # # # . .   corps
+        #   . . # # # # . .   body
         #   . . . . . . . .
-        #   . . . # # . . .   pattes
+        #   . . . # # . . .   paws
         BODY = [
           [1, 7], [2, 7],                         [5, 7], [6, 7],
           [1, 6], [2, 6],                         [5, 6], [6, 6],
@@ -48,7 +48,7 @@ module Claudine
           FACES.each do |face|
             BODY.each { |dx, dy| px(panel, face, dx + shake, dy, COLOR) }
           end
-          # Dessus : gros X rouge qui clignote.
+          # Top: big red X that blinks.
           if (t / BLINK).floor.even?
             X_TOP.each { |x, y| px(panel, :top, x, y, COLOR) }
           end

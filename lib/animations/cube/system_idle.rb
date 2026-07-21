@@ -3,22 +3,22 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Repos (aucun event depuis IDLE_TIMEOUT) : un anneau de 2 px à l'équateur
-      # du cube (rangées 3,4 des 4 faces latérales) clignote doucement, puis
-      # s'éteint progressivement jusqu'à extinction complète.
+      # Rest (no event since IDLE_TIMEOUT): a 2 px ring at the equator
+      # of the cube (rows 3,4 of the 4 side faces) blinks gently, then
+      # gradually turns off until fully off.
       #
-      # Jouée UNE SEULE FOIS : clignotement doux pendant HOLD, puis extinction
-      # monotone (FADE) sans pulsation résiduelle. Le manager éteint le cube à
-      # DURATION.
+      # Played ONCE ONLY: gentle blinking during HOLD, then monotone
+      # extinction (FADE) with no residual pulsing. The manager turns the cube
+      # off at DURATION.
       class SystemIdle < CubeBase
-        ROWS     = [3, 4]                   # anneau de 2 px au milieu du cube
-        PERIOD   = 1.6                      # clignotement lent et doux
-        BLINKS   = 1                        # pulsations à pleine intensité
-        HOLD     = BLINKS * PERIOD          # durée du clignotement plein
-        FADE     = 2.0                      # extinction progressive, après HOLD
-        DURATION = HOLD + FADE              # durée de vie totale (lue par le manager)
-        COLOR    = [0, 120, 200]            # bleu doux (veille)
-        LOW      = 0.1                      # creux du clignotement (glow, pas tout à fait éteint)
+        ROWS     = [3, 4]                   # 2 px ring in the middle of the cube
+        PERIOD   = 1.6                      # slow, gentle blinking
+        BLINKS   = 1                        # pulses at full intensity
+        HOLD     = BLINKS * PERIOD          # duration of the full blinking
+        FADE     = 2.0                      # gradual extinction, after HOLD
+        DURATION = HOLD + FADE              # total lifetime (read by the manager)
+        COLOR    = [0, 120, 200]            # soft blue (standby)
+        LOW      = 0.1                      # trough of the blink (glow, not quite off)
 
         def render(t, panel)
           panel.clear
@@ -28,11 +28,11 @@ module Claudine
 
         private
 
-        # Deux phases enchaînées sans rupture :
-        #  - HOLD : clignotement doux en cosinus (plein aux multiples de PERIOD,
-        #    creux à LOW au milieu) → HOLD tombe pile sur un sommet (=1).
-        #  - FADE : extinction monotone 1 → 0, ease cosinus (dérivée nulle aux
-        #    deux bouts), donc pas de pulsation résiduelle ni de sursaut.
+        # Two phases chained without a break:
+        #  - HOLD: gentle cosine blinking (full at multiples of PERIOD,
+        #    trough at LOW in the middle) -> HOLD lands exactly on a peak (=1).
+        #  - FADE: monotone extinction 1 -> 0, cosine ease (zero derivative at
+        #    both ends), so no residual pulsing and no jump.
         def brightness(t)
           if t < HOLD
             LOW + (1.0 - LOW) * (0.5 + 0.5 * Math.cos(2 * Math::PI * t / PERIOD))

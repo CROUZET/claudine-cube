@@ -3,17 +3,17 @@ require_relative '_base'
 module Claudine
   module Animations
     module Cube
-      # Notification (variante inverse de Notification2) : seuls les DEUX anneaux
-      # carrés EXTÉRIEURS de chaque face clignotent (le cadre : d=0 et d=1), le
-      # cœur 4×4 restant éteint.
-      # Signature : clignotement carré rapide et net d'un cadre lumineux en
-      # bordure de chaque face. Le manager tire au sort entre Notification,
-      # Notification2 (cœur) et Notification3 (cadre).
+      # Notification (inverse variant of Notification2): only the TWO OUTER
+      # square rings of each face blink (the frame: d=0 and d=1), the 4x4
+      # core staying off.
+      # Signature: fast, crisp square blinking of a bright frame at the border
+      # of each face. The manager draws at random between Notification,
+      # Notification2 (core) and Notification3 (frame).
       class Notification3 < CubeBase
         MIN_DURATION = 0.9
-        RATE  = 3.0             # clignotements par seconde (approx)
+        RATE  = 3.0             # blinks per second (approx)
         COLOR = [255, 130, 0]
-        OUTER = [0, 1]          # les 2 anneaux concentriques extérieurs
+        OUTER = [0, 1]          # the 2 outer concentric rings
 
         def render(t, panel)
           panel.clear

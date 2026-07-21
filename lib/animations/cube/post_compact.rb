@@ -3,11 +3,11 @@ require_relative 'pre_compact'
 module Claudine
   module Animations
     module Cube
-      # Après compaction : même damier 2×2 clignotant que pre_compact, mais en
-      # jaune. pre_compact et post_compact partagent le geste ; seule la couleur
-      # les distingue (gris avant, jaune après).
+      # After compaction: same blinking 2x2 checkerboard as pre_compact, but in
+      # yellow. pre_compact and post_compact share the gesture; only the color
+      # distinguishes them (gray before, yellow after).
       class PostCompact < PreCompact
-        COLOR = [235, 200, 0]   # jaune
+        COLOR = [235, 200, 0]   # yellow
       end
     end
   end
