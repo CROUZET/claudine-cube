@@ -12,7 +12,15 @@
 //   (the one for the built-in RGB LED), proven on the XIAO S3.
 //
 // Requires the "Adafruit NeoPixel" library (IDE Library Manager).
-// The Adalight protocol and the rest of the setup are unchanged.
+//
+// Boot animation:
+//   A SHORT one-shot sweep on power-up — a dim rainbow filling along the chain,
+//   then off — just to show the cube is powered and ready (and that every R/G/B
+//   channel responds). It plays ONCE, then the cube stays dark until the Mac app
+//   drives it (no standby, no loop). If Adalight frames arrive during the sweep,
+//   it yields immediately. Deliberately DIM (BOOT_VAL): the app-driven path runs
+//   full scale (the Mac dims), but there's no Mac here, so we cap brightness to
+//   stay USB-safe.
 #include <Adafruit_NeoPixel.h>
 
 #define NUM_LEDS   320   // 5 faces x 8x8 (cube)
@@ -20,6 +28,10 @@
 #define WIDTH      8
 #define HEIGHT     8
 #define BAUD       921600
+
+#define BOOT_FILL_MS 1800  // sweep fill duration (LEDs light up 0..NUM_LEDS)
+#define BOOT_HOLD_MS 700   // hold fully lit before going dark
+#define BOOT_VAL     10    // boot brightness 0..255 (dim, USB-safe; ~working level)
 
 // NEO_GRB: the WS2812B expect GRB order. The Mac sends R,G,B triplets
 // and handles brightness; we therefore transmit at full scale.
@@ -34,6 +46,8 @@ uint8_t hi, lo;
 uint8_t byteInLed = 0;   // 0=R, 1=G, 2=B
 uint8_t r, g;
 
+bool bootDone = false;   // true once the boot sweep ended, or the app took over
+
 void setup() {
   // During strip.show() (~10 ms for 320 LEDs) the loop does not read the port:
   // the Mac is already sending the next frame. The default USB-CDC RX buffer
@@ -45,9 +59,36 @@ void setup() {
   strip.begin();
   strip.clear();
   strip.show();
+  // bootDone stays false → the boot sweep plays once, right after power-up.
+}
+
+// One-shot "powered & ready" sweep: a dim rainbow filling along the chain, then
+// off. Sets bootDone when finished; after that it is never called again.
+void renderBoot() {
+  uint32_t now = millis();
+  if (now >= (uint32_t)BOOT_FILL_MS + BOOT_HOLD_MS) {  // done → go dark, for good
+    strip.clear();
+    strip.show();
+    bootDone = true;
+    return;
+  }
+  static uint32_t lastMs = 0;
+  if (now - lastMs < (1000 / 30)) return;              // ~30 fps
+  lastMs = now;
+
+  uint16_t lit = (now < BOOT_FILL_MS)
+               ? (uint16_t)((uint32_t)NUM_LEDS * now / BOOT_FILL_MS)
+               : NUM_LEDS;
+  strip.clear();
+  for (uint16_t i = 0; i < lit; i++) {
+    uint16_t hue = (uint16_t)((uint32_t)i * 65536UL / NUM_LEDS);  // rainbow along the chain
+    strip.setPixelColor(i, strip.ColorHSV(hue, 255, BOOT_VAL));
+  }
+  strip.show();
 }
 
 void loop() {
+  // Drain any incoming serial through the Adalight decoder.
   while (Serial.available() > 0) {
     uint8_t b = Serial.read();
     switch (state) {
@@ -76,6 +117,7 @@ void loop() {
           byteInLed = 0;
           if (idx > count) {                // full frame
             strip.show();
+            bootDone = true;                // the app is driving: no more boot anim
             state = WAIT_A;
           }
         }
@@ -83,4 +125,7 @@ void loop() {
       }
     }
   }
+
+  // Boot sweep plays once on power-up; afterwards the cube is dark until the app.
+  if (!bootDone) renderBoot();
 }
