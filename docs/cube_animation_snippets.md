@@ -1,27 +1,27 @@
-# Snippets d'animations cube (mis de côté)
+# Cube animation snippets (set aside)
 
-Bouts d'effets utiles, non branchés, à réutiliser dans un futur hook du set
-`lib/animations/cube/`. Ces fichiers ne sont **pas** chargés par l'AnimationManager
-(seuls les `.rb` de `lib/animations/cube/` le sont).
+Useful effect fragments, not wired up, to reuse in a future hook of the
+`lib/animations/cube/` set. These files are **not** loaded by the AnimationManager
+(only the `.rb` files in `lib/animations/cube/` are).
 
 ---
 
-## Dessus qui « se remplit » derrière un balayage (accumulation)
+## Top face that "fills in" behind a sweep (accumulation)
 
-Variante initiale de `pre_tool` : derrière la colonne qui tourne, les 2 anneaux
-extérieurs du dessus se **peignent progressivement et restent allumés** (l'action
-« se referme par le haut »), plafonné à un tour complet puis maintenu.
+Initial variant of `pre_tool`: behind the rotating column, the 2 outer rings of
+the top face **paint in progressively and stay lit** (the action "closes up from
+the top"), capped at one full turn then held.
 
-Remplacée dans `pre_tool` par un marqueur mobile qui s'éteint derrière la colonne,
-mais l'effet « remplissage/rémanent » peut convenir à un event de type
-accomplissement/verrouillage (p.ex. une variante de `task_done` ou `post_compact`).
+Replaced in `pre_tool` by a moving marker that turns off behind the column, but
+the "fill/persistent" effect can suit an accomplishment/locking type event
+(e.g. a variant of `task_done` or `post_compact`).
 
-S'utilise avec les helpers de `CubeBase` (`top_edge_px`, `px`, `LATERAL`, `RING`,
-`SIDE`). `head = t * SPEED` est la position de tête du balayage (en colonnes).
+Used with the `CubeBase` helpers (`top_edge_px`, `px`, `LATERAL`, `RING`,
+`SIDE`). `head = t * SPEED` is the head position of the sweep (in columns).
 
 ```ruby
-# Dessus : bordure (anneau 0) + anneau 1 peints derrière la tête du balayage,
-# au fil de la progression (plafonné à un tour complet, puis maintenu).
+# Top face: border (ring 0) + ring 1 painted behind the head of the sweep,
+# as the progression advances (capped at one full turn, then held).
 painted = [head.floor, RING - 1].min
 (0..painted).each do |col|
   face = LATERAL[(col % RING) / SIDE]

@@ -213,42 +213,13 @@ claudine-cube/
 
 ## Future ideas
 
-- **Random variants** for frequent events (`post_tool_2.rb`, …) to avoid
-  repetition — the manager already picks one variant at random per hook.
-- **Calibrate the other three side↔top edges** (`top_edge_px`) so effects can
-  cross any edge cleanly, not just front→top.
-- **More event sources** (Slack, GitHub, Outlook): a new source is just a file
-  in `lib/connectors/` pushing onto the bus — the render path is untouched.
-- **Cross-face effects**: "liquid" pouring from the top down the sides,
-  per-category propagation around the ring, etc.
-- **Bring back text** on a single face by porting `lib/text/renderer.rb` to the
-  per-face `panel.set` API (it still uses the old positional signature).
+The evolution backlog lives in one place: **[docs/IDEAS.md](docs/IDEAS.md)**,
+organized by maturity —
 
-### Animation editor for non-developers
-
-Goal: let humans create cube animations without writing Ruby. Three barriers to
-lift, best tackled in this order (the first has value on its own):
-
-1. **Cube simulator (do this first).** See the cube without the cube, reusing
-   the existing animation code unchanged: a `SimPanel` implements the same API
-   as `Panel` (`set`/`fill_face`/`show`) but records `(face, x, y, rgb)` instead
-   of pushing Adalight; a headless run streams frames as JSON to a web page that
-   renders the cube as an **unfolded net** (the 5 faces in a cross — the natural
-   editing surface) plus an optional **3D view** (three.js), with a timeline
-   scrubber and hot-reload on save. Instant iteration, no hardware, shareable.
-2. **Declarative animation format.** Turn "animation = Ruby class" into
-   "animation = data" (YAML/JSON): a list of *layers*, each an effect + params +
-   timing. A small Ruby *player* interprets a file into `panel.set` calls, in the
-   spirit of "adding an animation never touches the render path" — new `.yml`
-   files drop into a folder and map to hooks, no code.
-3. **Effect composer (web).** A browser UI that writes that format, previewing
-   live in the simulator. Preferred over a per-pixel/keyframe editor because the
-   `_base.rb` helpers (`ring_px`, `face_ring`, `top_ring`, the comet, breathing…)
-   *are already* an effect catalogue — expose them as configurable blocks and
-   authoring matches the cube's volumetric style, far more approachable than
-   painting 320 LEDs × N frames.
-
-Cube-specific caveats for any editor: the unfolded net must reflect the
-**edge continuities** (only front→top is calibrated, see CLAUDE.md §4), and it
-should nudge authors to keep events **distinguishable without color**
-(movement/shape/brightness), a standing project constraint.
+- the **intention layer** (decided, frozen spec): decouples the cube from Claude
+  Code, animations target neutral states (`think`, `start`, `fork`…) — see
+  [docs/INTENTIONS.md](docs/INTENTIONS.md);
+- the **animation marketplace** (vision): safe sharing of third-party
+  animations — see [docs/MARKETPLACE.md](docs/MARKETPLACE.md);
+- smaller near-term ideas (random variants, more event sources, cross-face
+  effects, payload-aware animations, text on a face).

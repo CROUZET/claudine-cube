@@ -41,7 +41,7 @@ flowchart LR
     RUNNER -->|handle event, t| MGR
     MGR -->|instantiate hook class| ANIM
     RUNNER -->|render t - t_activation| ANIM
-    ANIM -->|set(face:,x:,y:…)/clear/fill/fill_face| PANEL
+    ANIM -->|"set(face:,x:,y:…)/clear/fill/fill_face"| PANEL
     RUNNER -->|show| PANEL
     PANEL --> SERIAL
 ```
@@ -520,15 +520,8 @@ short label on a single face), port it to `panel.set(face:, x:, y:, …)`.
 
 ---
 
-## Future ideas
+## Evolution
 
-- **Random variants** per hook (`post_tool_2.rb`, …) — the loader already
-  supports them.
-- **Calibrate the other side↔top edges** (`top_edge_px`) for effects crossing
-  any edge, not just front→top.
-- **Cross-face effects**: liquid pouring from the top down the sides, category
-  propagation around the ring.
-- **More connectors** (GitHub, Slack, …): same shape as `ClaudeCode` — a file in
-  `lib/connectors/` pushing an `Event`, plus a matching animation file.
-- **Payload-aware animations**: the connector forwards an (empty) payload; hooks
-  could read fields (tool name, task title) if the hook script POSTs them.
+This document describes **what exists**. The evolution backlog — near-term ideas
+plus the bigger tracks (the decided **intention layer**, the **animation
+marketplace** vision) — lives in a single place: **[IDEAS.md](IDEAS.md)**.

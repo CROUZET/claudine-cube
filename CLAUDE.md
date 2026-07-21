@@ -1,239 +1,249 @@
-# CLAUDE.md — Cube LED (évolution de Claudine)
+# CLAUDE.md — Cube LED (evolution of Claudine)
 
-Ce document est le point d'entrée pour travailler sur le **cube LED**, portage de
-Claudine (panneau 16×16 plat) vers un cube de 5 faces 8×8. Il complète — sans le
-remplacer — l'architecture logicielle héritée de Claudine (daemon, EventBus,
-Runner, connectors, protocole Adalight), décrite dans `docs/SOFTWARE.md`.
+This document is the entry point for working on the **LED cube**, a port of
+Claudine (flat 16×16 panel) to a cube of 5 faces of 8×8. It complements — without
+replacing — the software architecture inherited from Claudine (daemon, EventBus,
+Runner, connectors, Adalight protocol), described in `docs/SOFTWARE.md`.
 
-**Le portage est terminé : matériel monté/testé, logiciel porté, géométrie
-validée sur le cube réel, et un set d'animations « cube » par défaut est en
-place.** Ce doc décrit le résultat et les pièges rencontrés (dont un non-évident
-qui a coûté cher : voir §3).
-
----
-
-## 1. Ce qu'est le projet
-
-Claudine à l'origine : un panneau **16×16 plat** (256 LEDs WS2812B) piloté par un
-ESP32, qui réagit visuellement aux hooks de cycle de vie de Claude Code. Le Mac
-fait tout le calcul (daemon Ruby, boucle 30 fps, protocole Adalight sur USB
-série), l'ESP32 est « bête » et pousse des frames de pixels sur la matrice.
-
-Le cube : **5 faces LED 8×8** (320 LEDs) assemblées en cube posé sur une table,
-électronique dans un PCB central et connecteurs déportés dans un socle. Le
-principe logiciel est **strictement le même** que Claudine — seuls la géométrie
-(plat → cube) et le microcontrôleur (DevKit → XIAO) changent.
+**The port is complete: hardware assembled/tested, software ported, geometry
+validated on the real cube, and a default "cube" animation set is in
+place.** This doc describes the result and the pitfalls encountered (including a
+non-obvious one that was costly: see §3).
 
 ---
 
-## 2. Matériel (terminé, testé, fonctionnel)
+## 1. What the project is
 
-### Différences clés avec Claudine
+Claudine originally: a **flat 16×16** panel (256 WS2812B LEDs) driven by an
+ESP32, which reacts visually to Claude Code lifecycle hooks. The Mac
+does all the computation (Ruby daemon, 30 fps loop, Adalight protocol over USB
+serial); the ESP32 is "dumb" and pushes frames of pixels onto the matrix.
 
-| Aspect | Claudine (origine) | Cube (ce projet) |
+The cube: **5 LED faces of 8×8** (320 LEDs) assembled into a cube sitting on a table,
+electronics in a central PCB and remote connectors in a base. The
+software principle is **strictly the same** as Claudine — only the geometry
+(flat → cube) and the microcontroller (DevKit → XIAO) change.
+
+---
+
+## 2. Hardware (complete, tested, functional)
+
+### Key differences from Claudine
+
+| Aspect | Claudine (original) | Cube (this project) |
 |---|---|---|
-| Matrice | 1 × 16×16 plate (256) | 5 × 8×8 en cube (320) |
-| Microcontrôleur | ESP32-S3-DevKitC-1 | **Seeed XIAO ESP32-S3** |
-| Pin data | GPIO 16 | **D0 = GPIO 1** |
-| Alimentation | 5V/10A, jack | 5V/10A, jack **dans le socle** |
-| Level shifter | 74AHCT125 | 74AHCT125 (identique) |
-| Structure | panneau nu | cube bois + socle + fond amovible |
+| Matrix | 1 × 16×16 flat (256) | 5 × 8×8 as a cube (320) |
+| Microcontroller | ESP32-S3-DevKitC-1 | **Seeed XIAO ESP32-S3** |
+| Data pin | GPIO 16 | **D0 = GPIO 1** |
+| Power | 5V/10A, jack | 5V/10A, jack **in the base** |
+| Level shifter | 74AHCT125 | 74AHCT125 (identical) |
+| Structure | bare panel | wooden cube + base + removable bottom |
 
-Détails complets (composants, câblage, topologie d'alim en étoile, thermique,
-leçons apprises) dans **`docs/HARDWARE.md`**. Rappels essentiels :
+Full details (components, wiring, star power topology, thermal,
+lessons learned) in **`docs/HARDWARE.md`**. Essential reminders:
 
-- **XIAO ESP32-S3**, data sur **D0 (GPIO 1)**, USB-C pour data/reflash seulement.
-- **74AHCT125** (3,3 V → 5 V), **330 Ω** en série, réservoir **1000 µF**,
-  découplage **100 nF**.
-- **5 × WS2812B 8×8 GRB**, chaînées DOUT→DIN. Alim **5 V / 10 A** par jack dans le
-  socle, **topologie en étoile** (chaque face tire son 5V/GND du PCB).
-- Brightness de travail ~0,08 (≈20/255), ~1,5 A total → convection naturelle
-  suffit. Garder le jack DC branché pour tout usage réel (l'USB seul ne tient pas
-  le blanc plein).
+- **XIAO ESP32-S3**, data on **D0 (GPIO 1)**, USB-C for data/reflash only.
+- **74AHCT125** (3.3 V → 5 V), **330 Ω** in series, **1000 µF** reservoir,
+  **100 nF** decoupling.
+- **5 × WS2812B 8×8 GRB**, chained DOUT→DIN. Power **5 V / 10 A** via a jack in the
+  base, **star topology** (each face draws its 5V/GND from the PCB).
+- Working brightness ~0.08 (≈20/255), ~1.5 A total → natural convection
+  is enough. Keep the DC jack plugged in for any real use (USB alone can't hold
+  full white).
 
 ---
 
-## 3. Firmware (XIAO) — ⚠️ points non-évidents
+## 3. Firmware (XIAO) — ⚠️ non-obvious points
 
-Le firmware reste un décodeur Adalight minimal, mais **deux choses diffèrent de
-Claudine et sont critiques** (elles ont été trouvées à la dure) :
+The firmware remains a minimal Adalight decoder, but **two things differ from
+Claudine and are critical** (they were found the hard way):
 
-### a) Sortie LED : Adafruit NeoPixel, PAS FastLED
+### a) LED output: Adafruit NeoPixel, NOT FastLED
 
-Sur ce couple **FastLED 3.10 / ESP-IDF 5.x**, aucun backend FastLED n'est fiable
-pour 320 WS2812B sur le S3 :
+On this **FastLED 3.10 / ESP-IDF 5.x** pairing, no FastLED backend is reliable
+for 320 WS2812B on the S3:
 
-- **RMT5** (défaut) : plante sa synchro DMA (`esp_cache_msync(113): invalid addr`)
-  et corrompt la chaîne au-delà des premières LEDs.
-- **RMT4 legacy** : ne compile pas sur IDF5 (conflit `neopixelWrite`).
-- **I2S** : le driver « classic ESP32 » n'a pas d'implémentation S3 → erreurs de
-  link.
-- **SPI clockless** : met les trames en file sans les transmettre.
+- **RMT5** (default): its DMA sync crashes (`esp_cache_msync(113): invalid addr`)
+  and corrupts the chain beyond the first few LEDs.
+- **RMT4 legacy**: doesn't compile on IDF5 (`neopixelWrite` conflict).
+- **I2S**: the "classic ESP32" driver has no S3 implementation → link
+  errors.
+- **SPI clockless**: queues frames without transmitting them.
 
-→ Le firmware utilise **Adafruit NeoPixel** (`strip.setPixelColor` / `strip.show`),
-qui s'appuie sur le driver RMT natif du core Arduino (celui de la LED RGB
-intégrée), éprouvé sur le XIAO S3. Installer la lib « Adafruit NeoPixel ».
+→ The firmware uses **Adafruit NeoPixel** (`strip.setPixelColor` / `strip.show`),
+which relies on the native RMT driver of the Arduino core (the one for the built-in
+RGB LED), proven on the XIAO S3. Install the "Adafruit NeoPixel" library.
 
-### b) Buffer série RX à agrandir (cause racine du bug d'affichage)
+### b) RX serial buffer to enlarge (root cause of the display bug)
 
-Symptôme initial : les couleurs partaient « en vrac » au-delà d'une frontière
-**mouvante** (≈ LED 85-128). Ce **n'était ni le mapping ni le matériel** (matériel
-sain, confirmé par un sketch d'animation autonome). Cause : pendant `strip.show()`
-(~10 ms, boucle bloquée), le Mac envoie déjà la trame suivante ; le buffer RX
-USB-CDC par défaut (**256 o ≈ 85 LEDs**) déborde → fin de trame perdue/corrompue à
-position variable.
+Initial symptom: colors went "haywire" beyond a **moving**
+boundary (≈ LED 85-128). This was **neither the mapping nor the hardware** (hardware
+sound, confirmed by a standalone animation sketch). Cause: during `strip.show()`
+(~10 ms, loop blocked), the Mac is already sending the next frame; the default
+USB-CDC RX buffer (**256 B ≈ 85 LEDs**) overflows → end of frame lost/corrupted at a
+variable position.
 
-→ Correctif : **`Serial.setRxBufferSize(4096)` avant `Serial.begin()`** (une trame
-= 6 + 320×3 = **966 o**, tient largement).
+→ Fix: **`Serial.setRxBufferSize(4096)` before `Serial.begin()`** (one frame
+= 6 + 320×3 = **966 B**, fits with plenty of room).
 
-### Constantes
+### Constants
 
 ```cpp
-#define DATA_PIN   1     // D0 sur le XIAO (était 16 sur le DevKit)
-#define NUM_LEDS   320   // 5 × 64 (était 256)
-// + Serial.setRxBufferSize(4096) dans setup(), avant Serial.begin(BAUD)
+#define DATA_PIN   1     // D0 on the XIAO (was 16 on the DevKit)
+#define NUM_LEDS   320   // 5 × 64 (was 256)
+// + Serial.setRxBufferSize(4096) in setup(), before Serial.begin(BAUD)
 ```
 
-Baud 921600, ordre GRB (`NEO_GRB + NEO_KHZ800`), luminosité pleine côté firmware
-(le Mac scale). Carte IDE : **XIAO_ESP32S3**. Reflash : USB seul, jack débranché.
-Fermer le moniteur série avant de lancer le daemon (« port busy »).
+Baud 921600, GRB order (`NEO_GRB + NEO_KHZ800`), full brightness on the firmware side
+(the Mac scales). IDE board: **XIAO_ESP32S3**. Reflash: USB only, jack unplugged.
+Close the serial monitor before starting the daemon ("port busy").
 
-Le dossier `sketch_firmware/testing/` contient des sketches autonomes de
-diagnostic matériel (ex. `flashing_colors.ino`, qui fait défiler des couleurs sur
-les 320 LEDs sans flux série — utile pour confirmer que le matériel est sain).
+The `sketch_firmware/testing/` folder contains standalone hardware
+diagnostic sketches (e.g. `flashing_colors.ino`, which scrolls colors across
+the 320 LEDs with no serial stream — useful to confirm the hardware is sound).
 
 ---
 
-## 4. Mapping des LEDs (relevé, validé et calé visuellement)
+## 4. LED mapping (surveyed, validated, and visually calibrated)
 
-Le parcours physique a été relevé LED par LED et implémenté dans
-`lib/cube_mapping.rb` (module `CubeMapping`, auto-test OK : `ruby lib/cube_mapping.rb`).
+The physical path was mapped LED by LED and implemented in
+`lib/cube_mapping.rb` (module `CubeMapping`, self-test OK: `ruby lib/cube_mapping.rb`).
 
-### Ordre des faces dans la chaîne
+### Order of faces in the chain
 
 ```
-0 = avant (front)   → index 0..63
-1 = droite (right)  → index 64..127
-2 = arrière (back)  → index 128..191
-3 = gauche (left)   → index 192..255
-4 = dessus (top)    → index 256..319
+0 = front   → index 0..63
+1 = right   → index 64..127
+2 = back    → index 128..191
+3 = left    → index 192..255
+4 = top     → index 256..319
 ```
 
-Face F occupe `64*F .. 64*F+63`.
+Face F occupies `64*F .. 64*F+63`.
 
-### Coordonnées logiques (unifiées pour toutes les faces)
+### Logical coordinates (unified for all faces)
 
-- **x = colonne**, 0 = gauche … 7 = droite
-- **y = ligne**, 0 = bas … 7 = haut
+- **x = column**, 0 = left … 7 = right
+- **y = row**, 0 = bottom … 7 = top
 
-Toute animation raisonne en `(face, x, y)` ; `CubeMapping.index(face, x, y)` absorbe
-le sens physique du câblage.
+Every animation reasons in `(face, x, y)`; `CubeMapping.index(face, x, y)` absorbs
+the physical wiring direction.
 
-### Parcours physique
+### Physical path
 
-- **Faces latérales (0..3)** : origine bas-gauche, la chaîne monte une colonne
-  entière (bas→haut) puis passe à la colonne suivante → `index_local = x*8 + y`.
-- **Face dessus (4)** : origine haut-gauche, la chaîne parcourt une ligne vers la
-  droite puis descend → `index_local = (7 - y)*8 + x`.
+- **Side faces (0..3)**: origin bottom-left, the chain climbs an entire column
+  (bottom→top) then moves to the next column → `index_local = x*8 + y`.
+- **Top face (4)**: origin top-left, the chain runs along a row to the
+  right then descends → `index_local = (7 - y)*8 + x`.
 
-### ✅ Rotation du dessus — calée
+### ✅ Top rotation — calibrated
 
-Le point autrefois ouvert est **résolu**. La continuité avant→dessus a été validée
-sur matériel (`test/test_cube_edge.rb`) : le coin avant-haut-gauche coïncide avec
-le coin proche-gauche du dessus, `x` aligné, sans miroir, et monter sur l'avant
-(`y`→7) se prolonge sur le dessus en `y` croissant (proche→fond). **`top_local`
-est correct tel quel, aucun offset.**
+The previously open point is **resolved**. The front→top continuity was validated
+on hardware (`test/test_cube_edge.rb`): the front-top-left corner coincides with
+the near-left corner of the top, `x` aligned, no mirror, and climbing on the front
+(`y`→7) continues onto the top with increasing `y` (near→far). **`top_local`
+is correct as-is, no offset.**
 
-**Les 8 arêtes sont désormais validées sur matériel** (`test/test_cube_edge.rb`,
-qui allume les 8 arêtes partagées, pixels 2→6 des deux côtés) : les 3 arêtes
-dessus↔latérales restantes (droite/arrière/gauche→dessus) sont **continues et
-alignées telles quelles, aucun offset à appliquer**. Les effets qui traversent
-ces arêtes (cf. `top_edge_px` et le serpent de `pre_tool`) sont donc corrects.
+**The 8 edges are now validated on hardware** (`test/test_cube_edge.rb`,
+which lights the 8 shared edges, pixels 2→6 on both sides): the 3 remaining
+top↔side edges (right/back/left→top) are **continuous and
+aligned as-is, no offset to apply**. The effects that cross
+these edges (cf. `top_edge_px` and the snake in `pre_tool`) are therefore correct.
 
 ---
 
-## 5. Logiciel — état livré
+## 5. Software — delivered state
 
-Tout le découplage source ↔ rendu de Claudine est conservé. Ce qui a changé :
+All of Claudine's source ↔ rendering decoupling is preserved. What changed:
 
-1. **`Panel` orienté face** (`lib/panel.rb`) : le mapping serpentin plat +
-   `FLIP_X/FLIP_Y` est remplacé par `CubeMapping`. API :
-   `panel.set(face:, x:, y:, r:, g:, b:)` et `panel.fill_face(face, r, g, b)`
+1. **Face-oriented `Panel`** (`lib/panel.rb`): the flat serpentine mapping +
+   `FLIP_X/FLIP_Y` is replaced by `CubeMapping`. API:
+   `panel.set(face:, x:, y:, r:, g:, b:)` and `panel.fill_face(face, r, g, b)`
    (plus `fill`, `clear`, `set_raw`, `show`, `close`).
-2. **`Settings`** (`config/settings.rb`) : `WIDTH=8`, `HEIGHT=8`, `FACES=5`,
-   `NUM_LEDS=320`, `PORT='/dev/cu.usbmodem11201'` (XIAO). `FLIP_X/FLIP_Y` supprimés.
-3. **Set d'animations `cube`** (par défaut, `lib/animations/cube/`) : les sets
-   plats de Claudine (`default`/`fancy`/`abstract`/`bunny`) et `EventLabel` ont
-   été **supprimés** (texte 3×5 inadapté au cube). Le nouveau set est **sans
-   texte**, pensé volume : 16 hooks + `_base.rb` (helpers `ring_px`/`ring_row`
-   autour des 4 faces latérales, `face_ring`/`top_ring` anneaux concentriques,
-   `top_edge_px` pour le pourtour du dessus).
-   ⚠️ **L'utilisateur est légèrement daltonien** : chaque event est distinguable
-   par le **mouvement/forme/luminosité**, pas seulement la couleur.
-   Un second set **`bunny`** (lapins, `lib/animations/bunny/`) est **complet**
-   (les 16 hooks) : il réutilise la géométrie du cube (`Cube::CubeBase`, via
-   `bunny/_base.rb`) et met en scène des lapins (réveil arc-en-ciel, sauts
-   autour de l'anneau, danses, coucou, lapin fâché, endormissement, fusion de
-   têtes, etc.). Choisi via `CLAUDINE_ANIMATION_SET=bunny`. Charte couleur du
-   set : début = clair (blanc/bleu clair), fin = jaune, erreur = rouge.
-4. **Modèle deux couches dans `AnimationManager`** : un event de **fond**
-   (`user_prompt`) démarre une boucle « au travail » qui persiste (indicateur de
-   thinking) ; les events **ponctuels** (`pre_tool`, `post_tool`, …) sont des
-   **overlays** qui jouent une fois (leur `MIN_DURATION`) puis rendent la main au
-   fond ; les events **terminaux** (`stop`, `stop_failure`, `session_end`,
-   `session_start`) coupent le fond. Le fond boucle jusqu'au terminal ou l'idle.
-   Vérifié par `test/test_manager_states.rb`.
-5. **Inchangé** : EventBus, Runner (30 fps), connector Claude Code
-   (HTTP 127.0.0.1:9292, 15 hooks + `system_idle`), display lock (0,6 s,
-   latest-wins), idle (`system_idle` après 90 s), protocole Adalight.
+2. **`Settings`** (`config/settings.rb`): `WIDTH=8`, `HEIGHT=8`, `FACES=5`,
+   `NUM_LEDS=320`, `PORT='/dev/cu.usbmodem11201'` (XIAO). `FLIP_X/FLIP_Y` removed.
+3. **`cube` animation set** (default, `lib/animations/cube/`): Claudine's flat
+   sets (`default`/`fancy`/`abstract`/`bunny`) and `EventLabel` have
+   been **removed** (3×5 text unsuitable for the cube). The new set is **without
+   text**, designed for volume: 16 hooks + `_base.rb` (helpers `ring_px`/`ring_row`
+   around the 4 side faces, `face_ring`/`top_ring` concentric rings,
+   `top_edge_px` for the perimeter of the top).
+   ⚠️ **The user is slightly colorblind**: each event is distinguishable
+   by **motion/shape/brightness**, not by color alone.
+   A second set, **`bunny`** (bunnies, `lib/animations/bunny/`), is **complete**
+   (all 16 hooks): it reuses the cube geometry (`Cube::CubeBase`, via
+   `bunny/_base.rb`) and stages bunnies (rainbow wake-up, jumps
+   around the ring, dances, peekaboo, angry bunny, falling asleep, merging
+   heads, etc.). Selected via `CLAUDINE_ANIMATION_SET=bunny`. Color scheme of the
+   set: start = light (white/light blue), end = yellow, error = red.
+4. **Two-layer model in `AnimationManager`**: a **background** event
+   (`user_prompt`) starts a "working" loop that persists (thinking
+   indicator); the **one-shot** events (`pre_tool`, `post_tool`, …) are
+   **overlays** that play once (their `MIN_DURATION`) then hand back to the
+   background; the **terminal** events (`stop`, `stop_failure`, `session_end`,
+   `session_start`) cut the background. The background loops until the terminal or idle.
+   Verified by `test/test_manager_states.rb`.
+5. **Unchanged**: EventBus, Runner (30 fps), Claude Code connector
+   (HTTP 127.0.0.1:9292, 15 hooks + `system_idle`), display lock (0.6 s,
+   latest-wins), idle (`system_idle` after 90 s), Adalight protocol.
 
-Le dossier `lib/text/` (font 3×5, renderer) est conservé de Claudine mais **non
-utilisé** par le set cube (le renderer emploie l'ancien `set` positionnel ; il
-faudrait le porter à l'API par face pour dessiner du texte sur une face 8×8).
+The `lib/text/` folder (3×5 font, renderer) is kept from Claudine but **not
+used** by the cube set (the renderer uses the old positional `set`; it
+would need to be ported to the per-face API to draw text on an 8×8 face).
 
-### Tests (`test/`, sans les anciens tests plats)
+### Tests (`test/`, without the old flat tests)
 
-| Fichier | Rôle | Matériel |
+| File | Role | Hardware |
 |---|---|---|
-| `test_cube_faces.rb` | 1 couleur/face (ordre + mapping) | oui |
-| `test_cube_edge.rb` | calage/vérif des 8 arêtes (pixels 2→6 des 2 côtés) | oui |
-| `test_cube_preview.rb [hooks…]` | aperçu des animations sur le cube | oui |
-| `test_cube_animations.rb` | dry-run de toutes les anims (panel factice) | non |
-| `test_manager_states.rb` | modèle deux couches (fond/overlay) du manager | non |
+| `test_cube_faces.rb` | 1 color/face (order + mapping) | yes |
+| `test_cube_edge.rb` | calibration/check of the 8 edges (pixels 2→6 on both sides) | yes |
+| `test_cube_preview.rb [hooks…]` | preview of the animations on the cube | yes |
+| `test_cube_animations.rb` | dry-run of all the animations (fake panel) | no |
+| `test_manager_states.rb` | two-layer model (background/overlay) of the manager | no |
 
-### Lancer
+### Running
 
 ```bash
 bundle install
-ruby claudine.rb                 # set 'cube' par défaut
-ruby test/test_cube_preview.rb   # regarder les animations tourner
+ruby claudine.rb                 # default 'cube' set
+ruby test/test_cube_preview.rb   # watch the animations run
 ```
 
 ---
 
-## 6. Fichiers de référence
+## 6. Reference files
 
-- `lib/cube_mapping.rb` — `CubeMapping.index(face, x, y)` + auto-test. Fondation.
-- `lib/animations/cube/` — set par défaut (16 hooks + `_base.rb`).
-- `lib/animations/bunny/` — set « lapins » complet (16 hooks ; réutilise `Cube::CubeBase`).
-- `docs/HARDWARE.md` — matériel complet.
-- `docs/SOFTWARE.md` — architecture daemon + firmware (référence logicielle,
-  mise à jour pour le cube).
-- `docs/cube_animation_snippets.md` — effets mis de côté, réutilisables.
-- `sketch_firmware/sketch_firmware.ino` — firmware NeoPixel.
-- `sketch_firmware/testing/` — sketches de diagnostic matériel autonomes
+- `lib/cube_mapping.rb` — `CubeMapping.index(face, x, y)` + self-test. Foundation.
+- `lib/animations/cube/` — default set (16 hooks + `_base.rb`).
+- `lib/animations/bunny/` — complete "bunnies" set (16 hooks; reuses `Cube::CubeBase`).
+- `docs/HARDWARE.md` — full hardware.
+- `docs/SOFTWARE.md` — daemon + firmware architecture (software reference,
+  updated for the cube).
+- `docs/cube_animation_snippets.md` — effects set aside, reusable.
+- `docs/IDEAS.md` — **single index of evolutions** (nothing built), organized
+  by maturity; the big work items are linked (marketplace) and the small ideas
+  inline. Every evolution idea goes here, not in the README nor `SOFTWARE.md`.
+- `docs/INTENTIONS.md` — intention vocabulary (V1 frozen, not yet
+  implemented): a source ↔ rendering contract that decouples the cube from Claude Code
+  (the animations target states "think/start/fork…", a profile maps the
+  hooks onto them). Next concrete work item.
+- `docs/MARKETPLACE.md` — vision of a marketplace of shareable animations
+  (design exploration): third-party code execution security, compilation
+  to WASM, creator journey.
+- `sketch_firmware/sketch_firmware.ino` — NeoPixel firmware.
+- `sketch_firmware/testing/` — standalone hardware diagnostic sketches
   (`flashing_colors.ino`).
 
 ---
 
-## 7. Rappels de conventions (hérités de Claudine)
+## 7. Convention reminders (inherited from Claudine)
 
-- Le Mac pense, le microcontrôleur est bête (frames Adalight sur USB série).
-- Découplage source ↔ rendu : ajouter une source ne touche jamais le rendu.
+- The Mac thinks, the microcontroller is dumb (Adalight frames over USB serial).
+- Source ↔ rendering decoupling: adding a source never touches the render path.
 - Ruby 4.0.5 (rbenv, `.ruby-version`), `bundle install`, `ruby claudine.rb`.
-- Fermer le moniteur série de l'IDE Arduino avant de lancer (« port busy »).
-- `CLAUDINE_ANIMATION_SET` choisit le set (`cube` par défaut, `bunny` complet) —
-  surchargeable aussi dans `test/test_cube_preview.rb` et `test_cube_animations.rb`.
-- `CLAUDINE_BRIGHTNESS` surcharge la luminosité globale (défaut 0,08 ; monter
-  augmente courant/chaleur, garder le jack DC branché).
-- `CLAUDINE_LOG_LEVEL=DEBUG` pour les logs verbeux.
+- Close the Arduino IDE serial monitor before starting ("port busy").
+- `CLAUDINE_ANIMATION_SET` chooses the set (`cube` by default, `bunny` complete) —
+  also overridable in `test/test_cube_preview.rb` and `test_cube_animations.rb`.
+- `CLAUDINE_BRIGHTNESS` overrides the global brightness (default 0.08; raising it
+  increases current/heat, keep the DC jack plugged in).
+- `CLAUDINE_LOG_LEVEL=DEBUG` for verbose logs.

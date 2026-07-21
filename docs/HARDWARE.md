@@ -160,7 +160,7 @@ flowchart LR
 
 ## LED chain mapping (physical)
 
-Relevé LED-by-LED on the assembled cube. Logical convention used everywhere:
+Mapped LED-by-LED on the assembled cube. Logical convention used everywhere:
 **x = column (0 left … 7 right), y = row (0 bottom … 7 top)**.
 
 - **Side faces (front/right/back/left)** — origin bottom-left, the chain
@@ -211,7 +211,7 @@ meeting).
   gets its 5 V/GND straight from the PCB, guaranteeing uniform color even if
   brightness is raised later.
 - **Test each face before gluing.** Faces were validated electrically
-  (R/G/B uniform) while still loose, taped into a cube for the mapping relevé,
+  (R/G/B uniform) while still loose, taped into a cube for the mapping survey,
   and only then assembled — so any cold joint stayed reachable.
 - **Leave slack loops** on inter-face data wires: the faces move relative to
   each other during assembly and when opening the removable bottom.
