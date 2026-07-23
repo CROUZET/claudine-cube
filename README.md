@@ -128,16 +128,25 @@ why). Key points: `DATA_PIN 1`, `NUM_LEDS 320`, and
 fixed the "colors garbled past LED ~100" bug). Flash with USB only, DC jack
 unplugged.
 
-### Preview the animations without Claude Code
+### Tests
+
+Automated, hardware-free suite (minitest):
 
 ```bash
-ruby test/test_cube_preview.rb                 # all intentions in sequence, on the cube
-ruby test/test_cube_preview.rb think handled   # only these intentions
-ruby test/test_cube_animations.rb              # dry-run, no hardware (CI-friendly)
+bundle exec rake test
 ```
 
-Geometry checks: `test/test_cube_faces.rb` (one color per face),
-`test/test_cube_edge.rb` (all shared edges, both sides, one color each).
+### On-cube diagnostics (need the real cube)
+
+`diagnostics/` holds manual, on-cube utilities (not part of the test suite):
+
+```bash
+ruby diagnostics/cube_preview.rb                 # play every intention in sequence
+ruby diagnostics/cube_preview.rb think handled   # only these intentions
+ruby diagnostics/cube_faces.rb                   # one color per face (order + mapping)
+ruby diagnostics/cube_edge.rb                    # all shared edges, both sides
+ruby diagnostics/cube_stress.rb                  # brightness / current stress (DC vs USB)
+```
 
 ### Testing hooks manually
 
@@ -239,7 +248,9 @@ claudine-cube/
 │  ├─ connectors/           # claude_code.rb (:9292) + admin_server.rb (:9293) + admin/index.html
 │  └─ …                     # Runner, EventBus, Event, logger, intentions, profiles
 ├─ sketch_firmware/         # XIAO firmware (NeoPixel, DATA_PIN 1, NUM_LEDS 320)
-└─ test/                    # cube geometry + animation + admin tests
+├─ Rakefile                 # `bundle exec rake test`
+├─ test/                    # automated, hardware-free tests (minitest)
+└─ diagnostics/             # manual on-cube utilities (preview, faces, edge, stress)
 ```
 
 ---

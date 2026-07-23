@@ -173,7 +173,7 @@ Mapped LED-by-LED on the assembled cube. Logical convention used everywhere:
 
 Implemented and auto-tested in `lib/cube_mapping.rb`. The **top-face rotation**
 is calibrated: rising up a side face continues onto the top with the same `x`
-and increasing `y` (validated with `test/test_cube_edge.rb`). The three other
+and increasing `y` (validated with `diagnostics/cube_edge.rb`). The three other
 side↔top edges (right/back/left) are not calibrated yet — only needed for future
 effects that cross them.
 
@@ -200,7 +200,7 @@ meeting).
   the level shifter → 74AHCT125 mandatory (same as Claudine).
 - USB power alone cannot sustain full-white on 320 LEDs → external supply
   **mandatory** for real use; USB-only is fine only for low-brightness tests.
-  Measured with `test/test_cube_stress.rb` (2026-07): with the DC jack in,
+  Measured with `diagnostics/cube_stress.rb` (2026-07): with the DC jack in,
   **full-white 100 % on all 320 LEDs holds with no visible artifact** (no hue
   shift, flicker, or ESP brownout) — the ~19 A theoretical worst case is very
   pessimistic, the 10 A supply copes cleanly. On **USB only** (no jack), white

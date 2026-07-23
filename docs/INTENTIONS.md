@@ -138,7 +138,7 @@ sleep    ← system_idle
   (triggered internally on `IDLE_TIMEOUT`). Loading warns on unknown intentions
   or a missing core.
 - Both sets (`cube`, `bunny`) are migrated. Verified by
-  `test/test_cube_animations.rb` (both sets) and `test/test_manager_states.rb`.
+  `test/animations_smoke_test.rb` (both sets) and `test/animation_manager_test.rb`.
 
 ## Versioning
 

@@ -192,7 +192,7 @@ There is **no serpentine transform and no FLIP_X/FLIP_Y** anymore — the physic
 wiring of each face is entirely absorbed by these per-face formulas.
 `lib/cube_mapping.rb` carries a self-test (`ruby lib/cube_mapping.rb`). The
 top-face rotation is calibrated so that rising up a side face continues onto the
-top with the same `x` and increasing `y` (validated via `test/test_cube_edge.rb`).
+top with the same `x` and increasing `y` (validated via `diagnostics/cube_edge.rb`).
 
 ### Adalight protocol (wire format)
 
@@ -411,7 +411,7 @@ So a typical turn looks like: `think` (loop starts) → `start` (overlay
 0.6 s) → back to loop → `finish` (overlay) → back to loop → … → `stop` (loop
 ends). Going idle also clears the background. The display lock still governs how
 fast a *new* event can take over; the overlay→background revert is internal (not
-an event) and needs no lock. Verified by `test/test_manager_states.rb`.
+an event) and needs no lock. Verified by `test/animation_manager_test.rb`.
 
 Which temporal role an intention has is data: its `kind` in
 `Intentions::VOCAB` (`lib/intentions.rb`), not a per-set or per-manager list.
@@ -490,8 +490,9 @@ needed in the Runner, the Panel, or the AnimationManager.
 
 - **Ruby 4.0.5** (rbenv, `.ruby-version`).
 - **Gems**: `rubyserial` (`Serial` class — do NOT use `serialport`, fails on high
-  baud, or `uart`, Ruby 4 compat unconfirmed) and `webrick` (admin server;
-  removed from Ruby's default gems in 3+).
+  baud, or `uart`, Ruby 4 compat unconfirmed), `webrick` (admin server), and
+  `logger` / `json` (used at runtime; both left Ruby's default gems by 4.0, so
+  they're declared explicitly). Test-only: `minitest` + `rake`.
 - The serial port opens **one program at a time** — close the Arduino Serial
   Monitor first.
 - Opening the port **reboots the XIAO** → `Panel#initialize` does `sleep 2`
@@ -502,8 +503,13 @@ needed in the Runner, the Panel, or the AnimationManager.
 
 ```bash
 bundle install
-ruby claudine.rb
+ruby claudine.rb            # run the daemon
+bundle exec rake test       # the automated suite (hardware-free)
 ```
+
+The on-cube diagnostics live under `diagnostics/` (run by hand with the cube
+plugged in, e.g. `ruby diagnostics/cube_preview.rb`) — they are not part of the
+automated suite.
 
 Env vars: `CLAUDINE_LOG_LEVEL=DEBUG` (default `INFO`), `CLAUDINE_ANIMATION_SET`
 (default `cube`; `bunny` complete — all 16 intentions), `CLAUDINE_BRIGHTNESS`
@@ -547,15 +553,19 @@ claudine-cube/
 │  ├─ sketch_firmware.ino       # ESP32 firmware (Adalight + NeoPixel)
 │  └─ testing/                  # standalone hardware diagnostic sketches
 │     └─ flashing_colors.ino    # cycles colors over all 320 LEDs (no serial)
-└─ test/
-   ├─ test_cube_faces.rb        # one color per face (order + mapping)
-   ├─ test_cube_edge.rb         # all 8 shared edges, both sides (edge calibration)
-   ├─ test_cube_preview.rb      # play the animations on the cube
-   ├─ test_cube_animations.rb   # dry-run all animations (no hardware)
-   ├─ test_manager_states.rb    # two-layer background/overlay model (no hardware)
-   ├─ test_config.rb            # Config precedence / ceiling / boost / integrations / I/O (no hw)
-   ├─ test_admin_server.rb      # admin HTTP API (WEBrick, no hardware)
-   └─ test_claude_code_gate.rb  # ClaudeCode ingestion gate (no hardware)
+├─ diagnostics/                 # manual, on-cube utilities — NOT the test suite
+│  ├─ cube_faces.rb             # one color per face (order + mapping)
+│  ├─ cube_edge.rb              # all 8 shared edges, both sides (edge calibration)
+│  ├─ cube_preview.rb           # play the animations on the cube
+│  └─ cube_stress.rb            # brightness / current stress on the cube
+├─ Rakefile                     # `bundle exec rake test` → the automated suite
+└─ test/                        # automated, hardware-free (minitest)
+   ├─ test_helper.rb            # stub panels, free_port, quiet logs
+   ├─ config_test.rb            # Config: precedence / ceiling / boost / integrations / I/O
+   ├─ animation_manager_test.rb # two-layer model, status, switch_set, one-shot
+   ├─ animations_smoke_test.rb  # every animation renders without crashing (both sets)
+   ├─ admin_server_test.rb      # the admin HTTP API (WEBrick)
+   └─ claude_code_gate_test.rb  # ClaudeCode ingestion gate
 ```
 
 ---
@@ -759,15 +769,15 @@ read-only **status panel**, and the **trigger** buttons.
 
 ### Tests
 
-All run without hardware (no `Panel`, no serial):
+All hardware-free (no `Panel`, no serial), run with `bundle exec rake test`:
 
-- `test/test_config.rb` — brightness precedence/ceiling/boost, theme, integration
+- `test/config_test.rb` — brightness precedence/ceiling/boost, theme, integration
   toggles, file-I/O robustness, key preservation.
-- `test/test_admin_server.rb` — the whole HTTP API (state, status, brightness,
+- `test/admin_server_test.rb` — the whole HTTP API (state, status, brightness,
   integration, theme, trigger) end-to-end via `Net::HTTP` against a temp `Config`.
-- `test/test_claude_code_gate.rb` — the connector's ingestion gate: events reach
+- `test/claude_code_gate_test.rb` — the connector's ingestion gate: events reach
   the bus when on, are dropped (still `204`) when off.
-- `test/test_manager_states.rb` (a daemon test) also covers `switch_set`, the
+- `test/animation_manager_test.rb` (a daemon test) also covers `switch_set`, the
   `status` snapshot, and one-shot triggers.
 
 ---

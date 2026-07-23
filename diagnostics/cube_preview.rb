@@ -2,9 +2,9 @@
 # Plays each intention ~2.5 s in sequence, at 30 fps, on the real cube.
 # Handy to judge the rendering without triggering the real Claude Code hooks.
 #
-#   ruby test/test_cube_preview.rb
-#   ruby test/test_cube_preview.rb finish think   # only those intentions
-#   CLAUDINE_PREVIEW_REALTIME=1 ruby test/test_cube_preview.rb retry fail
+#   ruby diagnostics/cube_preview.rb
+#   ruby diagnostics/cube_preview.rb finish think   # only those intentions
+#   CLAUDINE_PREVIEW_REALTIME=1 ruby diagnostics/cube_preview.rb retry fail
 #                                    # play each at its real on-cube lifetime
 #
 # Close the serial monitor of the Arduino IDE before launching ("port busy").

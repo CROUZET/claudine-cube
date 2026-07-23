@@ -33,7 +33,7 @@ Ruby 3.0).
 ## 2. The real threat model
 
 What we are protecting is **not the cube**: the stress test
-(`test/test_cube_stress.rb`, cf. `HARDWARE.md`) showed that even full white
+(`diagnostics/cube_stress.rb`, cf. `HARDWARE.md`) showed that even full white
 does not damage it, and brightness/current are bounded on the host side. What we
 are protecting is **the machine running the daemon**. Today the daemon
 `require`s the animation file: downloading + `require`ing an unknown `.rb` =
@@ -107,7 +107,7 @@ The distributed binary is a *derivative*, not the truth. This unlocks:
 - **Resource budgets**: per-frame timeout (~33 ms at 30 fps), memory
   cap, instruction limit → we *kill* the animation that exceeds them.
 - **Publication CI**: the server renders the animation headless (like
-  `test/test_cube_animations.rb`) → rejects crash/loop/overrun before
+  `test/animations_smoke_test.rb`) → rejects crash/loop/overrun before
   publication.
 - **Physical safety bounded on the host side**: brightness/current cap applied
   by the daemon, never by the animation.
@@ -134,7 +134,7 @@ We distinguish two objects that are easily confused:
   For creation, **the physical cube IS the best preview.**
 - **Headless rendering engine** → kept, but **server-side only**:
   replay the pure function `(t) → grid` and dump the pixels. Almost free
-  (the foundation is already there with `test_cube_animations.rb`). Serves the
+  (the foundation is already there with `animations_smoke_test.rb`). Serves the
   catalog's **thumbnails/GIFs** (a visitor browsing is on their phone, not in
   front of their cube), the **lints**, and the **CI**.
 

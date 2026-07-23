@@ -139,12 +139,12 @@ the physical wiring direction.
 ### ✅ Top rotation — calibrated
 
 The previously open point is **resolved**. The front→top continuity was validated
-on hardware (`test/test_cube_edge.rb`): the front-top-left corner coincides with
+on hardware (`diagnostics/cube_edge.rb`): the front-top-left corner coincides with
 the near-left corner of the top, `x` aligned, no mirror, and climbing on the front
 (`y`→7) continues onto the top with increasing `y` (near→far). **`top_local`
 is correct as-is, no offset.**
 
-**The 8 edges are now validated on hardware** (`test/test_cube_edge.rb`,
+**The 8 edges are now validated on hardware** (`diagnostics/cube_edge.rb`,
 which lights the 8 shared edges, pixels 2→6 on both sides): the 3 remaining
 top↔side edges (right/back/left→top) are **continuous and
 aligned as-is, no offset to apply**. The effects that cross
@@ -197,7 +197,7 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    **dormant** intention (`sleep`) is the idle animation. If the set lacks a
    resolved intention, the manager walks the vocabulary fallback chain. The
    background loops until a boundary or idle. Verified by
-   `test/test_manager_states.rb`.
+   `test/animation_manager_test.rb`.
 6. **Unchanged**: EventBus, Runner (30 fps), Claude Code connector
    (HTTP 127.0.0.1:9292, pushes raw hooks — the profile translates), display
    lock (0.6 s, latest-wins), idle (`sleep` intention after 90 s), Adalight
@@ -232,33 +232,45 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    `think` doesn't become a looping background) then revert/blank; the buttons
    are disabled while the cube is off. Each new control is the same shape —
    a `Config` key + an endpoint + a widget; the plumbing is already there.
-   Verified by `test/test_config.rb`, `test/test_admin_server.rb`,
-   `test/test_manager_states.rb` (switch_set + status) and
-   `test/test_claude_code_gate.rb`.
+   Verified by `test/config_test.rb`, `test/admin_server_test.rb`,
+   `test/animation_manager_test.rb` (switch_set + status) and
+   `test/claude_code_gate_test.rb`.
 
 The `lib/text/` folder (3×5 font, renderer) is kept from Claudine but **not
 used** by the cube set (the renderer uses the old positional `set`; it
 would need to be ported to the per-face API to draw text on an 8×8 face).
 
-### Tests (`test/`, without the old flat tests)
+### Tests & diagnostics
 
-| File | Role | Hardware |
-|---|---|---|
-| `test_cube_faces.rb` | 1 color/face (order + mapping) | yes |
-| `test_cube_edge.rb` | calibration/check of the 8 edges (pixels 2→6 on both sides) | yes |
-| `test_cube_preview.rb [intentions…]` | preview of the animations on the cube | yes |
-| `test_cube_animations.rb` | dry-run of all the animations (fake panel) | no |
-| `test_manager_states.rb` | two-layer model (background/overlay) of the manager | no |
-| `test_config.rb` | Config: precedence, safe-boot ceiling, volatile boost, file I/O | no |
-| `test_admin_server.rb` | AdminServer control-plane HTTP API (WEBrick, no panel) | no |
-| `test_claude_code_gate.rb` | ClaudeCode integration gate (drops events when off) | no |
+Two distinct things, in two places:
+
+**Automated tests** (`test/`, **minitest**, no hardware) — `bundle exec rake test`:
+
+| File | Role |
+|---|---|
+| `config_test.rb` | Config: precedence, safe-boot ceiling, volatile boost, integrations, theme, I/O |
+| `animation_manager_test.rb` | two-layer model, status snapshot, `switch_set`, direct-intention & one-shot triggers |
+| `animations_smoke_test.rb` | every animation of every set renders without crashing / out-of-bounds |
+| `admin_server_test.rb` | the whole admin HTTP API (state, status, brightness, integration, theme, trigger) |
+| `claude_code_gate_test.rb` | ClaudeCode ingestion gate (drops events when off) |
+| `test_helper.rb` | shared stubs (`TestPanels`), `free_port`, quiet logs |
+
+**On-cube diagnostics** (`diagnostics/`, need the real cube — **not** the test suite, run by hand):
+
+| File | Role |
+|---|---|
+| `cube_faces.rb` | 1 color/face (order + mapping) |
+| `cube_edge.rb` | calibration/check of the 8 edges (pixels 2→6 on both sides) |
+| `cube_preview.rb [intentions…]` | preview of the animations on the cube |
+| `cube_stress.rb` | brightness / current stress (DC vs USB) |
 
 ### Running
 
 ```bash
 bundle install
-ruby claudine.rb                 # default 'cube' set
-ruby test/test_cube_preview.rb   # watch the animations run
+ruby claudine.rb                   # daemon, default 'cube' set (+ admin on :9293)
+bundle exec rake test              # automated suite (no hardware)
+ruby diagnostics/cube_preview.rb   # watch the animations on the cube
 ```
 
 ---
@@ -301,7 +313,7 @@ ruby test/test_cube_preview.rb   # watch the animations run
 - Ruby 4.0.5 (rbenv, `.ruby-version`), `bundle install`, `ruby claudine.rb`.
 - Close the Arduino IDE serial monitor before starting ("port busy").
 - `CLAUDINE_ANIMATION_SET` chooses the set (`cube` by default, `bunny` complete) —
-  also overridable in `test/test_cube_preview.rb` and `test_cube_animations.rb`.
+  also overridable in `diagnostics/cube_preview.rb` and `animations_smoke_test.rb`.
 - `CLAUDINE_BRIGHTNESS` overrides the global brightness (default 0.08; raising it
   increases current/heat, keep the DC jack plugged in). Precedence: ENV wins over
   the persisted `~/.claudine`, which wins over the `Settings` default.

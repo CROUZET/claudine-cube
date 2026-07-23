@@ -36,7 +36,7 @@ puts <<~MSG
   To confirm:
     - each face is indeed ONE single color, uniform (per-face mapping OK);
     - the order matches (otherwise review the order of the faces in the chain);
-    - the TOP is uniform white (the rotation is calibrated with test_cube_edge.rb).
+    - the TOP is uniform white (the rotation is calibrated with cube_edge.rb).
 MSG
 
 panel.close
