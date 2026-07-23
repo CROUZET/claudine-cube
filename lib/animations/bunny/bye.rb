@@ -10,12 +10,12 @@ module Claudine
       # cube (bunnies + top frame) fades out progressively from start to
       # finish. COLD rainbow. "Sleep" mirror of the wake-up (session_start).
       class Bye < Welcome
-        HUE0 = 0.25               # cold: yellow-green -> ... -> violet
+        HUE0 = 0.25 # cold: yellow-green -> ... -> violet
         HUE1 = 0.85
-        DUR = 2.6                # complete falling asleep (fade to black)
-        SINK = 0.8                # lowering of the ears (s)
+        DUR = 2.6 # complete falling asleep (fade to black)
+        SINK = 0.8 # lowering of the ears (s)
         MIN_DURATION = DUR
-        DURATION = DUR        # duration shown by the preview
+        DURATION = DUR # duration shown by the preview
 
         EYES = [[2, 3], [5, 3]].freeze # eye gaps (same positions A and B)
 

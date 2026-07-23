@@ -18,11 +18,11 @@ module Claudine
         # First the jumps, then the dive into the burrow.
         def pose(t, base)
           jt = JUMPS * JUMP_T
-          if t < jt                                  # around the cube jumping
+          if t < jt # around the cube jumping
             total = t / JUMP_T
             p = total - total.floor
             [base + (total * SIDE), Math.sin(Math::PI * p) * HOP_H]
-          elsif t < jt + POP                         # dive into the burrow (0 -> -5)
+          elsif t < jt + POP # dive into the burrow (0 -> -5)
             p = (t - jt) / POP
             off = (-5 * (1.0 - ease_out_back(1.0 - p))).round
             [base + (JUMPS * SIDE), off]

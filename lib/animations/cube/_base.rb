@@ -8,8 +8,8 @@ module Claudine
       # Shared faces and geometric landmarks.
       ALL_FACES = %i[front right back left top].freeze
       LATERAL = %i[front right back left].freeze # the 4 side faces
-      SIDE = 8                                   # side of a face
-      RING = LATERAL.size * SIDE                 # 32 columns around the cube
+      SIDE = 8 # side of a face
+      RING = LATERAL.size * SIDE # 32 columns around the cube
 
       # Common base for the cube animations. Provides "volumetric" rendering
       # helpers: ring around the 4 side faces, pulsing, per-face fill. Each

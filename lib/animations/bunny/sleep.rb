@@ -11,19 +11,19 @@ module Claudine
       # After HOLD, everything fades out; the manager cuts the cube at DURATION.
       # Signature: sleeping bunnies breathing, with sleep bubbles.
       class Sleep < BunnyBase
-        PERIOD = 2.6                  # breathing period (s)
-        HOLD = 4.0                  # visible sleep before the fade
-        FADE = 2.0                  # extinction
-        DURATION = HOLD + FADE          # lifetime (read by the manager)
+        PERIOD = 2.6 # breathing period (s)
+        HOLD = 4.0 # visible sleep before the fade
+        FADE = 2.0 # extinction
+        DURATION = HOLD + FADE # lifetime (read by the manager)
         COLOR = [80, 150, 220].freeze # soft blue (idle)
         FACES = %i[front right back left].freeze
 
         # Sleep bubbles: little dots that rise in zigzag and fade away.
-        NB_BUB = 3                      # number of staggered bubbles
-        RISE = 3.9                    # rise duration of one bubble (s)
-        AMP = 1.0                    # amplitude of the zigzag (px)
-        ZIG = 2.0                    # number of oscillations during the rise
-        BUB_X = 6                      # center column of the bubbles (right side)
+        NB_BUB = 3 # number of staggered bubbles
+        RISE = 3.9 # rise duration of one bubble (s)
+        AMP = 1.0 # amplitude of the zigzag (px)
+        ZIG = 2.0 # number of oscillations during the rise
+        BUB_X = 6 # center column of the bubbles (right side)
 
         # "Loaf" bunny (dx, dy; 0 = bottom): oval shape, ears folded.
         #   . . # . . # . .   folded ears

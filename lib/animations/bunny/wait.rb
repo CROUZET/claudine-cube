@@ -13,12 +13,12 @@ module Claudine
       # Signature: bunny waving + carrot jumping.
       class Wait < BunnyBase
         MIN_DURATION = 1.5
-        COLOR = [255, 200, 0].freeze   # yellow (bunny)
-        BODY_C = [255, 0, 0].freeze     # carrot body (red)
-        LEAF = [0, 170, 0].freeze     # tops
-        FREQ = 2.5             # frequency (Hz)
-        SPIN = 0.15          # turns/second of the top ring
-        SEGMENTS = 8             # number of segments (yellow arcs / holes) of the ring
+        COLOR = [255, 200, 0].freeze # yellow (bunny)
+        BODY_C = [255, 0, 0].freeze # carrot body (red)
+        LEAF = [0, 170, 0].freeze # tops
+        FREQ = 2.5 # frequency (Hz)
+        SPIN = 0.15 # turns/second of the top ring
+        SEGMENTS = 8 # number of segments (yellow arcs / holes) of the ring
 
         # Head close-up (fixed). dx, dy ; 0 = bottom. Eye = gap at (2,2).
         #   . # # . . . . .   ear
@@ -74,8 +74,8 @@ module Claudine
 
         def render(t, panel)
           panel.clear
-          w = Math.sin(2 * Math::PI * FREQ * t).round   # -1..1 (peekaboo)
-          bob = Math.sin(2 * Math::PI * FREQ * t).round   # -1..1 (carrot bounce)
+          w = Math.sin(2 * Math::PI * FREQ * t).round # -1..1 (peekaboo)
+          bob = Math.sin(2 * Math::PI * FREQ * t).round # -1..1 (carrot bounce)
           draw_bunny(panel, :front, w)    # 1 : bunny
           draw_bunny(panel, :back,  w)    # 3 : bunny
           draw_carrot(panel, :right, bob) # 2 : carrot

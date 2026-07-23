@@ -14,10 +14,10 @@ module Claudine
       # there.
       # Signature: a single bright snake that "navigates" through the volume.
       class Start < CubeBase
-        BODY = 18             # length of the snake (in 2 px "rungs")
-        SPEED = 30.0           # rungs per second
-        HEAD = [190, 80, 0].freeze   # orange/amber (head)
-        TAIL = [28, 8, 0].freeze     # very dark amber (tail)
+        BODY = 18 # length of the snake (in 2 px "rungs")
+        SPEED = 30.0 # rungs per second
+        HEAD = [190, 80, 0].freeze # orange/amber (head)
+        TAIL = [28, 8, 0].freeze # very dark amber (tail)
 
         # Track: ordered list of "rungs", each rung = the 2 pixels (width of
         # the snake) lit at one step of the path. Two consecutive rungs are
@@ -52,8 +52,8 @@ module Claudine
         end
 
         TRACK = build_track
-        MIN_DURATION = (TRACK.size + BODY) / SPEED   # plays the whole path
-        DURATION = MIN_DURATION                  # lifetime (read by the preview)
+        MIN_DURATION = (TRACK.size + BODY) / SPEED # plays the whole path
+        DURATION = MIN_DURATION # lifetime (read by the preview)
 
         def render(t, panel)
           panel.clear

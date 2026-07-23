@@ -14,11 +14,11 @@ module Claudine
       # off at DURATION.
       class Sleep < CubeBase
         ROWS = [3, 4].freeze # 2 px ring in the middle of the cube
-        PERIOD = 1.6                      # slow, gentle blinking
-        BLINKS = 1                        # pulses at full intensity
-        HOLD = BLINKS * PERIOD          # duration of the full blinking
-        FADE = 2.0                      # gradual extinction, after HOLD
-        DURATION = HOLD + FADE              # total lifetime (read by the manager)
+        PERIOD = 1.6 # slow, gentle blinking
+        BLINKS = 1 # pulses at full intensity
+        HOLD = BLINKS * PERIOD # duration of the full blinking
+        FADE = 2.0 # gradual extinction, after HOLD
+        DURATION = HOLD + FADE # total lifetime (read by the manager)
         COLOR = [0, 120, 200].freeze # soft blue (standby)
         LOW = 0.1 # trough of the blink (glow, not quite off)
 

@@ -10,11 +10,11 @@ module Claudine
       # dropping (brown) at its starting position; then everything fades out.
       # Signature: the bunny does an about-turn and leaves a dropping, then fades away.
       class Handled < Handle
-        COLOR = [255, 200, 0].freeze     # yellow (end)
-        CACA_C = [110, 55, 0].freeze      # little dropping (brown)
-        HALF = 16                # half-turn (16 columns out of 32)
-        T_WALK = 2.5               # walks up to the half-turn then stops
-        T_FADE = 1.2               # extinction
+        COLOR = [255, 200, 0].freeze # yellow (end)
+        CACA_C = [110, 55, 0].freeze # little dropping (brown)
+        HALF = 16 # half-turn (16 columns out of 32)
+        T_WALK = 2.5 # walks up to the half-turn then stops
+        T_FADE = 1.2 # extinction
         MIN_DURATION = T_WALK + T_FADE
         DURATION = T_WALK + T_FADE
 

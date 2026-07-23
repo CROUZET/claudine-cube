@@ -19,11 +19,11 @@ module Claudine
         NB = HOP_H.size
         RUN = Think::RABBIT # running sprite (profile) from user_prompt
 
-        T_RUN = 2.0                       # duration of the running
-        T_FADE = 2.0                       # duration of the fade (after the stop)
+        T_RUN = 2.0 # duration of the running
+        T_FADE = 2.0 # duration of the fade (after the stop)
         DUR = T_RUN + T_FADE
         MIN_DURATION = DUR
-        DURATION = DUR                 # full duration (read by the preview)
+        DURATION = DUR # full duration (read by the preview)
 
         # Small front bunny (whole body), 4 px wide; centered via FRONT_X.
         #   # . . #   ears

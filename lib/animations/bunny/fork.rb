@@ -12,11 +12,11 @@ module Claudine
       # Signature: the bunnies spring up then turn around the cube jumping.
       class Fork < BunnyBase
         COLOR = [120, 200, 255].freeze # light blue (start)
-        POP = 0.45              # duration of the spring-up (s)
-        JUMPS = 4                 # number of jumps (full turn)
-        JUMP_T = 1.0               # duration of one jump (s)
-        HOP_H = 3.0               # height of one jump (px)
-        BASE_X = 2                 # position of the bunny in its face (centered, 4 px)
+        POP = 0.45 # duration of the spring-up (s)
+        JUMPS = 4 # number of jumps (full turn)
+        JUMP_T = 1.0 # duration of one jump (s)
+        HOP_H = 3.0 # height of one jump (px)
+        BASE_X = 2 # position of the bunny in its face (centered, 4 px)
         MIN_DURATION = POP + (JUMPS * JUMP_T)
         DURATION = MIN_DURATION
 

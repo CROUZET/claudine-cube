@@ -11,9 +11,9 @@ module Claudine
       # into a new bunny (hatching). Light blue (start event -> light).
       # Signature: 4 heads rising and merging into one bunny on the top.
       class Save < BunnyBase
-        T1 = 0.6                  # rise on the lateral faces
-        T2 = 1.5                  # convergence on the top
-        DUR = 2.3                  # hatching of the merged bunny
+        T1 = 0.6 # rise on the lateral faces
+        T2 = 1.5 # convergence on the top
+        DUR = 2.3 # hatching of the merged bunny
         MIN_DURATION = DUR
         DURATION = DUR
         COLOR = [120, 200, 255].freeze # light blue (start)
@@ -33,8 +33,8 @@ module Claudine
         ].freeze
 
         # Entry positions on the top (sprite origin), per edge.
-        EDGES = [[2, 0], [4, 3], [2, 3], [0, 3]].freeze   # front, right, back, left
-        CENTER = [2, 2].freeze                             # merge point
+        EDGES = [[2, 0], [4, 3], [2, 3], [0, 3]].freeze # front, right, back, left
+        CENTER = [2, 2].freeze # merge point
 
         # Merged bunny = the nice bunny (profile) from user_prompt, centered.
         NEW = Think::RABBIT
@@ -43,19 +43,19 @@ module Claudine
 
         def render(t, panel)
           panel.clear
-          if t < T1                                        # rise on the 4 faces
+          if t < T1 # rise on the 4 faces
             yb = (3 * (t / T1)).round
             LATERAL.each do |face|
               HEAD.each { |dx, dy| px(panel, face, 2 + dx, yb + dy, COLOR) }
             end
-          elsif t < T2                                     # convergence on the top
+          elsif t < T2 # convergence on the top
             cp = (t - T1) / (T2 - T1)
             EDGES.each do |sx, sy|
               ox = (sx + (cp * (CENTER[0] - sx))).round
               oy = (sy + (cp * (CENTER[1] - sy))).round
               HEAD.each { |dx, dy| px(panel, :top, ox + dx, oy + dy, COLOR) }
             end
-          else                                             # hatching of the merged bunny
+          else # hatching of the merged bunny
             a = 1.0 - ((1.0 - [(t - T2) / (DUR - T2), 1.0].min)**2)
             NEW.each { |dx, dy| px(panel, :top, NEW_X + dx, NEW_Y + dy, dim(COLOR, a)) }
           end

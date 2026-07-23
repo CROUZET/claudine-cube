@@ -13,9 +13,9 @@ module Claudine
       class Retry < BunnyBase
         MIN_DURATION = 0.5
         COLOR = [255, 0, 0].freeze # red (error)
-        SHAKE = 1.0                # amplitude of the shaking (px)
-        FREQ = 5.0                # frequency of the shaking (Hz) -- anger
-        BLINK = 0.2                # half-period of the X blinking (s)
+        SHAKE = 1.0 # amplitude of the shaking (px)
+        FREQ = 5.0 # frequency of the shaking (Hz) -- anger
+        BLINK = 0.2 # half-period of the X blinking (s)
 
         # Top: big thick X (2 px) -- the 2 widened diagonals.
         X_TOP = (0..7).to_a.product((0..7).to_a)

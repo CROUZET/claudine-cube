@@ -13,13 +13,13 @@ module Claudine
       # fades out.
       class Finish < BunnyBase
         COLOR = [255, 200, 0].freeze # yellow (end)
-        DUR = 1.6               # duration of the dance + fade
+        DUR = 1.6 # duration of the dance + fade
         MIN_DURATION = DUR
-        SWAYS = 3                 # number of hip sways during the dance
-        BASE_X = 2                 # left edge of the sprite (centered, 4 px wide)
-        SHEAR = 1.0               # amplitude of the lean (px at the top of the sprite)
-        SQUASH = 0                 # max vertical squash (slight)
-        BLINK = 0.25              # half-period of the top blinking (s)
+        SWAYS = 3 # number of hip sways during the dance
+        BASE_X = 2 # left edge of the sprite (centered, 4 px wide)
+        SHEAR = 1.0 # amplitude of the lean (px at the top of the sprite)
+        SQUASH = 0 # max vertical squash (slight)
+        BLINK = 0.25 # half-period of the top blinking (s)
 
         # Phase offset of the dance per lateral face (staggered dances).
         FACE_PHASE = { front: 0.0, right: 0.2, back: 0.4, left: 0.6 }.freeze

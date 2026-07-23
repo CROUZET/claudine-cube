@@ -13,9 +13,9 @@ module Claudine
       # Signature: rising crest bottom->top, in rings toward the inside, repeated.
       class Think < CubeBase
         MIN_DURATION = 0.6
-        SPEED = 16.0           # rows/rings per second
-        SPREAD = 2.0            # thickness of the crest
-        PAUSE = 0.5            # dark time between two waves (seconds)
+        SPEED = 16.0 # rows/rings per second
+        SPREAD = 2.0 # thickness of the crest
+        PAUSE = 0.5 # dark time between two waves (seconds)
         COLOR = [0, 180, 220].freeze
 
         # Duration of a full pass: rise (SIDE rows) + top rings

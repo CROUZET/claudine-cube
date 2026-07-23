@@ -14,15 +14,15 @@ module Claudine
       # Signature: bunnies jumping then dancing all around the facade.
       class Start < BunnyBase
         COLOR = [210, 232, 255].freeze # bluish white (start)
-        T1 = 0.60              # end of the left -> right jump
-        T2 = 1.20              # end of the right -> left jump
-        DUR = 2.30              # end of the dance
+        T1 = 0.60 # end of the left -> right jump
+        T2 = 1.20 # end of the right -> left jump
+        DUR = 2.30 # end of the dance
         MIN_DURATION = DUR
-        HOP_H = 3.0             # height of the jumps (px)
-        CENTER_X = 2.0             # left edge of the sprite when centered
-        SHEAR = 2.0             # amplitude of the lean (px at the top of the sprite)
-        SQUASH = 0.15            # max vertical squash during the dance (slight)
-        BLINK = 0.25            # half-period of the top blinking (s)
+        HOP_H = 3.0 # height of the jumps (px)
+        CENTER_X = 2.0 # left edge of the sprite when centered
+        SHEAR = 2.0 # amplitude of the lean (px at the top of the sprite)
+        SQUASH = 0.15 # max vertical squash during the dance (slight)
+        BLINK = 0.25 # half-period of the top blinking (s)
 
         # Top: 8 pixels (row x column -> x,y), 2 along the diagonal of
         # each corner, that blink in rhythm.

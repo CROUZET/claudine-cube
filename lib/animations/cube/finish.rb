@@ -11,11 +11,11 @@ module Claudine
       # pattern that scrolls around the cube. Same orange/amber as the snake
       # (pre_tool). Signature: a crenellated crown rotating at the base.
       class Finish < CubeBase
-        MIN_DURATION = 0.8           # rotates for a short moment then hands back
-        HEIGHT = 2             # height of a merlon (px from bottom: y = 0,1)
-        MERLON = 3             # width of a merlon (upper part)
-        PERIOD = 4             # merlon + crenel (3 + 1 columns)
-        SPEED = 4.0           # columns per second (rotation)
+        MIN_DURATION = 0.8 # rotates for a short moment then hands back
+        HEIGHT = 2 # height of a merlon (px from bottom: y = 0,1)
+        MERLON = 3 # width of a merlon (upper part)
+        PERIOD = 4 # merlon + crenel (3 + 1 columns)
+        SPEED = 4.0 # columns per second (rotation)
         COLOR = [190, 80, 0].freeze # = Start::HEAD (orange/amber of the snake)
 
         def render(t, panel)

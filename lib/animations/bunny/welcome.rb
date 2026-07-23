@@ -13,10 +13,10 @@ module Claudine
       # (The top stays empty for now.)
       # Signature: bunnies waking up all around the facade.
       class Welcome < BunnyBase
-        RISE = 0.7            # appearance + ears rising (s)
-        TOP_FILL = 2.0            # filling of the loader on the top (s)
+        RISE = 0.7 # appearance + ears rising (s)
+        TOP_FILL = 2.0 # filling of the loader on the top (s)
         MIN_DURATION = 1.4
-        DURATION = 4.0        # duration shown by the preview (see 2 blinks)
+        DURATION = 4.0 # duration shown by the preview (see 2 blinks)
 
         # Warm palette, identical to the cube session_start: hue along the
         # diagonal d=0..DMAX (orange-yellow -> red -> magenta).
@@ -24,9 +24,9 @@ module Claudine
         HUE0 = 0.15
         HUE1 = -0.18
 
-        BLINK_PERIOD = 2.6        # time between two blinks (s)
-        BLINK_DUR = 0.14       # duration of closed eyelid (s)
-        BLINK_OFFSET = 1.3        # sets the 1st blink shortly after wake-up
+        BLINK_PERIOD = 2.6 # time between two blinks (s)
+        BLINK_DUR = 0.14 # duration of closed eyelid (s)
+        BLINK_OFFSET = 1.3 # sets the 1st blink shortly after wake-up
 
         # --- Model A: front bunny, straight ears, full width. ---
         # Body + head (without ears). Eyes (x=2,5 at y=3) left off.
@@ -37,8 +37,8 @@ module Claudine
                   [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1],
                           [2, 0], [3, 0], [4, 0], [5, 0],
         ].freeze
-        A_EARS = [1, 2, 5, 6].freeze  # straight ears (rise from y=5 to y=7)
-        A_WINK = [2, 3].freeze        # winking eye (left)
+        A_EARS = [1, 2, 5, 6].freeze # straight ears (rise from y=5 to y=7)
+        A_WINK = [2, 3].freeze # winking eye (left)
 
         # --- Model B: bunny with spread ears (in a V). ---
         B_BODY = [

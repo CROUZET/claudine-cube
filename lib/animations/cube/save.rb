@@ -10,8 +10,8 @@ module Claudine
       # Signature: a blinking checkerboard alternating over the whole cube.
       class Save < CubeBase
         MIN_DURATION = 1.0
-        PHASE = 0.3             # duration of a phase before the checkerboard inverts
-        SQUARE = 2               # side of a square (px)
+        PHASE = 0.3 # duration of a phase before the checkerboard inverts
+        SQUARE = 2 # side of a square (px)
         COLOR = [210, 210, 210].freeze # neutral gray
 
         def render(t, panel)

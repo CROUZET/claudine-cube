@@ -14,10 +14,10 @@ module Claudine
       class Think < BunnyBase
         MIN_DURATION = 0.6
         COLOR = [140, 200, 255].freeze # light blue
-        SPEED = 12.0                    # columns/second (around the cube)
-        HOP_LEN = 8                       # length of one jump (columns) -- 32 = 4 jumps/turn
-        HOP_H = [3.0, 5.0, 4.0].freeze  # jump height per bunny (the top can go out)
-        NB = HOP_H.size              # number of staggered bunnies around the cube
+        SPEED = 12.0 # columns/second (around the cube)
+        HOP_LEN = 8 # length of one jump (columns) -- 32 = 4 jumps/turn
+        HOP_H = [3.0, 5.0, 4.0].freeze # jump height per bunny (the top can go out)
+        NB = HOP_H.size # number of staggered bunnies around the cube
 
         # Profile bunny sprite (increasing dx = walk direction). dy = row,
         # 0 = paws. Shape provided by the user.

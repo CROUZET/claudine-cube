@@ -14,8 +14,8 @@ module Claudine
         MIN_DURATION = 3.6
         DURATION = 4.5 # full duration (read by the preview)
         COLOR = [120, 200, 255].freeze # light blue (start)
-        SPEED = 7.0               # columns/second (calm walk)
-        STEP = 4                 # columns per step (paw alternation)
+        SPEED = 7.0 # columns/second (calm walk)
+        STEP = 4 # columns per step (paw alternation)
 
         # Profile bunny, turned toward the walk (increasing dx = front). dy=0=bottom.
         # Eye = hollow at (5,4). Close-up (7 px wide, 7 tall).
@@ -33,8 +33,8 @@ module Claudine
           [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2],
                   [1, 1], [2, 1], [3, 1], [4, 1], [5, 1],
         ].freeze
-        LEGS_A = [[1, 0], [4, 0]].freeze   # step 1
-        LEGS_B = [[2, 0], [5, 0]].freeze   # step 2 (alternation)
+        LEGS_A = [[1, 0], [4, 0]].freeze # step 1
+        LEGS_B = [[2, 0], [5, 0]].freeze # step 2 (alternation)
 
         def render(t, panel)
           panel.clear
