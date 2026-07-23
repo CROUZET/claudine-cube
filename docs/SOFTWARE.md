@@ -137,9 +137,11 @@ sequenceDiagram
     ESP-->>Panel: (silent, WS2812B latch)
 ```
 
-Each frame the Runner also reflects the live `Config#brightness` onto the panel
-(see [Ruby-side brightness](#ruby-side-brightness) and
-[the admin server](#3--the-admin-web-server--user-facing-control-plane)).
+Each frame the Runner also observes the live `Config`: it reflects
+`Config#brightness` onto the panel, and if no source integration is enabled it
+blanks the panel and skips dispatch (nothing is driving the cube) — see
+[Ruby-side brightness](#ruby-side-brightness) and
+[the admin server](#3--the-admin-web-server--user-facing-control-plane).
 
 ### Classes and files
 
@@ -460,8 +462,9 @@ displayed until the next one (or until idle).
 The connector reads a **gate** from `Config`: if the `claude_code` integration is
 switched off in the [admin page](#3--the-admin-web-server--user-facing-control-plane),
 it still answers `204` (hooks never error) but drops the event instead of pushing
-it — so the cube stops reacting and falls to idle, with no effect on the render
-path.
+it. With no source enabled, the Runner then blanks the cube (see the
+[Config gate](#config-and-persistence)) — it turns off rather than looping the
+last animation.
 
 #### Extensibility: adding a source
 
@@ -668,8 +671,10 @@ settings, persisted to **`~/.claudine`** (JSON, user-level, outside the repo).
   restore a brownout-inducing level.
 - **Integration toggles** are read by the source connectors: `ClaudeCode` calls
   `config.integration_enabled?(:claude_code)` before pushing. When off it still
-  answers `204` but drops the event — a gate on *ingestion*, never on the render
-  path, so the cube simply idles.
+  answers `204` but drops the event (gate on *ingestion*). And when
+  `any_integration_enabled?` is false — no source is driving the cube — the
+  Runner blanks the display (`panel.clear`) and resets the manager, so the cube
+  turns off rather than looping the last animation.
 
 ### AdminServer (HTTP API)
 
@@ -684,9 +689,10 @@ Routes:
 | `/api/brightness` | POST | body `{ "value": <0..1> }` → `204` (`400` on bad input); applies to `Config` (persisted if ≤ ceiling) |
 | `/api/integration` | POST | body `{ "name": "claude_code", "enabled": bool }` → `204` (`400` on bad input); toggles a source integration |
 
-The `Runner` reflects `config.brightness` onto the panel at the top of each
-frame — the whole hot-reload mechanism (see
-[Threading](#threading-and-thread-safety)).
+The `Runner` observes `config` at the top of each frame: it reflects
+`config.brightness` onto the panel (hot-reload) and, when
+`config.any_integration_enabled?` is false, blanks the cube and resets the
+manager instead of rendering (see [Threading](#threading-and-thread-safety)).
 
 ### The page
 

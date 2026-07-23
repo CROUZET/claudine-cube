@@ -43,9 +43,20 @@ module Claudine
         frame_start = monotonic
         t = frame_start - t0
 
-        panel.brightness = @config.brightness   # live control-plane value (hot)
-        @bus.drain.each { |event| @manager.handle(event, t) }
-        @manager.render(t, panel)
+        active = @config.any_integration_enabled?
+        panel.brightness = @config.brightness    # live control-plane value (hot)
+        if active
+          @bus.drain.each { |event| @manager.handle(event, t) }
+          @manager.render(t, panel)
+        else
+          # No source is driving the cube → turn it off. Reset once on the
+          # on→off transition so a later resume starts blank, and drop any
+          # already-queued events so they don't replay on resume.
+          @manager.reset if @sources_active
+          @bus.drain
+          panel.clear
+        end
+        @sources_active = active
         panel.show
         frames += 1
 

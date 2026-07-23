@@ -107,6 +107,13 @@ Dir.mktmpdir do |dir|
   # 13. stored integrations map is loaded
   write_file(file, 'integrations' => { 'claude_code' => false })
   check('stored integration loaded', Claudine::Config.new(path: file).integration_enabled?(:claude_code), false)
+
+  # 14. any_integration_enabled? drives the "blank the cube" decision
+  File.delete(file) if File.exist?(file)
+  c = Claudine::Config.new(path: file)
+  check('any_integration_enabled? true by default', c.any_integration_enabled?, true)
+  c.set_integration('claude_code', false)
+  check('any_integration_enabled? false when all off', c.any_integration_enabled?, false)
 end
 
 puts(ALL[0] ? "\nALL OK" : "\nFAILURES")

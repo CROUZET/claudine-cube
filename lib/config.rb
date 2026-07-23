@@ -73,6 +73,12 @@ module Claudine
       on
     end
 
+    # True if at least one source integration is on. When all sources are off,
+    # nothing drives the cube, so the render loop blanks it (see Runner).
+    def any_integration_enabled?
+      @mutex.synchronize { @integrations.values.any? }
+    end
+
     def to_state
       { brightness: brightness, boost_ceiling: BOOST_CEILING, integrations: integrations }
     end

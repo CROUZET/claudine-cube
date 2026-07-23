@@ -77,5 +77,11 @@ ok &= check('new user_prompt restarts the background loop',
 bg = mgr.instance_variable_get(:@background)
 ok &= check('a background is active after the new prompt', !bg.nil?, true)
 
+# reset (used by the Runner when all sources are off → the cube is blanked):
+# clears current + background so a later resume starts blank, not mid-loop.
+mgr.reset
+ok &= check('reset clears @current',    mgr.instance_variable_get(:@current).nil?,    true)
+ok &= check('reset clears @background', mgr.instance_variable_get(:@background).nil?, true)
+
 puts ok ? "\nLAYER MODEL OK ✅" : "\nFAILURE ❌"
 exit(ok ? 0 : 1)

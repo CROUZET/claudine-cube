@@ -76,6 +76,23 @@ module Claudine
       end
     end
 
+    # Clears all animation state (current, background, overlay, pending, idle).
+    # Called by the Runner when output is suspended because every source
+    # integration is off: a later resume then starts blank and waits for the
+    # next event rather than replaying the last loop.
+    def reset
+      @current              = nil
+      @activated            = nil
+      @background           = nil
+      @background_activated = nil
+      @overlay              = false
+      @overlay_until        = nil
+      @pending              = nil
+      @is_idle              = false
+      @idle_off_at          = nil
+      @last_event_t         = nil
+    end
+
     def render(t, panel)
       if @pending && lock_open?(t)
         activate(@pending[0], @pending[1], t)

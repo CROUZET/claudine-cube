@@ -206,8 +206,10 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    config.brightness`), so changes apply **hot**. It exposes **brightness** and
    **per-source integration on/off** (ClaudeCode): turning a source off gates its
    *event ingestion* — the connector still answers `204` (hooks never error) but
-   drops the event instead of pushing, so the cube just falls to idle. No
-   render-path exception. Brightness precedence: `CLAUDINE_BRIGHTNESS` (ENV) >
+   drops the event instead of pushing. When **no source is enabled** the Runner
+   has nothing driving the cube, so it **blanks it** (`panel.clear`) and resets
+   the manager; re-enabling starts blank until the next event. Brightness
+   precedence: `CLAUDINE_BRIGHTNESS` (ENV) >
    `~/.claudine` > `Settings` default. A **safe-boot ceiling**
    (`Config::BOOST_CEILING = 0.25`) caps what is persisted and restored; higher
    values are volatile **session boosts** (UI raises a "plug the DC jack"
