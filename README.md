@@ -6,7 +6,9 @@ Five 8×8 addressable LED panels (320 pixels total) arranged as a **cube**,
 driven by a XIAO ESP32-S3, displaying a short animated reaction for each
 Claude Code lifecycle event: session start/end, tool use, subagents, task
 creation, compaction, idle, etc. The most recent event stays displayed until
-the next one arrives.
+the next one arrives. A local **admin web page** lets you tune the running cube
+live — brightness, animation theme, enable/disable the source — preview any
+animation, and watch its status.
 
 This is an evolution of the original **Claudine** flat 16×16 panel. The
 software principle is unchanged — only the geometry (flat → cube) and the
@@ -88,8 +90,12 @@ the physical wiring. See [HARDWARE.md](docs/HARDWARE.md).
   (NeoPixel not FastLED, RX buffer), LED mapping, delivered software.
 - **[HARDWARE.md](docs/HARDWARE.md)** — components, wiring, star power topology,
   power-up sequence, lessons learned.
-- **[SOFTWARE.md](docs/SOFTWARE.md)** — daemon architecture, firmware, Adalight
-  protocol, cube animation set, connectors.
+- **[SOFTWARE.md](docs/SOFTWARE.md)** — the three software components (Ruby
+  daemon, ESP32 firmware, and the **admin web server**); architecture, Adalight
+  protocol, animation sets, connectors.
+- **[INTENTIONS.md](docs/INTENTIONS.md)** — the intention vocabulary: the
+  source ↔ rendering contract (**implemented**) that lets animations target
+  neutral states (`think`, `start`, `fork`…) instead of Claude Code hooks.
 - **[cube_animation_snippets.md](docs/cube_animation_snippets.md)** — set-aside
   effects for reuse.
 
@@ -146,6 +152,24 @@ curl -sX POST http://127.0.0.1:9292/event/task_done
 Verbose logs: `CLAUDINE_LOG_LEVEL=DEBUG ruby claudine.rb`.
 Brightness override (test different levels): `CLAUDINE_BRIGHTNESS=0.12 ruby claudine.rb`
 (default `0.08`; higher draws more current/heat — keep the DC jack plugged in).
+
+### Live control (admin page)
+
+`ruby claudine.rb` also starts a small admin web server on
+**http://localhost:9293** (self-contained, no build, no external assets). From
+it you can, live:
+
+- watch a **status** panel (current animation, last event, uptime);
+- **enable/disable** the Claude Code source (when off, the cube goes dark);
+- switch the **animation theme** (`cube` / `bunny`);
+- **trigger** any intention once — to preview it or demo without Claude Code;
+- adjust **brightness** (capped at a safe `0.25` by default; higher is a
+  session-only boost with a "plug the DC jack" warning).
+
+Settings persist to `~/.claudine` (user-level, outside the repo). This admin
+server is a *control plane*, separate from the Claude Code hook endpoint
+(`:9292`), which is untouched. See
+[SOFTWARE.md](docs/SOFTWARE.md#3--the-admin-web-server--user-facing-control-plane).
 
 ### Animation sets
 
@@ -205,15 +229,17 @@ temporal role comes from each intention's `kind`. See
 ```
 claudine-cube/
 ├─ claudine.rb              # Daemon entry point
-├─ config/settings.rb       # Port, baud, size (8×8×5=320), brightness, faces
+├─ config/settings.rb       # Serial, geometry (8×8×5=320), ports, theme + brightness defaults
 ├─ lib/
 │  ├─ cube_mapping.rb       # (face,x,y) → chain index (+ self-test)
 │  ├─ panel.rb              # per-face API via CubeMapping (no serpentine/FLIP)
 │  ├─ animation_manager.rb  # loads the active set, dispatches events
+│  ├─ config.rb, status.rb  # live settings (~/.claudine) + runtime snapshot
 │  ├─ animations/cube/      # default set: 16 intentions + _base.rb (volumetric)
-│  └─ …                     # Runner, EventBus, Event, connectors, logger
+│  ├─ connectors/           # claude_code.rb (:9292) + admin_server.rb (:9293) + admin/index.html
+│  └─ …                     # Runner, EventBus, Event, logger, intentions, profiles
 ├─ sketch_firmware/         # XIAO firmware (NeoPixel, DATA_PIN 1, NUM_LEDS 320)
-└─ test/                    # cube geometry + animation tests
+└─ test/                    # cube geometry + animation + admin tests
 ```
 
 ---

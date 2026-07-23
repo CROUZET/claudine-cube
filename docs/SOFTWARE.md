@@ -710,11 +710,11 @@ manager instead of rendering (see [Threading](#threading-and-thread-safety)).
 
 `lib/connectors/admin/index.html` — **vanilla HTML/CSS/JS**, self-contained (CSS
 and JS inline), no build step and no external asset (works offline). An
-**État** panel (top) shows the live runtime snapshot (polled from `/api/status`
-every 2 s). A **Déclencher** grid plays any intention on demand (disabled when
-the cube is off). An
+**Status** panel (top) shows the live runtime snapshot (polled from `/api/status`
+every 2 s). A **Trigger an intention** grid plays any intention on demand
+(disabled when the cube is off). An
 **Integrations** section lists each source with a labeled switch (state
-shown by knob position + "activé/désactivé" text — **not color alone**, the
+shown by knob position + "on/off" text — **not color alone**, the
 maintainer is slightly colorblind). A **Theme** `<select>` lists the available
 sets (from `/api/state`) and switches the active one. A **Brightness** slider
 shows its value live
@@ -724,7 +724,7 @@ The `ClaudeCode` HTTP contract (`:9292`) is untouched — only its ingestion gat
 
 ### Trigger buttons
 
-A **Déclencher une intention** grid (one button per vocabulary intention, from
+A **Trigger an intention** grid (one button per vocabulary intention, from
 `/api/state`) plays any animation on demand — handy to preview a theme or demo
 without Claude Code. `POST /api/trigger` pushes an intention-typed event onto the
 `bus` with `once: true`; the Runner drains it and `AnimationManager#resolve`
@@ -738,7 +738,7 @@ enabled (the poll's `source_active` drives this).
 
 ### Status panel (read-only)
 
-The page also shows a live **État** panel (state, current animation, seconds
+The page also shows a live **Status** panel (state, current animation, seconds
 since the last event, uptime), polled from `GET /api/status` every 2 s. This is
 the mirror of the observe-in-the-loop pattern: instead of the Runner reading
 `Config`, it **publishes** a status snapshot into a shared `Status`
@@ -753,19 +753,22 @@ is enabled (the cube is blanked).
 
 Adding a future control is the same shape everywhere: a key in `Config` + an
 endpoint in `AdminServer` + a widget in the page; the render loop (or, for
-integrations, the connector) already observes `Config` (and the connector for integrations). Shipped: **brightness**,
-**theme** (active animation set), and **integration on/off**.
+integrations, the connector) already observes `Config`. Shipped so far:
+**brightness**, **theme** (active animation set), **integration on/off**, the
+read-only **status panel**, and the **trigger** buttons.
 
 ### Tests
 
-Both run without hardware (no `Panel`, no serial):
+All run without hardware (no `Panel`, no serial):
 
-- `test/test_config.rb` — brightness precedence, safe-boot ceiling, volatile
-  boost, integration toggles, file-I/O robustness, key preservation.
-- `test/test_admin_server.rb` — the HTTP API (brightness + integration) end-to-end
-  via `Net::HTTP` against a temp `Config` on a test port.
+- `test/test_config.rb` — brightness precedence/ceiling/boost, theme, integration
+  toggles, file-I/O robustness, key preservation.
+- `test/test_admin_server.rb` — the whole HTTP API (state, status, brightness,
+  integration, theme, trigger) end-to-end via `Net::HTTP` against a temp `Config`.
 - `test/test_claude_code_gate.rb` — the connector's ingestion gate: events reach
   the bus when on, are dropped (still `204`) when off.
+- `test/test_manager_states.rb` (a daemon test) also covers `switch_set`, the
+  `status` snapshot, and one-shot triggers.
 
 ---
 

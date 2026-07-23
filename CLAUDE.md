@@ -172,7 +172,7 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    `start`, `fork`…), not by hook. A **profile** (data) maps Claude Code hooks
    onto the 16 intentions; the manager translates. This decouples the cube from
    Claude Code (any source is just a new profile) and moves the temporal role
-   out of the manager. Frozen V1 spec + rationale: `docs/INTENTIONS.md`.
+   out of the manager. Full vocabulary + rationale (implemented): `docs/INTENTIONS.md`.
 4. **`cube` animation set** (default, `lib/animations/cube/`): Claudine's flat
    sets (`default`/`fancy`/`abstract`/`bunny`) and `EventLabel` have
    been **removed** (3×5 text unsuitable for the cube). The new set is **without

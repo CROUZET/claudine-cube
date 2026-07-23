@@ -13,6 +13,11 @@
   a pointer). Decouples the cube from Claude Code: animations target neutral
   states (`think`, `start`, `fork`…), a profile (data) maps the hooks onto them,
   and the temporal role (`kind`) lives on the intention. → **[`INTENTIONS.md`](INTENTIONS.md)**
+- **Admin control page** — ✅ *shipped* (pointer). A local web page (WEBrick,
+  `:9293`) to tune the running cube live: status panel, brightness, theme,
+  source on/off, and trigger any intention — persisted to `~/.claudine`. →
+  **[`SOFTWARE.md`](SOFTWARE.md#3--the-admin-web-server--user-facing-control-plane)**.
+  Possible next controls: idle-timeout, more source integrations.
 - **Animation marketplace** — *vision.* Public marketplace of shareable
   animations: safe third-party code execution (compilation to WASM,
   capabilities, photosensitivity/color-blindness lints), local creation studio,
