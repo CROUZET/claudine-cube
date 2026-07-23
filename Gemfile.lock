@@ -14,6 +14,7 @@ GEM
     ffi (1.17.4-x86_64-linux-musl)
     rubyserial (0.6.0)
       ffi (~> 1.9, >= 1.9.3)
+    webrick (1.9.2)
 
 PLATFORMS
   aarch64-linux-gnu
@@ -30,6 +31,7 @@ PLATFORMS
 
 DEPENDENCIES
   rubyserial (>= 0.6.0)
+  webrick
 
 CHECKSUMS
   ffi (1.17.4) sha256=bcd1642e06f0d16fc9e09ac6d49c3a7298b9789bcb58127302f934e437d60acf
@@ -44,6 +46,7 @@ CHECKSUMS
   ffi (1.17.4-x86_64-linux-gnu) sha256=9d3db14c2eae074b382fa9c083fe95aec6e0a1451da249eab096c34002bc752d
   ffi (1.17.4-x86_64-linux-musl) sha256=3fdf9888483de005f8ef8d1cf2d3b20d86626af206cbf780f6a6a12439a9c49e
   rubyserial (0.6.0) sha256=5888c6a7a172425f0623c5b3fe417bde73f4d34a2d5db78b9b7b656dacf245ee
+  webrick (1.9.2) sha256=beb4a15fc474defed24a3bda4ffd88a490d517c9e4e6118c3edce59e45864131
 
 RUBY VERSION
   ruby 4.0.5

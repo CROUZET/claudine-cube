@@ -1,24 +1,27 @@
 require_relative 'panel'
 require_relative 'logger'
 require_relative 'event_bus'
+require_relative 'config'
 
 module Claudine
   # Fixed-cadence render loop.
-  # Every frame: drains the event bus, calls manager.render(t, panel),
-  # then panel.show. Measures elapsed real time to hold the requested FPS.
-  # Catches Ctrl-C to blank the panel cleanly on shutdown.
+  # Every frame: reflects the live Config brightness onto the panel, drains the
+  # event bus, calls manager.render(t, panel), then panel.show. Measures elapsed
+  # real time to hold the requested FPS. Catches Ctrl-C to blank the panel
+  # cleanly on shutdown.
   class Runner
     attr_reader :bus
 
-    def initialize(manager:, bus: EventBus.new, fps: Settings::FPS)
+    def initialize(manager:, bus: EventBus.new, fps: Settings::FPS, config: Config.new)
       @manager    = manager
       @bus        = bus
       @fps        = fps
       @frame_time = 1.0 / fps
+      @config     = config
     end
 
     def start
-      panel = Panel.new
+      panel = Panel.new(brightness: @config.brightness)
       Claudine.logger.info "Runner: started (#{@fps} fps)"
       begin
         run_loop(panel)
@@ -40,6 +43,7 @@ module Claudine
         frame_start = monotonic
         t = frame_start - t0
 
+        panel.brightness = @config.brightness   # live control-plane value (hot)
         @bus.drain.each { |event| @manager.handle(event, t) }
         @manager.render(t, panel)
         panel.show

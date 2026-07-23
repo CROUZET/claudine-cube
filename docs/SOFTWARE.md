@@ -1,13 +1,18 @@
-# SOFTWARE — Ruby daemon and ESP32 firmware
+# SOFTWARE — daemon, firmware, and admin web server
 
-Two software pieces collaborate over a USB serial link:
+Three software pieces collaborate around one USB serial link:
 
-- **ESP32 firmware** (`sketch_firmware/`) — a few dozen lines of C++/Arduino,
+- **Ruby daemon** (`claudine.rb` + `lib/`) — the business logic on the Mac: an
+  event bus, a fixed-cadence render loop, animations that paint the pixels, and
+  connectors that listen to external sources and push events onto the bus.
+- **ESP32 firmware** (`sketch_firmware/`) — a few dozen lines of C++/Arduino
   decoding the Adalight protocol and pushing the received pixels onto the LED
   chain via **Adafruit NeoPixel**. No animation intelligence.
-- **Ruby daemon** (`claudine.rb` + `lib/`) — the business logic: an event bus,
-  a fixed-cadence render loop, animations that paint the pixels, and connectors
-  that listen to external sources and push events onto the bus.
+- **Admin web server** (`lib/connectors/admin_server.rb` + `lib/config.rb`) — a
+  user-facing control plane: a WEBrick HTTP server serving a small web page to
+  tune the running cube (brightness…) live, persisted to `~/.claudine`. It runs
+  inside the daemon process but is architecturally distinct — it is *not* an
+  event source.
 
 See [README.md](../README.md) for the overview and [HARDWARE.md](HARDWARE.md)
 for the hardware. This is the port of the flat 16×16 Claudine to the 5-face
@@ -16,7 +21,66 @@ the firmware LED driver, and the animation set changed.
 
 ---
 
-## Daemon architecture
+## Architecture at a glance
+
+The Mac does all the thinking; the device is dumb. A single Ruby process hosts
+the **daemon core** (compute + render) and the **admin web server**; it drives
+the **ESP32 firmware** over USB serial, which in turn lights the cube.
+
+```mermaid
+flowchart LR
+    USER["You / Claude Code"]
+
+    subgraph MAC["Mac — Ruby process (claudine.rb)"]
+        direction TB
+        subgraph DAEMON["Daemon core (compute + render)"]
+            BUS["EventBus"]
+            RUNNER["Runner (30 fps)"]
+            MGR["AnimationManager"]
+            PANEL["Panel (Adalight)"]
+        end
+        ADMIN["Admin web server<br/>(WEBrick :9293)"]
+        CONFIG["Config<br/>(~/.claudine)"]
+    end
+
+    ESP["ESP32 firmware<br/>(XIAO, dumb decoder)"]
+    CUBE["Cube — 5×8×8 = 320 LEDs"]
+
+    USER -->|"lifecycle hooks · HTTP :9292"| BUS
+    USER -->|"browser · :9293"| ADMIN
+    ADMIN -->|writes| CONFIG
+    RUNNER -->|reads each frame| CONFIG
+    PANEL -->|"Adalight over USB serial"| ESP
+    ESP --> CUBE
+```
+
+**The three components:**
+
+| # | Component | Where | Role | Section |
+|---|---|---|---|---|
+| 1 | **Ruby daemon** | Mac (`claudine.rb`, `lib/`) | Event bus, 30 fps render loop, animations, source connectors | [↓](#1--the-ruby-daemon--compute--render) |
+| 2 | **ESP32 firmware** | XIAO device (`sketch_firmware/`) | Decode Adalight, push pixels to WS2812B | [↓](#2--the-esp32-firmware--dumb-adalight-decoder) |
+| 3 | **Admin web server** | Mac (`admin_server.rb`, `config.rb`) | User-facing control plane, live tuning, persisted to `~/.claudine` | [↓](#3--the-admin-web-server--user-facing-control-plane) |
+
+**Cross-cutting principles:**
+
+- **The Mac thinks, the device is dumb.** All animation logic is Ruby; the
+  firmware only decodes frames and latches them.
+- **Source ↔ rendering decoupling.** A source (Claude Code today) pushes raw
+  events onto the bus; a *profile* maps them to intentions; the active *set*
+  provides the visual. Adding a source never touches the render path.
+- **The control plane observes, it does not push.** The admin server mutates a
+  shared `Config`; the render loop reads it each frame. It never enters the
+  `EventBus` or the animation dispatch.
+
+---
+
+## 1 · The Ruby daemon — compute & render
+
+The core: it drains events, dispatches animations, paints the 320-pixel buffer
+and streams Adalight frames over serial at 30 fps.
+
+### Render loop and frame lifecycle
 
 ```mermaid
 flowchart LR
@@ -73,14 +137,16 @@ sequenceDiagram
     ESP-->>Panel: (silent, WS2812B latch)
 ```
 
----
+Each frame the Runner also reflects the live `Config#brightness` onto the panel
+(see [Ruby-side brightness](#ruby-side-brightness) and
+[the admin server](#3--the-admin-web-server--user-facing-control-plane)).
 
-## Components — role and file
+### Classes and files
 
 | Component | File | Role |
 |---|---|---|
 | `Claudine::Panel` | `lib/panel.rb` | Opens the serial port, manages the 320-pixel buffer, encodes/sends Adalight frames, maps `(face, x, y)` → chain index via `CubeMapping`, applies Ruby-side brightness |
-| `Claudine::Runner` | `lib/runner.rb` | Fixed-cadence render loop, drains the bus, calls `manager.render` then `panel.show`, handles Ctrl-C |
+| `Claudine::Runner` | `lib/runner.rb` | Fixed-cadence render loop; reflects `Config` brightness, drains the bus, calls `manager.render` then `panel.show`, handles Ctrl-C |
 | `Claudine::EventBus` | `lib/event_bus.rb` | Thread-safe event queue (`Queue`): connectors `push`, the Runner `drain`s |
 | `Claudine::Event` | `lib/event.rb` | Immutable value object `Data.define(:type, :payload)` |
 | `Claudine::AnimationManager` | `lib/animation_manager.rb` | Loads the active set at startup (`CLAUDINE_ANIMATION_SET`, default `cube`), builds an `intention => [Class,…]` registry; on an event it maps the raw hook type → intention via the active profile, resolves the intention against the set (walking `Intentions.resolve`'s fallback chain if absent), instantiates a fresh animation, and applies the display lock and idle switch |
@@ -90,22 +156,21 @@ sequenceDiagram
 | `Claudine::Intentions` | `lib/intentions.rb` | The 16-intention `VOCAB` (each mapped to a `kind` + `fallback`), the mandatory `CORE = %i[think stop sleep]`, and helpers `kind` / `fallback` / `resolve(intention, available)` (cycle-safe fallback walk) |
 | `Claudine::Profiles::CLAUDE_CODE` | `lib/profiles/claude_code.rb` | Data hash mapping the 16 Claude Code hook types 1:1 to intentions (e.g. `session_start → welcome`, `user_prompt → think`, `stop → stop`) |
 | `Claudine::Connectors::ClaudeCode` | `lib/connectors/claude_code.rb` | Small local HTTP server, pushes the raw hook type onto the bus (the profile does the hook→intention translation, in the manager) |
-| `Claudine::Settings` | `config/settings.rb` | Config constants (port, baud, 8×8×5 size, faces, brightness) |
+| `Claudine::Connectors::AdminServer` | `lib/connectors/admin_server.rb` | Control-plane WEBrick server (`:9293`) — see [component 3](#3--the-admin-web-server--user-facing-control-plane) |
+| `Claudine::Config` | `lib/config.rb` | Live-tunable settings source of truth, persisted to `~/.claudine` — see [component 3](#3--the-admin-web-server--user-facing-control-plane) |
+| `Claudine::Settings` | `config/settings.rb` | Config constants (port, baud, 8×8×5 size, faces, default brightness) |
 | `Claudine::Logger` | `lib/logger.rb` | Simple logger, level via `CLAUDINE_LOG_LEVEL` |
-| Arduino firmware | `sketch_firmware/sketch_firmware.ino` | Decodes Adalight, pushes to the chain via Adafruit NeoPixel |
+| Arduino firmware | `sketch_firmware/sketch_firmware.ino` | See [component 2](#2--the-esp32-firmware--dumb-adalight-decoder) |
 
-The entry point is `claudine.rb`: it builds the `AnimationManager`, the
-`Runner` and the `ClaudeCode` connector, then starts the loop. No hook-specific
-config lives there — each animation carries its own colors/motion in its file.
+The entry point is `claudine.rb`: it builds the `Config`, the `AnimationManager`,
+the `Runner`, the `ClaudeCode` connector and the `AdminServer`, then starts the
+loop. No hook-specific config lives there — each animation carries its own
+colors/motion in its file.
 
 > `lib/text/font_3x5.rb` and `lib/text/renderer.rb` are retained from Claudine
 > but **not used** by the cube set (which is text-free). The renderer still uses
 > the old positional `panel.set(x, y, …)`; it would need porting to the per-face
 > API to draw text on a single 8×8 face.
-
----
-
-## Important concepts
 
 ### Cube LED mapping
 
@@ -126,10 +191,12 @@ wiring of each face is entirely absorbed by these per-face formulas.
 top-face rotation is calibrated so that rising up a side face continues onto the
 top with the same `x` and increasing `y` (validated via `test/test_cube_edge.rb`).
 
-### Adalight protocol
+### Adalight protocol (wire format)
 
-A trivial protocol for carrying a frame of pixels over a serial port. Each
-frame starts with a 6-byte header, followed by `(N+1) × 3` RGB bytes.
+A trivial protocol for carrying a frame of pixels over a serial port. `Panel`
+encodes it; the firmware decodes it (see
+[Adalight decoder](#adalight-decoder-state-machine)). Each frame starts with a
+6-byte header, followed by `(N+1) × 3` RGB bytes.
 
 ```
 ┌──────────────────── Header (6 bytes) ────────────────────┬── Data (N+1)×3 ──┐
@@ -143,66 +210,21 @@ frame starts with a 6-byte header, followed by `(N+1) × 3` RGB bytes.
 For the cube: `N = 320`, so `count = 319 = 0x013F`, `hi = 0x01`, `lo = 0x3F`,
 `checksum = 0x01 ^ 0x3F ^ 0x55 = 0x6B`. Total frame: **6 + 960 = 966 bytes**.
 
-On the ESP32, a small state machine reads byte by byte and waits for the magic
-`'A' 'd' 'a'` before accepting a header:
-
-```mermaid
-stateDiagram-v2
-    [*] --> WAIT_A
-    WAIT_A --> WAIT_D: 'A'
-    WAIT_A --> WAIT_A: other
-    WAIT_D --> WAIT_A2: 'd'
-    WAIT_D --> WAIT_A: other
-    WAIT_A2 --> HI: 'a'
-    WAIT_A2 --> WAIT_A: other
-    HI --> LO: read hi
-    LO --> CHK: read lo
-    CHK --> DATA: checksum OK
-    CHK --> WAIT_A: checksum KO (resync)
-    DATA --> DATA: read R,G,B (idx ≤ count)
-    DATA --> WAIT_A: full frame → strip.show()
-```
-
-If a byte is lost, the state machine resyncs on the next valid `'A' 'd' 'a'`.
-
-### GRB color order
-
-WS2812B LEDs expect bytes in **G, R, B** order. This is absorbed on the ESP32
-side (`Adafruit_NeoPixel(..., NEO_GRB + NEO_KHZ800)`), so the Ruby side reasons
-in normal R, G, B.
-
 ### Ruby-side brightness
 
 The firmware runs the LEDs at full brightness; dimming happens on the Ruby side
-via `Panel#scale`, applying `Settings::BRIGHTNESS` (0.0–1.0, currently 0.08) on
-each channel before sending. Keeps the Ruby loop the single source of truth and
+via `Panel#scale`, applying `panel.brightness` (0.0–1.0, ~0.08 working) on each
+channel before sending. Keeps the Ruby loop the single source of truth and
 avoids reflash roundtrips. At 0.08 the cube draws ~1.5 A.
 
-### LED driver and the serial RX buffer (hard-won)
-
-Two firmware decisions were forced by hardware reality on the XIAO ESP32-S3 with
-FastLED 3.10 / ESP-IDF 5.x — both cost real debugging time:
-
-1. **NeoPixel, not FastLED.** Every FastLED backend was unusable here: RMT5
-   (default) crashes its DMA cache sync (`esp_cache_msync … invalid addr`) and
-   corrupts the chain; RMT4 legacy won't compile on IDF5; the I2S driver has no
-   S3 implementation (link errors); the SPI clockless driver enqueues frames
-   without transmitting. Adafruit NeoPixel uses the Arduino core's native RMT
-   path (the one behind the onboard RGB LED) and just works.
-2. **`Serial.setRxBufferSize(4096)` before `Serial.begin()`.** The original
-   symptom looked like a mapping or wiring bug: colors went garbled past a
-   *moving* boundary (~LED 85–128). Root cause: while `strip.show()` blocks the
-   loop (~10 ms for 320 LEDs), the Mac already streams the next frame; the
-   default 256-byte USB-CDC RX buffer (~85 LEDs) overflows and the tail of the
-   frame is dropped/shifted. A missing byte in the DATA phase misaligns every
-   later pixel while the firmware still latches — clean prefix, garbled tail, at
-   a timing-dependent position. Enlarging the RX buffer to hold a full 966-byte
-   frame fixes it. (This is the same failure mode noted in Claudine's old
-   "why not 60 fps" analysis — here it hit even at 30 fps because a full cube
-   frame is larger and `show()` blocks longer.)
-
-The hardware itself is sound (confirmed by a standalone on-device animation
-sketch lighting all 320 LEDs cleanly).
+Brightness is **live-tunable**: the Runner reflects `Config#brightness` onto the
+panel at the top of every frame, so the admin page can change it hot (see
+[the admin server](#3--the-admin-web-server--user-facing-control-plane)). The
+starting value follows the precedence `CLAUDINE_BRIGHTNESS` (ENV) > `~/.claudine`
+> `Settings::BRIGHTNESS`. A **safe-boot ceiling** (`Config::BOOST_CEILING`, 0.25)
+caps what is persisted and restored: higher values are volatile session boosts,
+never written, so a fresh boot (possibly USB-only) can't brown out on a stale
+high value.
 
 ### Render cadence and serial throughput
 
@@ -218,16 +240,21 @@ sketch lighting all 320 LEDs cleanly).
 
 - **Main thread**: Runner, blocking 30 fps render loop.
 - **Connector thread(s)**: each connector spawns its own thread (`ClaudeCode`
-  does `Thread.new { serve }` with a blocking `TCPServer#accept`).
+  does `Thread.new { serve }` with a blocking `TCPServer#accept`; `AdminServer`
+  runs WEBrick in a thread).
 
-Communication goes through an `EventBus` based on `Queue` (thread-safe). The
-Runner calls `drain` at frame start, emptying the queue with a `pop(true)` loop
-until `ThreadError`. Animations do no threading of their own — they're driven by
-the Runner ticks.
+Event sources communicate through an `EventBus` based on `Queue` (thread-safe).
+The Runner calls `drain` at frame start, emptying the queue with a `pop(true)`
+loop until `ThreadError`. Animations do no threading of their own — they're
+driven by the Runner ticks.
 
----
+The **control plane** uses a different, simpler channel: `AdminServer` (its own
+thread) mutates a shared `Config`, and the render loop *observes* it each frame
+(`panel.brightness = config.brightness`). A single float written on the admin
+thread and read on the render thread is safe under the GIL; a `Mutex` guards
+`Config`'s in-memory value and its file write. No command queue is needed.
 
-## Animation sets
+### Animation sets
 
 An **animation set** is a directory under `lib/animations/` with one `.rb` file
 per **intention** (not per Claude Code hook). The filename matches the intention
@@ -280,7 +307,7 @@ lib/animations/
   activation. This is how frequent intentions (`start` / `finish`) can avoid
   looking identical.
 
-### `CubeBase` helpers
+#### `CubeBase` helpers
 
 Every cube animation subclasses `Cube::CubeBase` and paints via these
 (coordinates in `(face, x, y)`; the physical wiring is handled by `CubeMapping`):
@@ -298,14 +325,14 @@ Every cube animation subclasses `Cube::CubeBase` and paints via these
 
 Constants: `ALL_FACES`, `LATERAL` (the 4 sides), `SIDE` (8), `RING` (32).
 
-### Design constraint: colorblind-safe
+#### Design constraint: colorblind-safe
 
 The maintainer is mildly colorblind, so **every event is distinguishable by
 motion / shape / brightness, not color alone** (no red↔green or yellow↔green
 distinctions). E.g. `finish` is a single flash while `retry` is a
 double blink; `save` converges while `saved` expands.
 
-### Example animations
+#### Example animations
 
 Whole-cube breathing:
 
@@ -334,7 +361,7 @@ class Think < CubeBase
 end
 ```
 
-### Display lock (latest-wins buffering)
+#### Display lock (latest-wins buffering)
 
 When events arrive faster than the current animation can play out, the cube
 would thrash. `AnimationManager` applies a **display lock**:
@@ -351,7 +378,7 @@ would thrash. `AnimationManager` applies a **display lock**:
 Tuning: `config/settings.rb → MIN_ANIMATION_DURATION` (global) and per-class
 `MIN_DURATION`.
 
-### Working-state model (background + overlays)
+#### Working-state model (background + overlays)
 
 A single "one animation at a time" model left the cube dark during *thinking*:
 after `think` played its wave once, nothing was active until the next
@@ -381,7 +408,7 @@ an event) and needs no lock. Verified by `test/test_manager_states.rb`.
 Which temporal role an intention has is data: its `kind` in
 `Intentions::VOCAB` (`lib/intentions.rb`), not a per-set or per-manager list.
 
-### Idle mode
+#### Idle mode
 
 After `Settings::IDLE_TIMEOUT` seconds without any event (default **90 s**;
 `nil` to disable), the manager triggers the `sleep` intention (kind `dormant`).
@@ -396,113 +423,7 @@ After `Settings::IDLE_TIMEOUT` seconds without any event (default **90 s**;
 
 Tuning: `config/settings.rb → IDLE_TIMEOUT`.
 
-### Extensibility: adding a source
-
-Adding a source is now **data + a connector**, with zero changes to the render
-path:
-
-1. Write a **profile** (like `lib/profiles/claude_code.rb`) — a data hash
-   mapping the source's raw event types to intentions from the vocabulary.
-2. Write a **connector** that (a) receives the bus in its constructor and
-   (b) pushes a `Claudine::Event` with the raw event type as `:type`.
-
-The manager translates event → intention via the profile and resolves it
-against the active set (falling back along `Intentions.resolve` if the set lacks
-that intention). No per-source animation files are needed, and no change is
-needed in the Runner, the Panel, or the AnimationManager.
-
----
-
-## ESP32 firmware
-
-Environment: **Arduino IDE 2.x**, board **XIAO_ESP32S3**, library **Adafruit
-NeoPixel**. Baud **921600** (must match `Settings::BAUD`).
-
-`sketch_firmware/sketch_firmware.ino`, in short:
-
-- `Serial.setRxBufferSize(4096)` then `Serial.begin(BAUD)` (the buffer size is
-  mandatory — see [above](#led-driver-and-the-serial-rx-buffer-hard-won)).
-- `strip.begin()` (Adafruit NeoPixel, `NEO_GRB + NEO_KHZ800`, `DATA_PIN 1`,
-  `NUM_LEDS 320`).
-- Adalight state machine (see diagram). On a full frame → `strip.show()` → back
-  to `WAIT_A`.
-
-Flash with USB only, DC jack unplugged. Close the Serial Monitor before running
-the daemon.
-
-> ⚠ After changing `#define BAUD`, reflash then update `Settings::BAUD` to match.
-
----
-
-## Ruby daemon
-
-### Environment
-
-- **Ruby 4.0.5** (rbenv, `.ruby-version`).
-- **Gem**: `rubyserial` (`Serial` class). Do NOT use `serialport` (fails on high
-  baud) or `uart` (Ruby 4 compat unconfirmed).
-- The serial port opens **one program at a time** — close the Arduino Serial
-  Monitor first.
-- Opening the port **reboots the XIAO** → `Panel#initialize` does `sleep 2`
-  before sending. (Consequence: a test run right after opening the port may need
-  a second run to display — the first frame lands during the reboot.)
-- Find the port: `ls /dev/cu.*` → `/dev/cu.usbmodem11201` here. Set in
-  `config/settings.rb`.
-
-### Install and run
-
-```bash
-bundle install
-ruby claudine.rb
-```
-
-Env vars: `CLAUDINE_LOG_LEVEL=DEBUG` (default `INFO`), `CLAUDINE_ANIMATION_SET`
-(default `cube`; `bunny` complete — all 16 intentions), `CLAUDINE_BRIGHTNESS` (overrides
-`Settings::BRIGHTNESS`, default `0.08`). Clean shutdown `Ctrl-C` (blanks the cube
-then closes the port).
-
-### Project layout
-
-```
-claudine-cube/
-├─ claudine.rb                  # Entry point: AnimationManager + Runner + ClaudeCode
-├─ config/settings.rb           # Port, baud, 8×8×5=320, faces, brightness
-├─ lib/
-│  ├─ cube_mapping.rb           # (face,x,y) → chain index (+ self-test)
-│  ├─ panel.rb                  # 320 px buffer, Adalight, per-face mapping, brightness
-│  ├─ runner.rb                 # 30 fps loop, bus drain, Ctrl-C
-│  ├─ event.rb                  # Data.define(:type, :payload)
-│  ├─ event_bus.rb              # Thread-safe Queue (push / drain)
-│  ├─ intentions.rb             # VOCAB (16 intentions: kind + fallback), CORE, resolve
-│  ├─ profiles/
-│  │  └─ claude_code.rb         # CLAUDE_CODE: hook type → intention (data)
-│  ├─ animation_manager.rb      # Loads active set, maps hook→intention, dispatches per intention
-│  ├─ logger.rb                 # Simple logger (CLAUDINE_LOG_LEVEL)
-│  ├─ rubyserial_patch.rb       # Extends rubyserial's known baud rates
-│  ├─ animations/
-│  │  ├─ base.rb                # Contract: render(t, panel)
-│  │  └─ cube/                  # default set (text-free, volumetric)
-│  │     ├─ _base.rb            # CubeBase helpers (not an intention)
-│  │     ├─ think.rb
-│  │     └─ … (16 intention files incl. sleep.rb)
-│  ├─ text/                     # font_3x5 + renderer — retained, unused by cube set
-│  └─ connectors/
-│     └─ claude_code.rb         # HTTP 127.0.0.1:9292 → pushes raw hook type
-├─ sketch_firmware/
-│  ├─ sketch_firmware.ino       # ESP32 firmware (Adalight + NeoPixel)
-│  └─ testing/                  # standalone hardware diagnostic sketches
-│     └─ flashing_colors.ino    # cycles colors over all 320 LEDs (no serial)
-└─ test/
-   ├─ test_cube_faces.rb        # one color per face (order + mapping)
-   ├─ test_cube_edge.rb         # all 8 shared edges, both sides (edge calibration)
-   ├─ test_cube_preview.rb      # play the animations on the cube
-   ├─ test_cube_animations.rb   # dry-run all animations (no hardware)
-   └─ test_manager_states.rb    # two-layer background/overlay model (no hardware)
-```
-
----
-
-## Claude Code connector
+### Claude Code connector
 
 A minimalist HTTP server (no framework) listens on `127.0.0.1:9292`. Claude
 Code hooks are configured in `.claude/settings.json` to `curl -sX POST` this
@@ -535,6 +456,249 @@ Which visual you get therefore depends on both the profile and the set. The
 `cube` set's per-intention visuals and their motion signatures are tabulated in
 [README.md](../README.md#the-cube-animation-set). The last event received stays
 displayed until the next one (or until idle).
+
+#### Extensibility: adding a source
+
+Adding a source is **data + a connector**, with zero changes to the render path:
+
+1. Write a **profile** (like `lib/profiles/claude_code.rb`) — a data hash
+   mapping the source's raw event types to intentions from the vocabulary.
+2. Write a **connector** that (a) receives the bus in its constructor and
+   (b) pushes a `Claudine::Event` with the raw event type as `:type`.
+
+The manager translates event → intention via the profile and resolves it
+against the active set (falling back along `Intentions.resolve` if the set lacks
+that intention). No per-source animation files are needed, and no change is
+needed in the Runner, the Panel, or the AnimationManager.
+
+### Environment, install, run
+
+- **Ruby 4.0.5** (rbenv, `.ruby-version`).
+- **Gems**: `rubyserial` (`Serial` class — do NOT use `serialport`, fails on high
+  baud, or `uart`, Ruby 4 compat unconfirmed) and `webrick` (admin server;
+  removed from Ruby's default gems in 3+).
+- The serial port opens **one program at a time** — close the Arduino Serial
+  Monitor first.
+- Opening the port **reboots the XIAO** → `Panel#initialize` does `sleep 2`
+  before sending. (Consequence: a test run right after opening the port may need
+  a second run to display — the first frame lands during the reboot.)
+- Find the port: `ls /dev/cu.*` → `/dev/cu.usbmodem11201` here. Set in
+  `config/settings.rb`.
+
+```bash
+bundle install
+ruby claudine.rb
+```
+
+Env vars: `CLAUDINE_LOG_LEVEL=DEBUG` (default `INFO`), `CLAUDINE_ANIMATION_SET`
+(default `cube`; `bunny` complete — all 16 intentions), `CLAUDINE_BRIGHTNESS`
+(overrides the persisted/default brightness, default `0.08`). Clean shutdown
+`Ctrl-C` (blanks the cube then closes the port). The admin page is at
+`http://localhost:9293` (see [component 3](#3--the-admin-web-server--user-facing-control-plane)).
+
+### Project layout
+
+```
+claudine-cube/
+├─ claudine.rb                  # Entry point: Config + AnimationManager + Runner + ClaudeCode + AdminServer
+├─ config/settings.rb           # Port, baud, 8×8×5=320, faces, default brightness
+├─ lib/
+│  ├─ cube_mapping.rb           # (face,x,y) → chain index (+ self-test)
+│  ├─ panel.rb                  # 320 px buffer, Adalight, per-face mapping, brightness
+│  ├─ runner.rb                 # 30 fps loop, Config observe, bus drain, Ctrl-C
+│  ├─ config.rb                 # Live settings source of truth, persisted to ~/.claudine
+│  ├─ event.rb                  # Data.define(:type, :payload)
+│  ├─ event_bus.rb              # Thread-safe Queue (push / drain)
+│  ├─ intentions.rb             # VOCAB (16 intentions: kind + fallback), CORE, resolve
+│  ├─ profiles/
+│  │  └─ claude_code.rb         # CLAUDE_CODE: hook type → intention (data)
+│  ├─ animation_manager.rb      # Loads active set, maps hook→intention, dispatches per intention
+│  ├─ logger.rb                 # Simple logger (CLAUDINE_LOG_LEVEL)
+│  ├─ rubyserial_patch.rb       # Extends rubyserial's known baud rates
+│  ├─ animations/
+│  │  ├─ base.rb                # Contract: render(t, panel)
+│  │  └─ cube/                  # default set (text-free, volumetric)
+│  │     ├─ _base.rb            # CubeBase helpers (not an intention)
+│  │     ├─ think.rb
+│  │     └─ … (16 intention files incl. sleep.rb)
+│  ├─ text/                     # font_3x5 + renderer — retained, unused by cube set
+│  └─ connectors/
+│     ├─ claude_code.rb         # HTTP 127.0.0.1:9292 → pushes raw hook type
+│     ├─ admin_server.rb        # WEBrick 127.0.0.1:9293 → control plane
+│     └─ admin/
+│        └─ index.html          # self-contained admin page (vanilla)
+├─ sketch_firmware/
+│  ├─ sketch_firmware.ino       # ESP32 firmware (Adalight + NeoPixel)
+│  └─ testing/                  # standalone hardware diagnostic sketches
+│     └─ flashing_colors.ino    # cycles colors over all 320 LEDs (no serial)
+└─ test/
+   ├─ test_cube_faces.rb        # one color per face (order + mapping)
+   ├─ test_cube_edge.rb         # all 8 shared edges, both sides (edge calibration)
+   ├─ test_cube_preview.rb      # play the animations on the cube
+   ├─ test_cube_animations.rb   # dry-run all animations (no hardware)
+   ├─ test_manager_states.rb    # two-layer background/overlay model (no hardware)
+   ├─ test_config.rb            # Config precedence / ceiling / boost / I/O (no hardware)
+   └─ test_admin_server.rb      # admin HTTP API (WEBrick, no hardware)
+```
+
+---
+
+## 2 · The ESP32 firmware — dumb Adalight decoder
+
+Environment: **Arduino IDE 2.x**, board **XIAO_ESP32S3**, library **Adafruit
+NeoPixel**. Baud **921600** (must match `Settings::BAUD`).
+
+`sketch_firmware/sketch_firmware.ino`, in short:
+
+- `Serial.setRxBufferSize(4096)` then `Serial.begin(BAUD)` (the buffer size is
+  mandatory — see [below](#led-driver-and-the-serial-rx-buffer-hard-won)).
+- `strip.begin()` (Adafruit NeoPixel, `NEO_GRB + NEO_KHZ800`, `DATA_PIN 1`,
+  `NUM_LEDS 320`).
+- Adalight state machine (see diagram). On a full frame → `strip.show()` → back
+  to `WAIT_A`.
+
+Flash with USB only, DC jack unplugged. Close the Serial Monitor before running
+the daemon.
+
+> ⚠ After changing `#define BAUD`, reflash then update `Settings::BAUD` to match.
+
+### Adalight decoder (state machine)
+
+The firmware reads the [wire format](#adalight-protocol-wire-format) byte by byte
+and waits for the magic `'A' 'd' 'a'` before accepting a header:
+
+```mermaid
+stateDiagram-v2
+    [*] --> WAIT_A
+    WAIT_A --> WAIT_D: 'A'
+    WAIT_A --> WAIT_A: other
+    WAIT_D --> WAIT_A2: 'd'
+    WAIT_D --> WAIT_A: other
+    WAIT_A2 --> HI: 'a'
+    WAIT_A2 --> WAIT_A: other
+    HI --> LO: read hi
+    LO --> CHK: read lo
+    CHK --> DATA: checksum OK
+    CHK --> WAIT_A: checksum KO (resync)
+    DATA --> DATA: read R,G,B (idx ≤ count)
+    DATA --> WAIT_A: full frame → strip.show()
+```
+
+If a byte is lost, the state machine resyncs on the next valid `'A' 'd' 'a'`.
+
+### GRB color order
+
+WS2812B LEDs expect bytes in **G, R, B** order. This is absorbed on the ESP32
+side (`Adafruit_NeoPixel(..., NEO_GRB + NEO_KHZ800)`), so the Ruby side reasons
+in normal R, G, B.
+
+### LED driver and the serial RX buffer (hard-won)
+
+Two firmware decisions were forced by hardware reality on the XIAO ESP32-S3 with
+FastLED 3.10 / ESP-IDF 5.x — both cost real debugging time:
+
+1. **NeoPixel, not FastLED.** Every FastLED backend was unusable here: RMT5
+   (default) crashes its DMA cache sync (`esp_cache_msync … invalid addr`) and
+   corrupts the chain; RMT4 legacy won't compile on IDF5; the I2S driver has no
+   S3 implementation (link errors); the SPI clockless driver enqueues frames
+   without transmitting. Adafruit NeoPixel uses the Arduino core's native RMT
+   path (the one behind the onboard RGB LED) and just works.
+2. **`Serial.setRxBufferSize(4096)` before `Serial.begin()`.** The original
+   symptom looked like a mapping or wiring bug: colors went garbled past a
+   *moving* boundary (~LED 85–128). Root cause: while `strip.show()` blocks the
+   loop (~10 ms for 320 LEDs), the Mac already streams the next frame; the
+   default 256-byte USB-CDC RX buffer (~85 LEDs) overflows and the tail of the
+   frame is dropped/shifted. A missing byte in the DATA phase misaligns every
+   later pixel while the firmware still latches — clean prefix, garbled tail, at
+   a timing-dependent position. Enlarging the RX buffer to hold a full 966-byte
+   frame fixes it. (This is the same failure mode noted in Claudine's old
+   "why not 60 fps" analysis — here it hit even at 30 fps because a full cube
+   frame is larger and `show()` blocks longer.)
+
+The hardware itself is sound (confirmed by a standalone on-device animation
+sketch lighting all 320 LEDs cleanly).
+
+---
+
+## 3 · The admin web server — user-facing control plane
+
+A small **admin web page** lets you tune the running cube without a restart. It
+is a *control plane*, deliberately separate from the event sources: it never
+pushes onto the `EventBus` and never touches the render/animation path — it only
+mutates settings the render loop reads.
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Admin as AdminServer (:9293)
+    participant Cfg as Config (~/.claudine)
+    participant Runner
+    participant Panel
+
+    Browser->>Admin: POST /api/brightness {value:0.12}
+    Admin->>Cfg: config.brightness = 0.12
+    Cfg->>Cfg: persist if ≤ 0.25 (atomic write)
+    Admin-->>Browser: 204
+    Note over Runner: next frame (≤ 33 ms)
+    Runner->>Cfg: read config.brightness
+    Runner->>Panel: panel.brightness = 0.12
+```
+
+### Config and persistence
+
+**`Config`** (`lib/config.rb`) is the single source of truth for live-tunable
+settings, persisted to **`~/.claudine`** (JSON, user-level, outside the repo).
+
+- v1 holds only `brightness`.
+- Precedence at load: `CLAUDINE_BRIGHTNESS` (ENV, honored as-is — may exceed the
+  ceiling since it is a deliberate act) > `~/.claudine` (clamped to
+  `BOOST_CEILING` as a defense against a hand-edited file) > `Settings::BRIGHTNESS`.
+- Writes are **atomic** (tmp + rename) and **merge** existing keys, so future
+  keys (theme, integrations) survive a brightness write.
+- Values above `BOOST_CEILING` (**0.25**) are applied but **not persisted**
+  (volatile session boost), so a fresh boot — possibly USB-only — can never
+  restore a brownout-inducing level.
+
+### AdminServer (HTTP API)
+
+**`AdminServer`** (`lib/connectors/admin_server.rb`) is a **WEBrick** HTTP server
+on `127.0.0.1:9293`, run in its own thread (WEBrick's own logs are silenced).
+Routes:
+
+| Route | Method | Behaviour |
+|---|---|---|
+| `/` | GET | serves the self-contained admin page |
+| `/api/state` | GET | `{ "brightness": .., "boost_ceiling": 0.25 }` |
+| `/api/brightness` | POST | body `{ "value": <0..1> }` → `204` (`400` on bad input); applies to `Config` (persisted if ≤ ceiling) |
+
+The `Runner` reflects `config.brightness` onto the panel at the top of each
+frame — the whole hot-reload mechanism (see
+[Threading](#threading-and-thread-safety)).
+
+### The page
+
+`lib/connectors/admin/index.html` — **vanilla HTML/CSS/JS**, self-contained (CSS
+and JS inline), no build step and no external asset (works offline). A brightness
+slider shows its value live and POSTs it debounced (~150 ms). The 0.25 boundary
+is drawn as a **labeled tick**, and crossing it raises a *"plug the DC jack"*
+banner — signalled by shape + text, **not color alone** (the maintainer is
+slightly colorblind). The `ClaudeCode` connector (`:9292`) is untouched.
+
+### Extending it
+
+Adding a future control is the same shape everywhere: a key in `Config` + an
+endpoint in `AdminServer` + a widget in the page; the render loop already
+observes `Config`. Planned next: **theme** (active animation set) and
+**integration on/off** toggles.
+
+### Tests
+
+Both run without hardware (no `Panel`, no serial):
+
+- `test/test_config.rb` — precedence, safe-boot ceiling, volatile boost,
+  file-I/O robustness, key preservation.
+- `test/test_admin_server.rb` — the HTTP API end-to-end via `Net::HTTP` against a
+  temp `Config` on a test port.
 
 ---
 

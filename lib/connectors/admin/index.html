@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cube — Admin</title>
+  <style>
+    :root {
+      --bg: #14161a;
+      --card: #1d2026;
+      --fg: #e8eaed;
+      --muted: #9aa0a8;
+      --accent: #6ea8fe;
+      --warn-bg: #2a2416;
+      --warn-fg: #ffd666;
+      --warn-border: #b8860b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--fg);
+      font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 32px 16px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 28px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.4);
+    }
+    h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: .3px; }
+    .sub { color: var(--muted); font-size: 13px; margin: 0 0 24px; }
+
+    .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; }
+
+    .readout { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+    .readout .pct { font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .readout .factor { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+    .readout .state { margin-left: auto; font-size: 12px; color: var(--muted); }
+
+    /* Slider + safe-zone marker. The 0.25 boundary is shown as a labeled tick
+       (shape + text), never by color alone — the user is slightly colorblind. */
+    .slider-wrap { position: relative; padding-top: 6px; }
+    input[type=range] { width: 100%; margin: 0; }
+    .track-marks { position: relative; height: 22px; margin-top: 2px; font-size: 11px; color: var(--muted); }
+    .tick {
+      position: absolute; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .tick::before { content: "▲"; font-size: 8px; line-height: 1; color: var(--fg); }
+    .tick .lbl { white-space: nowrap; }
+    .tick.ceiling::before { color: var(--warn-fg); }
+
+    .warn {
+      display: none;
+      margin-top: 20px;
+      padding: 12px 14px;
+      background: var(--warn-bg);
+      color: var(--warn-fg);
+      border: 1px dashed var(--warn-border);
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .warn.show { display: block; }
+    .warn b { color: var(--warn-fg); }
+    .warn .ico { font-weight: 700; margin-right: 6px; }
+
+    .foot { margin-top: 22px; font-size: 11px; color: var(--muted); }
+    .foot code { background: #000; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Cube — Admin</h1>
+    <p class="sub">Contrôle à chaud du cube LED</p>
+
+    <div class="section-title">Luminosité</div>
+    <div class="readout">
+      <span class="pct" id="pct">—</span>
+      <span class="factor" id="factor"></span>
+      <span class="state" id="state"></span>
+    </div>
+
+    <div class="slider-wrap">
+      <input type="range" id="slider" min="0" max="1" step="0.01" value="0.08"
+             aria-label="Luminosité (0 à 1)">
+      <div class="track-marks">
+        <span class="tick ceiling" id="ceilingTick"><span class="lbl">0.25 · max sans DC</span></span>
+      </div>
+    </div>
+
+    <div class="warn" id="warn">
+      <span class="ico">⚠</span><b>Zone boost (&gt; 0.25)</b> — branche le <b>jack DC</b>.
+      En USB seul : risque de brownout, décalage de couleurs et chaleur.
+      Ce réglage <b>n'est pas conservé</b> au redémarrage (il repartira ≤ 0.25).
+    </div>
+
+    <p class="foot">Persisté dans <code>~/.claudine</code> (uniquement ≤ 0.25).</p>
+  </main>
+
+  <script>
+    const slider  = document.getElementById('slider');
+    const pct     = document.getElementById('pct');
+    const factor  = document.getElementById('factor');
+    const state   = document.getElementById('state');
+    const warn    = document.getElementById('warn');
+    const ceilingTick = document.getElementById('ceilingTick');
+    let ceiling = 0.25;
+    let postTimer = null;
+
+    function render(v) {
+      pct.textContent    = Math.round(v * 100) + '%';
+      factor.textContent = '×' + v.toFixed(2);
+      const boost = v > ceiling + 1e-9;
+      warn.classList.toggle('show', boost);
+      state.textContent = boost ? 'boost (session)' : 'persisté';
+    }
+
+    async function loadState() {
+      try {
+        const r = await fetch('/api/state');
+        const s = await r.json();
+        if (typeof s.boost_ceiling === 'number') {
+          ceiling = s.boost_ceiling;
+          ceilingTick.style.left = (ceiling * 100) + '%';
+        }
+        slider.value = s.brightness;
+        render(s.brightness);
+      } catch (e) {
+        state.textContent = 'hors ligne';
+      }
+    }
+
+    function postValue(v) {
+      fetch('/api/brightness', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: v })
+      }).catch(() => { state.textContent = 'échec envoi'; });
+    }
+
+    slider.addEventListener('input', () => {
+      const v = parseFloat(slider.value);
+      render(v);                                   // instant visual feedback
+      clearTimeout(postTimer);
+      postTimer = setTimeout(() => postValue(v), 150);  // debounced network write
+    });
+
+    // place the tick before the first paint, then sync from the daemon
+    ceilingTick.style.left = (ceiling * 100) + '%';
+    loadState();
+  </script>
+</body>
+</html>

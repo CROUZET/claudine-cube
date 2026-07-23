@@ -197,6 +197,20 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    (HTTP 127.0.0.1:9292, pushes raw hooks — the profile translates), display
    lock (0.6 s, latest-wins), idle (`sleep` intention after 90 s), Adalight
    protocol.
+7. **Admin control plane** (`lib/config.rb` + `lib/connectors/admin_server.rb`):
+   a **WEBrick** server on `127.0.0.1:9293` serves a self-contained admin page
+   (`lib/connectors/admin/index.html`, vanilla HTML/JS) and a tiny JSON API. It
+   is a *control plane*, not an event source — it never touches the render path;
+   it mutates a shared **`Config`** (persisted to **`~/.claudine`**, JSON,
+   user-level) that the Runner **observes each frame** (`panel.brightness =
+   config.brightness`), so changes apply **hot**. v1 exposes **brightness** only.
+   Precedence: `CLAUDINE_BRIGHTNESS` (ENV) > `~/.claudine` > `Settings` default.
+   A **safe-boot ceiling** (`Config::BOOST_CEILING = 0.25`) caps what is persisted
+   and restored; higher values are volatile **session boosts** (UI raises a "plug
+   the DC jack" warning), never written — a fresh boot can't brown out on a stale
+   high value. Adding the next control (theme, integration on/off) = a `Config`
+   key + an endpoint + a widget; the observe-in-the-loop plumbing is already there.
+   Verified by `test/test_config.rb` and `test/test_admin_server.rb`.
 
 The `lib/text/` folder (3×5 font, renderer) is kept from Claudine but **not
 used** by the cube set (the renderer uses the old positional `set`; it
@@ -211,6 +225,8 @@ would need to be ported to the per-face API to draw text on an 8×8 face).
 | `test_cube_preview.rb [intentions…]` | preview of the animations on the cube | yes |
 | `test_cube_animations.rb` | dry-run of all the animations (fake panel) | no |
 | `test_manager_states.rb` | two-layer model (background/overlay) of the manager | no |
+| `test_config.rb` | Config: precedence, safe-boot ceiling, volatile boost, file I/O | no |
+| `test_admin_server.rb` | AdminServer control-plane HTTP API (WEBrick, no panel) | no |
 
 ### Running
 
@@ -225,6 +241,10 @@ ruby test/test_cube_preview.rb   # watch the animations run
 ## 6. Reference files
 
 - `lib/cube_mapping.rb` — `CubeMapping.index(face, x, y)` + self-test. Foundation.
+- `lib/config.rb` — `Config`: live-tunable settings persisted to `~/.claudine`,
+  observed by the Runner each frame (brightness hot-reload, safe-boot ceiling).
+- `lib/connectors/admin_server.rb` — admin control plane (WEBrick, `:9293`);
+  page in `lib/connectors/admin/index.html`.
 - `lib/animations/cube/` — default set (16 hooks + `_base.rb`).
 - `lib/animations/bunny/` — complete "bunnies" set (16 hooks; reuses `Cube::CubeBase`).
 - `docs/HARDWARE.md` — full hardware.
@@ -256,5 +276,9 @@ ruby test/test_cube_preview.rb   # watch the animations run
 - `CLAUDINE_ANIMATION_SET` chooses the set (`cube` by default, `bunny` complete) —
   also overridable in `test/test_cube_preview.rb` and `test_cube_animations.rb`.
 - `CLAUDINE_BRIGHTNESS` overrides the global brightness (default 0.08; raising it
-  increases current/heat, keep the DC jack plugged in).
+  increases current/heat, keep the DC jack plugged in). Precedence: ENV wins over
+  the persisted `~/.claudine`, which wins over the `Settings` default.
+- **Admin page**: `ruby claudine.rb` also starts a control panel at
+  `http://localhost:9293` (brightness, hot). Settings persist in `~/.claudine`;
+  brightness above 0.25 is a session-only boost (plug the DC jack).
 - `CLAUDINE_LOG_LEVEL=DEBUG` for verbose logs.
