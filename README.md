@@ -1,5 +1,7 @@
 # Claudine Cube — event-reactive LED cube
 
+[![CI](https://github.com/CROUZET/claudine-cube/actions/workflows/ci.yml/badge.svg)](https://github.com/CROUZET/claudine-cube/actions/workflows/ci.yml)
+
 ![demo](/docs/assets/demo_picture.png)
 
 Five 8×8 addressable LED panels (320 pixels total) arranged as a **cube**,
