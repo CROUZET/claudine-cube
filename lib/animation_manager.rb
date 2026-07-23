@@ -36,7 +36,7 @@ module Claudine
   # MIN_DURATION constant), new events don't take over — the latest is buffered
   # in a 1-slot cache and applied when the lock expires (latest-wins).
   class AnimationManager
-    DEFAULT_SET    = 'cube'.freeze
+    DEFAULT_SET    = Settings::DEFAULT_ANIMATION_SET
     IDLE_INTENTION = :sleep
 
     attr_reader :set

@@ -160,8 +160,13 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    `FLIP_X/FLIP_Y` is replaced by `CubeMapping`. API:
    `panel.set(face:, x:, y:, r:, g:, b:)` and `panel.fill_face(face, r, g, b)`
    (plus `fill`, `clear`, `set_raw`, `show`, `close`).
-2. **`Settings`** (`config/settings.rb`): `WIDTH=8`, `HEIGHT=8`, `FACES=5`,
-   `NUM_LEDS=320`, `PORT='/dev/cu.usbmodem11201'` (XIAO). `FLIP_X/FLIP_Y` removed.
+2. **`Settings`** (`config/settings.rb`): the one place for tunables —
+   `WIDTH=8`, `HEIGHT=8`, `FACES=5`, `NUM_LEDS=320`, `PORT='/dev/cu.usbmodem11201'`
+   (XIAO), plus the HTTP config (`LOCAL_HOST`, `CLAUDE_CODE_PORT=9292`,
+   `ADMIN_PORT=9293`), the `DEFAULT_ANIMATION_SET='cube'` and the
+   `BRIGHTNESS_BOOST_CEILING=0.25`. `Config`/connectors/manager reference these
+   rather than hard-coding their own (`Config::BOOST_CEILING` and
+   `AnimationManager::DEFAULT_SET` are kept as aliases). `FLIP_X/FLIP_Y` removed.
 3. **Intention layer** (`lib/intentions.rb` + `lib/profiles/claude_code.rb`):
    animations are indexed by **intention** (neutral state verbs: `think`,
    `start`, `fork`…), not by hook. A **profile** (data) maps Claude Code hooks

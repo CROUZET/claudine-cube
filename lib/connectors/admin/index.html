@@ -215,6 +215,7 @@
         if (typeof s.boost_ceiling === 'number') {
           ceiling = s.boost_ceiling;
           ceilingTick.style.left = (ceiling * 100) + '%';
+          ceilingTick.querySelector('.lbl').textContent = ceiling + ' · max sans DC';
         }
         slider.value = s.brightness;
         render(s.brightness);

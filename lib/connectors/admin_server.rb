@@ -2,6 +2,7 @@ require 'webrick'
 require 'json'
 require_relative '../logger'
 require_relative '../animation_manager'
+require_relative '../../config/settings'
 
 module Claudine
   module Connectors
@@ -20,18 +21,16 @@ module Claudine
     #   POST /api/integration → body { "name": "claude_code", "enabled": bool } → 204
     #   POST /api/theme       → body { "theme": "<set>" } → 204 (400 if unknown)
     class AdminServer
-      DEFAULT_PORT = 9293
-      HOST         = '127.0.0.1'
-      INDEX        = File.expand_path('admin/index.html', __dir__)
+      INDEX = File.expand_path('admin/index.html', __dir__)
 
-      def initialize(config:, port: DEFAULT_PORT)
+      def initialize(config:, port: Settings::ADMIN_PORT)
         @config = config
         @port   = port
       end
 
       def start
         @server = WEBrick::HTTPServer.new(
-          BindAddress: HOST,
+          BindAddress: Settings::LOCAL_HOST,
           Port:        @port,
           Logger:      WEBrick::Log.new(File::NULL), # silence WEBrick's own logs
           AccessLog:   []
@@ -39,7 +38,7 @@ module Claudine
         mount_routes
         @thread = Thread.new { @server.start }
         @thread.report_on_exception = true
-        Claudine.logger.info "AdminServer: listening on http://#{HOST}:#{@port}"
+        Claudine.logger.info "AdminServer: listening on http://#{Settings::LOCAL_HOST}:#{@port}"
       end
 
       def stop

@@ -160,7 +160,7 @@ blanks the panel and skips dispatch (nothing is driving the cube) — see
 | `Claudine::Connectors::ClaudeCode` | `lib/connectors/claude_code.rb` | Small local HTTP server, pushes the raw hook type onto the bus (the profile does the hook→intention translation, in the manager) |
 | `Claudine::Connectors::AdminServer` | `lib/connectors/admin_server.rb` | Control-plane WEBrick server (`:9293`) — see [component 3](#3--the-admin-web-server--user-facing-control-plane) |
 | `Claudine::Config` | `lib/config.rb` | Live-tunable settings source of truth, persisted to `~/.claudine` — see [component 3](#3--the-admin-web-server--user-facing-control-plane) |
-| `Claudine::Settings` | `config/settings.rb` | Config constants (port, baud, 8×8×5 size, faces, default brightness) |
+| `Claudine::Settings` | `config/settings.rb` | The single home for tunables: serial (port, baud), geometry (8×8×5, faces), cadence/idle, HTTP (`LOCAL_HOST`, `CLAUDE_CODE_PORT`, `ADMIN_PORT`), `DEFAULT_ANIMATION_SET`, default brightness + `BRIGHTNESS_BOOST_CEILING` |
 | `Claudine::Logger` | `lib/logger.rb` | Simple logger, level via `CLAUDINE_LOG_LEVEL` |
 | Arduino firmware | `sketch_firmware/sketch_firmware.ino` | See [component 2](#2--the-esp32-firmware--dumb-adalight-decoder) |
 

@@ -1,6 +1,7 @@
 require 'socket'
 require_relative '../event'
 require_relative '../logger'
+require_relative '../../config/settings'
 
 module Claudine
   module Connectors
@@ -13,21 +14,18 @@ module Claudine
     # picks the animation for that type from the active set (see
     # CLAUDINE_ANIMATION_SET). No translation table lives here anymore.
     class ClaudeCode
-      DEFAULT_PORT = 9292
-      HOST = '127.0.0.1'
-
       # `config` (optional) gates event ingestion: when the `claude_code`
       # integration is disabled, incoming hooks still get a 204 (hooks never
       # error) but are dropped rather than pushed onto the bus.
-      def initialize(bus:, port: DEFAULT_PORT, config: nil)
+      def initialize(bus:, port: Settings::CLAUDE_CODE_PORT, config: nil)
         @bus    = bus
         @port   = port
         @config = config
       end
 
       def start
-        @server = TCPServer.new(HOST, @port)
-        Claudine.logger.info "ClaudeCode: listening on http://#{HOST}:#{@port}"
+        @server = TCPServer.new(Settings::LOCAL_HOST, @port)
+        Claudine.logger.info "ClaudeCode: listening on http://#{Settings::LOCAL_HOST}:#{@port}"
         @thread = Thread.new { serve }
         @thread.report_on_exception = true
       end

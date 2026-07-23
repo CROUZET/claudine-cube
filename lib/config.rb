@@ -16,18 +16,14 @@ module Claudine
   class Config
     PATH = File.join(Dir.home, '.claudine')
 
-    # Above this factor, brightness is a *session boost*: applied live but never
-    # persisted, so a fresh boot (possibly USB-only) can never brown out on a
-    # stale high value. See docs/HARDWARE.md (thermal / power / brownout).
-    BOOST_CEILING = 0.25
+    # Above this factor, a brightness setting is a volatile *session boost*
+    # (applied live, never persisted). Single source of truth in Settings.
+    BOOST_CEILING = Settings::BRIGHTNESS_BOOST_CEILING
 
     # Source integrations and their default state (all on). Turning one off gates
     # that source's event ingestion (the connector still answers, it just doesn't
     # push) — the render path is untouched. Only `claude_code` exists today.
     DEFAULT_INTEGRATIONS = { 'claude_code' => true }.freeze
-
-    # Default animation set (matches AnimationManager::DEFAULT_SET).
-    DEFAULT_THEME = 'cube'
 
     def initialize(path: PATH)
       @path       = path
@@ -132,7 +128,7 @@ module Claudine
       return env if env && !env.empty?
       stored = read_file['theme']
       return stored if stored.is_a?(String) && !stored.empty?
-      DEFAULT_THEME
+      Settings::DEFAULT_ANIMATION_SET
     end
 
     # Defaults (all on) overlaid with whatever the file stored; unknown/future
