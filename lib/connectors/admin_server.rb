@@ -1,6 +1,7 @@
 require 'webrick'
 require 'json'
 require_relative '../logger'
+require_relative '../animation_manager'
 
 module Claudine
   module Connectors
@@ -14,9 +15,10 @@ module Claudine
     #
     # Routes:
     #   GET  /                → the admin page (self-contained HTML)
-    #   GET  /api/state       → { "brightness": .., "boost_ceiling": .., "integrations": {..} }
+    #   GET  /api/state       → { "brightness", "boost_ceiling", "theme", "themes", "integrations" }
     #   POST /api/brightness  → body { "value": <0..1> } → 204 (400 on bad input)
     #   POST /api/integration → body { "name": "claude_code", "enabled": bool } → 204
+    #   POST /api/theme       → body { "theme": "<set>" } → 204 (400 if unknown)
     class AdminServer
       DEFAULT_PORT = 9293
       HOST         = '127.0.0.1'
@@ -57,7 +59,7 @@ module Claudine
         @server.mount_proc('/api/state') do |_req, res|
           res.status = 200
           res['Content-Type'] = 'application/json'
-          res.body = JSON.generate(@config.to_state)
+          res.body = JSON.generate(@config.to_state.merge(themes: AnimationManager.available_sets))
         end
 
         @server.mount_proc('/api/brightness') do |req, res|
@@ -66,6 +68,10 @@ module Claudine
 
         @server.mount_proc('/api/integration') do |req, res|
           req.request_method == 'POST' ? handle_integration(req, res) : (res.status = 405)
+        end
+
+        @server.mount_proc('/api/theme') do |req, res|
+          req.request_method == 'POST' ? handle_theme(req, res) : (res.status = 405)
         end
       end
 
@@ -99,6 +105,18 @@ module Claudine
           return
         end
         @config.set_integration(name, enabled)
+        res.status = 204
+      rescue JSON::ParserError
+        res.status = 400
+      end
+
+      def handle_theme(req, res)
+        theme = JSON.parse(req.body || '{}')['theme']
+        unless theme.is_a?(String) && AnimationManager.available_sets.include?(theme)
+          res.status = 400
+          return
+        end
+        @config.theme = theme
         res.status = 204
       rescue JSON::ParserError
         res.status = 400

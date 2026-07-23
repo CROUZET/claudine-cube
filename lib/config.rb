@@ -26,12 +26,16 @@ module Claudine
     # push) — the render path is untouched. Only `claude_code` exists today.
     DEFAULT_INTEGRATIONS = { 'claude_code' => true }.freeze
 
+    # Default animation set (matches AnimationManager::DEFAULT_SET).
+    DEFAULT_THEME = 'cube'
+
     def initialize(path: PATH)
       @path       = path
       @mutex      = Mutex.new
       @brightness   = load_brightness
       @integrations = load_integrations
-      Claudine.logger.info "Config: brightness=#{@brightness} (source: #{@source}), integrations=#{@integrations}"
+      @theme        = load_theme
+      Claudine.logger.info "Config: brightness=#{@brightness} (source: #{@source}), theme=#{@theme}, integrations=#{@integrations}"
     end
 
     def brightness
@@ -79,8 +83,22 @@ module Claudine
       @mutex.synchronize { @integrations.values.any? }
     end
 
+    # Active animation set. The Runner reloads the manager when this changes.
+    def theme
+      @mutex.synchronize { @theme }
+    end
+
+    def theme=(value)
+      v = value.to_s
+      @mutex.synchronize do
+        @theme = v
+        persist_key('theme', v)
+      end
+      v
+    end
+
     def to_state
-      { brightness: brightness, boost_ceiling: BOOST_CEILING, integrations: integrations }
+      { brightness: brightness, boost_ceiling: BOOST_CEILING, theme: theme, integrations: integrations }
     end
 
     def integrations
@@ -104,6 +122,17 @@ module Claudine
       end
       @source = 'default'
       Settings::BRIGHTNESS
+    end
+
+    # Precedence: CLAUDINE_ANIMATION_SET (ENV) > ~/.claudine > default. Not
+    # validated here (Config doesn't know the animation dirs); the admin server
+    # rejects unknown sets, and claudine.rb falls back to the default at boot.
+    def load_theme
+      env = ENV['CLAUDINE_ANIMATION_SET']
+      return env if env && !env.empty?
+      stored = read_file['theme']
+      return stored if stored.is_a?(String) && !stored.empty?
+      DEFAULT_THEME
     end
 
     # Defaults (all on) overlaid with whatever the file stored; unknown/future

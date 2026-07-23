@@ -86,6 +86,17 @@ Dir.mktmpdir do |dir|
     r = req(:post, '/api/integration', JSON.generate('name' => 'claude_code'))
     check('integration without enabled → 400', r.code == '400')
 
+    # POST /api/theme switches the active animation set
+    state = JSON.parse(req(:get, '/api/state').body)
+    check('state has theme', state.key?('theme'))
+    check('state has themes list', state['themes'].is_a?(Array) && state['themes'].include?('bunny'))
+    r = req(:post, '/api/theme', JSON.generate('theme' => 'bunny'))
+    check('POST theme bunny → 204', r.code == '204')
+    check('config theme == bunny', cfg.theme == 'bunny')
+    check('state reflects theme', JSON.parse(req(:get, '/api/state').body)['theme'] == 'bunny')
+    r = req(:post, '/api/theme', JSON.generate('theme' => 'nope'))
+    check('unknown theme → 400', r.code == '400')
+
     # GET / serves the HTML page
     r = req(:get, '/')
     check('GET / → 200', r.code == '200')

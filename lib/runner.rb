@@ -18,6 +18,7 @@ module Claudine
       @fps        = fps
       @frame_time = 1.0 / fps
       @config     = config
+      @applied_theme = config.theme   # the set the manager was built with
     end
 
     def start
@@ -45,6 +46,12 @@ module Claudine
 
         active = @config.any_integration_enabled?
         panel.brightness = @config.brightness    # live control-plane value (hot)
+
+        if @config.theme != @applied_theme       # hot theme swap (only on change)
+          @manager.switch_set(@config.theme)
+          @applied_theme = @config.theme
+        end
+
         if active
           @bus.drain.each { |event| @manager.handle(event, t) }
           @manager.render(t, panel)

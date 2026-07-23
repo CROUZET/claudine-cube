@@ -41,6 +41,13 @@ module Claudine
 
     attr_reader :set
 
+    # The animation sets available to switch to: every sub-directory of
+    # lib/animations/ (the top-level base.rb is a file, not a set).
+    def self.available_sets
+      dir = File.expand_path('animations', __dir__)
+      Dir.children(dir).select { |c| File.directory?(File.join(dir, c)) }.sort
+    end
+
     def initialize(set: ENV['CLAUDINE_ANIMATION_SET'] || DEFAULT_SET,
                    profile: Profiles::CLAUDE_CODE)
       @set                  = set
@@ -74,6 +81,25 @@ module Claudine
         end
         @pending = [intention, event.payload]
       end
+    end
+
+    # Swaps the active animation set at runtime (hot). Reloads the registry for
+    # `name` and resets state so the new set starts blank and waits for the next
+    # event. Unknown sets are ignored (logged) — the current set stays. Called
+    # by the Runner when Config#theme changes. Returns true on success.
+    def switch_set(name)
+      name = name.to_s
+      return true if name == @set
+      dir = File.expand_path("animations/#{name}", __dir__)
+      unless Dir.exist?(dir)
+        Claudine.logger.warn "AnimationManager: switch_set('#{name}') ignored — unknown set"
+        return false
+      end
+      @registry = load_set(name)
+      @set      = name
+      reset
+      Claudine.logger.info "AnimationManager: switched to set '#{name}'"
+      true
     end
 
     # Clears all animation state (current, background, overlay, pending, idle).

@@ -83,5 +83,15 @@ mgr.reset
 ok &= check('reset clears @current',    mgr.instance_variable_get(:@current).nil?,    true)
 ok &= check('reset clears @background', mgr.instance_variable_get(:@background).nil?, true)
 
+# available_sets / switch_set (hot theme swap): both shipped sets are listed;
+# switching reloads the registry and resets; unknown sets are ignored.
+sets = Claudine::AnimationManager.available_sets
+ok &= check('available_sets includes cube',  sets.include?('cube'),  true)
+ok &= check('available_sets includes bunny', sets.include?('bunny'), true)
+ok &= check('switch_set to bunny',       mgr.switch_set('bunny'), true)
+ok &= check('set is now bunny',          mgr.set, 'bunny')
+ok &= check('switch_set unknown ignored', mgr.switch_set('nope'), false)
+ok &= check('set unchanged after unknown', mgr.set, 'bunny')
+
 puts ok ? "\nLAYER MODEL OK ✅" : "\nFAILURE ❌"
 exit(ok ? 0 : 1)

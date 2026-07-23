@@ -6,7 +6,8 @@ require 'json'
 require 'tmpdir'
 require 'logger'
 
-ENV.delete('CLAUDINE_BRIGHTNESS')   # clean slate; each case sets it explicitly
+ENV.delete('CLAUDINE_BRIGHTNESS')       # clean slate; each case sets it explicitly
+ENV.delete('CLAUDINE_ANIMATION_SET')    # idem for the theme
 require_relative '../lib/config'
 require_relative '../config/settings'
 
@@ -114,6 +115,20 @@ Dir.mktmpdir do |dir|
   check('any_integration_enabled? true by default', c.any_integration_enabled?, true)
   c.set_integration('claude_code', false)
   check('any_integration_enabled? false when all off', c.any_integration_enabled?, false)
+
+  # 15. theme: default 'cube', from file, ENV precedence, persistence, to_state
+  ENV.delete('CLAUDINE_ANIMATION_SET')
+  File.delete(file) if File.exist?(file)
+  check('theme default cube', Claudine::Config.new(path: file).theme, 'cube')
+  write_file(file, 'theme' => 'bunny')
+  check('theme from file', Claudine::Config.new(path: file).theme, 'bunny')
+  ENV['CLAUDINE_ANIMATION_SET'] = 'cube'
+  check('theme ENV beats file', Claudine::Config.new(path: file).theme, 'cube')
+  ENV.delete('CLAUDINE_ANIMATION_SET')
+  c = Claudine::Config.new(path: file)   # boots 'bunny' from file
+  c.theme = 'cube'
+  check('theme= persists', Claudine::Config.new(path: file).theme, 'cube')
+  check('theme in to_state', Claudine::Config.new(path: file).to_state[:theme], 'cube')
 end
 
 puts(ALL[0] ? "\nALL OK" : "\nFAILURES")

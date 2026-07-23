@@ -261,8 +261,10 @@ thread and read on the render thread is safe under the GIL; a `Mutex` guards
 An **animation set** is a directory under `lib/animations/` with one `.rb` file
 per **intention** (not per Claude Code hook). The filename matches the intention
 and the class is its CamelCase form: `think.rb` → `Think`, `welcome.rb` →
-`Welcome`, `sleep.rb` → `Sleep`. The active set is picked at startup via
-`CLAUDINE_ANIMATION_SET` (default `cube`).
+`Welcome`, `sleep.rb` → `Sleep`. The active set is picked at startup (theme
+precedence: `CLAUDINE_ANIMATION_SET` > `~/.claudine` > `cube`) and can be
+switched at runtime from the admin page — `AnimationManager#switch_set` reloads
+the registry and resets, so the new set starts blank until the next event.
 
 The 16 intentions and their temporal roles live in `lib/intentions.rb`
 (`Claudine::Intentions::VOCAB`); the full vocabulary is documented in
@@ -659,8 +661,10 @@ sequenceDiagram
 **`Config`** (`lib/config.rb`) is the single source of truth for live-tunable
 settings, persisted to **`~/.claudine`** (JSON, user-level, outside the repo).
 
-- It holds `brightness` and `integrations` (a `name → bool` map, all on by
-  default).
+- It holds `brightness`, `theme` (the active animation set) and `integrations`
+  (a `name → bool` map, all on by default).
+- Theme precedence at load: `CLAUDINE_ANIMATION_SET` (ENV) > `~/.claudine` >
+  `cube`. The Runner reloads the manager (`switch_set`) only when it changes.
 - Brightness precedence at load: `CLAUDINE_BRIGHTNESS` (ENV, honored as-is — may
   exceed the ceiling since it is a deliberate act) > `~/.claudine` (clamped to
   `BOOST_CEILING` as a defense against a hand-edited file) > `Settings::BRIGHTNESS`.
@@ -700,7 +704,9 @@ manager instead of rendering (see [Threading](#threading-and-thread-safety)).
 and JS inline), no build step and no external asset (works offline). An
 **Integrations** section (top) lists each source with a labeled switch (state
 shown by knob position + "activé/désactivé" text — **not color alone**, the
-maintainer is slightly colorblind). A **Brightness** slider shows its value live
+maintainer is slightly colorblind). A **Theme** `<select>` lists the available
+sets (from `/api/state`) and switches the active one. A **Brightness** slider
+shows its value live
 and POSTs it debounced (~150 ms); the 0.25 boundary is a **labeled tick**, and
 crossing it raises a *"plug the DC jack"* banner (shape + text, not color alone).
 The `ClaudeCode` HTTP contract (`:9292`) is untouched — only its ingestion gate.
@@ -709,9 +715,8 @@ The `ClaudeCode` HTTP contract (`:9292`) is untouched — only its ingestion gat
 
 Adding a future control is the same shape everywhere: a key in `Config` + an
 endpoint in `AdminServer` + a widget in the page; the render loop (or, for
-integrations, the connector) already observes `Config`. Shipped so far:
-**brightness** and **integration on/off**. Planned next: **theme** (active
-animation set).
+integrations, the connector) already observes `Config` (and the connector for integrations). Shipped: **brightness**,
+**theme** (active animation set), and **integration on/off**.
 
 ### Tests
 

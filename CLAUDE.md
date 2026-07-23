@@ -203,20 +203,23 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    is a *control plane*, not an event source — it never touches the render path;
    it mutates a shared **`Config`** (persisted to **`~/.claudine`**, JSON,
    user-level) that the Runner **observes each frame** (`panel.brightness =
-   config.brightness`), so changes apply **hot**. It exposes **brightness** and
-   **per-source integration on/off** (ClaudeCode): turning a source off gates its
-   *event ingestion* — the connector still answers `204` (hooks never error) but
-   drops the event instead of pushing. When **no source is enabled** the Runner
-   has nothing driving the cube, so it **blanks it** (`panel.clear`) and resets
-   the manager; re-enabling starts blank until the next event. Brightness
-   precedence: `CLAUDINE_BRIGHTNESS` (ENV) >
+   config.brightness`), so changes apply **hot**. It exposes **brightness**, the
+   **theme** (active animation set, hot-swapped via `AnimationManager#switch_set`
+   when `config.theme` changes; precedence `CLAUDINE_ANIMATION_SET` (ENV) >
+   `~/.claudine` > `cube`) and **per-source integration on/off** (ClaudeCode):
+   turning a source off gates its *event ingestion* — the connector still answers
+   `204` (hooks never error) but drops the event instead of pushing. When **no
+   source is enabled** the Runner has nothing driving the cube, so it **blanks
+   it** (`panel.clear`) and resets the manager; re-enabling starts blank until the
+   next event. Brightness precedence: `CLAUDINE_BRIGHTNESS` (ENV) >
    `~/.claudine` > `Settings` default. A **safe-boot ceiling**
    (`Config::BOOST_CEILING = 0.25`) caps what is persisted and restored; higher
    values are volatile **session boosts** (UI raises a "plug the DC jack"
    warning), never written — a fresh boot can't brown out on a stale high value.
-   Adding the next control (theme) = a `Config` key + an endpoint + a widget; the
-   observe-in-the-loop plumbing is already there. Verified by `test/test_config.rb`,
-   `test/test_admin_server.rb` and `test/test_claude_code_gate.rb`.
+   Each new control is the same shape — a `Config` key + an endpoint + a widget;
+   the observe-in-the-loop plumbing is already there. Verified by
+   `test/test_config.rb`, `test/test_admin_server.rb`, `test/test_manager_states.rb`
+   (switch_set) and `test/test_claude_code_gate.rb`.
 
 The `lib/text/` folder (3×5 font, renderer) is kept from Claudine but **not
 used** by the cube set (the renderer uses the old positional `set`; it

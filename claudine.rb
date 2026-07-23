@@ -6,8 +6,16 @@ require_relative 'lib/runner'
 require_relative 'lib/connectors/claude_code'
 require_relative 'lib/connectors/admin_server'
 
-config  = Claudine::Config.new
-manager = Claudine::AnimationManager.new
+config = Claudine::Config.new
+
+# Boot with the persisted theme, guarding against a hand-edited unknown set.
+theme = config.theme
+unless Claudine::AnimationManager.available_sets.include?(theme)
+  Claudine.logger.warn "claudine: unknown theme '#{theme}' — using '#{Claudine::AnimationManager::DEFAULT_SET}'"
+  config.theme = theme = Claudine::AnimationManager::DEFAULT_SET
+end
+
+manager = Claudine::AnimationManager.new(set: theme)
 runner  = Claudine::Runner.new(manager: manager, config: config)
 
 claude_code = Claudine::Connectors::ClaudeCode.new(bus: runner.bus, config: config)
