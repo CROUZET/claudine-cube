@@ -75,16 +75,16 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
-  json (~> 2.21.1)
-  logger (~> 1.7.0)
-  minitest (~> 5.27.0)
-  rake (~> 13.4.2)
-  rubocop (~> 1.88.2)
-  rubocop-minitest (~> 0.40.0)
-  rubocop-performance (~> 1.26.1)
-  rubocop-rake (~> 0.7.1)
-  rubyserial (~> 0.6.0)
-  webrick (~> 1.9.2)
+  json (~> 2.21)
+  logger (~> 1.7)
+  minitest (~> 5.27)
+  rake (~> 13.4)
+  rubocop (~> 1.88)
+  rubocop-minitest (~> 0.40)
+  rubocop-performance (~> 1.26)
+  rubocop-rake (~> 0.7)
+  rubyserial (~> 0.6)
+  webrick (~> 1.9)
 
 CHECKSUMS
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
