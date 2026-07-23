@@ -111,8 +111,18 @@ ok &= check('direct intention :fork resolves', step(mgr2, panel, 0.0, :fork), 'F
 mgr4 = Claudine::AnimationManager.new
 mgr4.handle(Claudine::Event.new(type: :think, payload: { once: true }), 0.0)
 ok &= check('trigger think: not a background', mgr4.instance_variable_get(:@background).nil?, true)
-mgr4.render(5.0, panel)   # well past the one-shot duration
-ok &= check('trigger think: blanks after one play', mgr4.instance_variable_get(:@current).nil?, true)
+
+# a spy panel to confirm the buffer is cleared (not left on the last frame)
+spy = Object.new
+def spy.clear; @cleared = true; end
+def spy.cleared?; @cleared ? true : false; end
+def spy.fill(*); end
+def spy.fill_face(*); end
+def spy.set(**); end
+def spy.set_raw(*); end
+mgr4.render(5.0, spy)   # well past the one-shot duration
+ok &= check('trigger think: blanks @current after one play', mgr4.instance_variable_get(:@current).nil?, true)
+ok &= check('trigger think: clears the panel at the end',    spy.cleared?, true)
 
 puts ok ? "\nLAYER MODEL OK ✅" : "\nFAILURE ❌"
 exit(ok ? 0 : 1)

@@ -149,6 +149,7 @@ module Claudine
           @oneshot   = false
           Claudine.logger.debug "AnimationManager: overlay done → resume background #{@current.class.name}"
         elsif @oneshot
+          panel.clear          # blank the buffer, else the last frame stays lit
           @current = nil
           @overlay = false
           @oneshot = false
