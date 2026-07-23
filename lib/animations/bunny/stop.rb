@@ -12,18 +12,18 @@ module Claudine
       # (end event -> yellow).
       # Signature: the running stops, the bunnies look, then fade away.
       class Stop < BunnyBase
-        COLOR   = [255, 200, 0].freeze # yellow (end)
-        SPEED   = 16.0 # columns/second (running)
+        COLOR = [255, 200, 0].freeze # yellow (end)
+        SPEED = 16.0 # columns/second (running)
         HOP_LEN = Think::HOP_LEN # same jump as user_prompt
-        HOP_H   = [3.0, 5.0, 4.0].freeze # varied jump heights
-        NB      = HOP_H.size
-        RUN     = Think::RABBIT # running sprite (profile) from user_prompt
+        HOP_H = [3.0, 5.0, 4.0].freeze # varied jump heights
+        NB = HOP_H.size
+        RUN = Think::RABBIT # running sprite (profile) from user_prompt
 
-        T_RUN  = 2.0                       # duration of the running
+        T_RUN = 2.0                       # duration of the running
         T_FADE = 2.0                       # duration of the fade (after the stop)
-        DUR    = T_RUN + T_FADE
+        DUR = T_RUN + T_FADE
         MIN_DURATION = DUR
-        DURATION     = DUR                 # full duration (read by the preview)
+        DURATION = DUR                 # full duration (read by the preview)
 
         # Small front bunny (whole body), 4 px wide; centered via FRONT_X.
         #   # . . #   ears
@@ -60,8 +60,8 @@ module Claudine
         def draw_run(panel, t)
           head = t * SPEED
           NB.times do |i|
-            col    = head + (i * (RING.to_f / NB))
-            hop    = Math.sin(Math::PI * ((col % HOP_LEN) / HOP_LEN))
+            col = head + (i * (RING.to_f / NB))
+            hop = Math.sin(Math::PI * ((col % HOP_LEN) / HOP_LEN))
             base_y = hop * HOP_H[i]
             RUN.each { |dx, dy| plot(panel, col + dx, base_y + dy, COLOR) }
           end
@@ -73,9 +73,9 @@ module Claudine
           if yi <= 7
             ring_px(panel, col, yy, rgb)
           else
-            c    = col.to_i % RING
+            c = col.to_i % RING
             face = LATERAL[c / SIDE]
-            lx   = c % SIDE
+            lx = c % SIDE
             tx, ty = top_edge_px(face, lx, yi - 8)
             px(panel, :top, tx, ty, rgb) if tx
           end

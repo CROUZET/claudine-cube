@@ -150,11 +150,11 @@
   </main>
 
   <script>
-    const slider  = document.getElementById('slider');
-    const pct     = document.getElementById('pct');
-    const factor  = document.getElementById('factor');
-    const state   = document.getElementById('state');
-    const warn    = document.getElementById('warn');
+    const slider = document.getElementById('slider');
+    const pct = document.getElementById('pct');
+    const factor = document.getElementById('factor');
+    const state = document.getElementById('state');
+    const warn = document.getElementById('warn');
     const ceilingTick = document.getElementById('ceilingTick');
     const integDiv = document.getElementById('integrations');
     const themeSel = document.getElementById('theme');
@@ -286,7 +286,7 @@
     }
 
     function render(v) {
-      pct.textContent    = Math.round(v * 100) + '%';
+      pct.textContent = Math.round(v * 100) + '%';
       factor.textContent = '×' + v.toFixed(2);
       const boost = v > ceiling + 1e-9;
       warn.classList.toggle('show', boost);

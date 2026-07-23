@@ -12,10 +12,10 @@ module Claudine
       # Signature: a big bunny walking around the cube at a steady pace.
       class Handle < BunnyBase
         MIN_DURATION = 3.6
-        DURATION     = 4.5 # full duration (read by the preview)
+        DURATION = 4.5 # full duration (read by the preview)
         COLOR = [120, 200, 255].freeze # light blue (start)
         SPEED = 7.0               # columns/second (calm walk)
-        STEP  = 4                 # columns per step (paw alternation)
+        STEP = 4                 # columns per step (paw alternation)
 
         # Profile bunny, turned toward the walk (increasing dx = front). dy=0=bottom.
         # Eye = hollow at (5,4). Close-up (7 px wide, 7 tall).
@@ -38,7 +38,7 @@ module Claudine
 
         def render(t, panel)
           panel.clear
-          col  = t * SPEED
+          col = t * SPEED
           legs = (col / STEP).floor.even? ? LEGS_A : LEGS_B
           (BODY + legs).each { |dx, dy| ring_px(panel, col + dx, dy, COLOR) }
         end

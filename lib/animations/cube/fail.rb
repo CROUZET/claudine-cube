@@ -11,7 +11,7 @@ module Claudine
       class Fail < CubeBase
         MIN_DURATION = 1.0
         PERIOD = 1.2
-        COLOR  = [255, 0, 0].freeze
+        COLOR = [255, 0, 0].freeze
 
         def render(t, panel)
           fill(panel, dim(COLOR, 0.15 + (0.85 * wave(t, PERIOD))))

@@ -13,9 +13,9 @@ module Claudine
       # Signature: yellow dissolve in steps, from light toward dark.
       class Stop < CubeBase
         SHADES = 8                 # number of shades (n), from light to dark
-        STEP   = 0.3               # interval between two extinctions (s)
-        LIGHT  = [255, 225, 70].freeze    # light yellow (first shade, turned off first)
-        DARK   = [90, 55, 0].freeze       # dark yellow (last shade, turned off last)
+        STEP = 0.3               # interval between two extinctions (s)
+        LIGHT = [255, 225, 70].freeze    # light yellow (first shade, turned off first)
+        DARK = [90, 55, 0].freeze       # dark yellow (last shade, turned off last)
 
         MIN_DURATION = SHADES * STEP # plays until fully off
 
@@ -23,7 +23,7 @@ module Claudine
           # Palette light -> dark, and fixed assignment of a shade per pixel
           # (once only: otherwise the speckle would flicker on every frame).
           @palette = (0...SHADES).map { |i| mix(LIGHT, DARK, i.to_f / (SHADES - 1)) }
-          @tint    = {}
+          @tint = {}
           ALL_FACES.each do |face|
             SIDE.times do |x|
               SIDE.times { |y| @tint[[face, x, y]] = rand(SHADES) }

@@ -13,7 +13,7 @@ module Claudine
       # The manager draws at random between Wait and Wait2.
       class Wait2 < CubeBase
         MIN_DURATION = 0.9
-        RATE  = 3.0 # blinks per second (approx)
+        RATE = 3.0 # blinks per second (approx)
         COLOR = [255, 130, 0].freeze
         INNER = [2, 3].freeze # the 2 inner concentric rings
 

@@ -15,13 +15,13 @@ module Claudine
       # distinguishes it from session_end (cool) -- movement AND temperature, not
       # hue alone.
       class Welcome < CubeBase
-        UP           = 2.4          # fill duration (s)
-        DOWN         = 2.0          # ebb duration (s)
+        UP = 2.4          # fill duration (s)
+        DOWN = 2.0          # ebb duration (s)
         MIN_DURATION = UP + DOWN    # hold the lock for the whole wave
-        DURATION     = UP + DOWN    # full lifetime (read by the preview)
-        DMAX         = 21           # d max = (7 + 7 + 7), opposite corner
-        EDGE         = 3.5          # thickness of the light front (in units of d)
-        SPAN         = DMAX + (2 * EDGE)
+        DURATION = UP + DOWN    # full lifetime (read by the preview)
+        DMAX = 21           # d max = (7 + 7 + 7), opposite corner
+        EDGE = 3.5          # thickness of the light front (in units of d)
+        SPAN = DMAX + (2 * EDGE)
 
         # Hue range (h 0..1) spread along the diagonal d=0..DMAX.
         # Warm: yellow-orange (0.15) -> red (0.0) -> magenta (-0.18 == 0.82).

@@ -13,9 +13,9 @@ module Claudine
     # end = yellow, error = red.
     module Bunny
       ALL_FACES = Cube::ALL_FACES
-      LATERAL   = Cube::LATERAL
-      SIDE      = Cube::SIDE
-      RING      = Cube::RING
+      LATERAL = Cube::LATERAL
+      SIDE = Cube::SIDE
+      RING = Cube::RING
 
       class BunnyBase < Cube::CubeBase
       end

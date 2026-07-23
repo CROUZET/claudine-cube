@@ -13,10 +13,10 @@ module Claudine
       # (The top stays empty for now.)
       # Signature: bunnies waking up all around the facade.
       class Welcome < BunnyBase
-        RISE     = 0.7            # appearance + ears rising (s)
+        RISE = 0.7            # appearance + ears rising (s)
         TOP_FILL = 2.0            # filling of the loader on the top (s)
         MIN_DURATION = 1.4
-        DURATION     = 4.0        # duration shown by the preview (see 2 blinks)
+        DURATION = 4.0        # duration shown by the preview (see 2 blinks)
 
         # Warm palette, identical to the cube session_start: hue along the
         # diagonal d=0..DMAX (orange-yellow -> red -> magenta).
@@ -25,7 +25,7 @@ module Claudine
         HUE1 = -0.18
 
         BLINK_PERIOD = 2.6        # time between two blinks (s)
-        BLINK_DUR    = 0.14       # duration of closed eyelid (s)
+        BLINK_DUR = 0.14       # duration of closed eyelid (s)
         BLINK_OFFSET = 1.3        # sets the 1st blink shortly after wake-up
 
         # --- Model A: front bunny, straight ears, full width. ---
@@ -69,9 +69,9 @@ module Claudine
 
         def render(t, panel)
           panel.clear
-          k       = [t / RISE, 1.0].min # appearance fade 0 -> 1
+          k = [t / RISE, 1.0].min # appearance fade 0 -> 1
           ear_top = 4 + (k * 3).round
-          wink    = t >= RISE && blinking?(t)
+          wink = t >= RISE && blinking?(t)
 
           # Model A: front (1) + back (3), mirror symmetry.
           draw_a(panel, :front, k, ear_top, wink, false)
@@ -112,7 +112,7 @@ module Claudine
         # which advances over TOP_FILL seconds (then stays full).
         def draw_top_loader(panel, t)
           path = top_path
-          n    = ((t / TOP_FILL).clamp(0.0, 1.0) * path.size).floor
+          n = ((t / TOP_FILL).clamp(0.0, 1.0) * path.size).floor
           path.first(n).each { |x, y| px(panel, :top, x, y, warm(:top, x, y, 1.0)) }
         end
 
@@ -125,7 +125,7 @@ module Claudine
         # dimmed by k. Warm by default; cold for Bye.
         def warm(face, x, y, k)
           wx, wy, wz = world(face, x, y)
-          d   = wx + wy + wz
+          d = wx + wy + wz
           hue = (self.class::HUE0 + ((d.to_f / DMAX) * (self.class::HUE1 - self.class::HUE0))) % 1.0
           dim(hsv(hue), k)
         end

@@ -13,11 +13,11 @@ module Claudine
       # Signature: bunny waving + carrot jumping.
       class Wait < BunnyBase
         MIN_DURATION = 1.5
-        COLOR  = [255, 200, 0].freeze   # yellow (bunny)
+        COLOR = [255, 200, 0].freeze   # yellow (bunny)
         BODY_C = [255, 0, 0].freeze     # carrot body (red)
-        LEAF   = [0, 170, 0].freeze     # tops
-        FREQ   = 2.5             # frequency (Hz)
-        SPIN     = 0.15          # turns/second of the top ring
+        LEAF = [0, 170, 0].freeze     # tops
+        FREQ = 2.5             # frequency (Hz)
+        SPIN = 0.15          # turns/second of the top ring
         SEGMENTS = 8             # number of segments (yellow arcs / holes) of the ring
 
         # Head close-up (fixed). dx, dy ; 0 = bottom. Eye = gap at (2,2).
@@ -74,7 +74,7 @@ module Claudine
 
         def render(t, panel)
           panel.clear
-          w   = Math.sin(2 * Math::PI * FREQ * t).round   # -1..1 (peekaboo)
+          w = Math.sin(2 * Math::PI * FREQ * t).round   # -1..1 (peekaboo)
           bob = Math.sin(2 * Math::PI * FREQ * t).round   # -1..1 (carrot bounce)
           draw_bunny(panel, :front, w)    # 1 : bunny
           draw_bunny(panel, :back,  w)    # 3 : bunny
@@ -92,7 +92,7 @@ module Claudine
             SIDE.times do |y|
               next unless [x, y, SIDE - 1 - x, SIDE - 1 - y].min <= 1 # 2 outer rings
 
-              u   = (Math.atan2(y - 3.5, x - 3.5) / (2 * Math::PI)) + 0.5 # 0..1 (angle)
+              u = (Math.atan2(y - 3.5, x - 3.5) / (2 * Math::PI)) + 0.5 # 0..1 (angle)
               seg = ((u + rot) * SEGMENTS).floor
               px(panel, :top, x, y, COLOR) if seg.even? # yellow arcs (holes otherwise)
             end

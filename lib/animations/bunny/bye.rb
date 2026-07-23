@@ -12,10 +12,10 @@ module Claudine
       class Bye < Welcome
         HUE0 = 0.25               # cold: yellow-green -> ... -> violet
         HUE1 = 0.85
-        DUR  = 2.6                # complete falling asleep (fade to black)
+        DUR = 2.6                # complete falling asleep (fade to black)
         SINK = 0.8                # lowering of the ears (s)
         MIN_DURATION = DUR
-        DURATION     = DUR        # duration shown by the preview
+        DURATION = DUR        # duration shown by the preview
 
         EYES = [[2, 3], [5, 3]].freeze # eye gaps (same positions A and B)
 
@@ -25,7 +25,7 @@ module Claudine
           return if fade <= 0.0 # asleep: cube off
 
           ear_top = 7 - ([t / SINK, 1.0].min * 3).round # ears 7 -> 4
-          asleep  = t >= SINK # eyes closed once dozed off
+          asleep = t >= SINK # eyes closed once dozed off
 
           # Model A: front + back (mirror). No wink (it's sleeping).
           draw_a(panel, :front, fade, ear_top, false, false)

@@ -347,7 +347,7 @@ Whole-cube breathing:
 ```ruby
 class Welcome < CubeBase
   PERIOD = 3.0
-  BASE   = [0, 200, 0]
+  BASE = [0, 200, 0]
   def render(t, panel)
     fill(panel, dim(BASE, wave(t, PERIOD)))
   end

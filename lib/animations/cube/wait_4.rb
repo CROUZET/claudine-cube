@@ -12,7 +12,7 @@ module Claudine
       # Signature: fast, crisp square blinking (a "hollow" target).
       class Wait4 < CubeBase
         MIN_DURATION = 0.9
-        RATE  = 3.0 # blinks per second (approx)
+        RATE = 3.0 # blinks per second (approx)
         COLOR = [255, 130, 0].freeze
         RINGS = [1, 3].freeze # 2nd ring + 4th ring (central)
 

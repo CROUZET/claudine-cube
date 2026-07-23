@@ -25,7 +25,7 @@ Used with the `CubeBase` helpers (`top_edge_px`, `px`, `LATERAL`, `RING`,
 painted = [head.floor, RING - 1].min
 (0..painted).each do |col|
   face = LATERAL[(col % RING) / SIDE]
-  x    = col % SIDE
+  x = col % SIDE
   [0, 1].each do |ring|
     tx, ty = top_edge_px(face, x, ring)
     px(panel, :top, tx, ty, COLOR)

@@ -11,11 +11,11 @@ module Claudine
       # into a new bunny (hatching). Light blue (start event -> light).
       # Signature: 4 heads rising and merging into one bunny on the top.
       class Save < BunnyBase
-        T1  = 0.6                  # rise on the lateral faces
-        T2  = 1.5                  # convergence on the top
+        T1 = 0.6                  # rise on the lateral faces
+        T2 = 1.5                  # convergence on the top
         DUR = 2.3                  # hatching of the merged bunny
         MIN_DURATION = DUR
-        DURATION     = DUR
+        DURATION = DUR
         COLOR = [120, 200, 255].freeze # light blue (start)
 
         # Bunny head (4x5, dx/dy ; 0 = bottom).
@@ -33,11 +33,11 @@ module Claudine
         ].freeze
 
         # Entry positions on the top (sprite origin), per edge.
-        EDGES  = [[2, 0], [4, 3], [2, 3], [0, 3]].freeze   # front, right, back, left
+        EDGES = [[2, 0], [4, 3], [2, 3], [0, 3]].freeze   # front, right, back, left
         CENTER = [2, 2].freeze                             # merge point
 
         # Merged bunny = the nice bunny (profile) from user_prompt, centered.
-        NEW   = Think::RABBIT
+        NEW = Think::RABBIT
         NEW_X = 2 # offset to center (5 px wide)
         NEW_Y = 1
 

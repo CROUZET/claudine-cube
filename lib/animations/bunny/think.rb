@@ -13,11 +13,11 @@ module Claudine
       # Signature: small light-blue bunnies hopping around the cube.
       class Think < BunnyBase
         MIN_DURATION = 0.6
-        COLOR   = [140, 200, 255].freeze # light blue
-        SPEED   = 12.0                    # columns/second (around the cube)
+        COLOR = [140, 200, 255].freeze # light blue
+        SPEED = 12.0                    # columns/second (around the cube)
         HOP_LEN = 8                       # length of one jump (columns) -- 32 = 4 jumps/turn
-        HOP_H   = [3.0, 5.0, 4.0].freeze  # jump height per bunny (the top can go out)
-        NB      = HOP_H.size              # number of staggered bunnies around the cube
+        HOP_H = [3.0, 5.0, 4.0].freeze  # jump height per bunny (the top can go out)
+        NB = HOP_H.size              # number of staggered bunnies around the cube
 
         # Profile bunny sprite (increasing dx = walk direction). dy = row,
         # 0 = paws. Shape provided by the user.
@@ -42,8 +42,8 @@ module Claudine
           panel.clear
           head = t * SPEED
           NB.times do |i|
-            col    = head + (i * (RING.to_f / NB))
-            hop    = Math.sin(Math::PI * ((col % HOP_LEN) / HOP_LEN))  # arc 0..1
+            col = head + (i * (RING.to_f / NB))
+            hop = Math.sin(Math::PI * ((col % HOP_LEN) / HOP_LEN))  # arc 0..1
             base_y = hop * HOP_H[i]                                    # height specific to the bunny
             RABBIT.each { |dx, dy| plot(panel, col + dx, base_y + dy, COLOR) }
           end
@@ -59,9 +59,9 @@ module Claudine
           if yi <= 7
             ring_px(panel, col, yy, rgb)
           else
-            c    = col.to_i % RING
+            c = col.to_i % RING
             face = LATERAL[c / SIDE]
-            lx   = c % SIDE
+            lx = c % SIDE
             tx, ty = top_edge_px(face, lx, yi - 8)
             px(panel, :top, tx, ty, rgb) if tx
           end

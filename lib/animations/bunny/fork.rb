@@ -11,14 +11,14 @@ module Claudine
       # turn). Light blue (start event -> light color). Overlay.
       # Signature: the bunnies spring up then turn around the cube jumping.
       class Fork < BunnyBase
-        COLOR  = [120, 200, 255].freeze # light blue (start)
-        POP    = 0.45              # duration of the spring-up (s)
-        JUMPS  = 4                 # number of jumps (full turn)
+        COLOR = [120, 200, 255].freeze # light blue (start)
+        POP = 0.45              # duration of the spring-up (s)
+        JUMPS = 4                 # number of jumps (full turn)
         JUMP_T = 1.0               # duration of one jump (s)
-        HOP_H  = 3.0               # height of one jump (px)
+        HOP_H = 3.0               # height of one jump (px)
         BASE_X = 2                 # position of the bunny in its face (centered, 4 px)
         MIN_DURATION = POP + (JUMPS * JUMP_T)
-        DURATION     = MIN_DURATION
+        DURATION = MIN_DURATION
 
         # Small bunny (dx, dy; 0 = paws).
         #   # . . #   ears
@@ -74,9 +74,9 @@ module Claudine
           if yi <= 7
             ring_px(panel, col, yy, rgb)
           else
-            c    = col.to_i % RING
+            c = col.to_i % RING
             face = LATERAL[c / SIDE]
-            lx   = c % SIDE
+            lx = c % SIDE
             tx, ty = top_edge_px(face, lx, yi - 8)
             px(panel, :top, tx, ty, rgb) if tx
           end

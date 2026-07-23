@@ -13,7 +13,7 @@ module Claudine
       class Saved < BunnyBase
         DUR = 1.6 # duration of the blinking + fade
         MIN_DURATION = DUR
-        DURATION     = DUR
+        DURATION = DUR
         COLOR = [255, 200, 0].freeze # yellow (end)
         BLINK = 0.25 # half-period of the blinking (s)
 

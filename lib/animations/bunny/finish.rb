@@ -12,14 +12,14 @@ module Claudine
       # Signature: bunnies dancing, top corners blinking, then everything
       # fades out.
       class Finish < BunnyBase
-        COLOR  = [255, 200, 0].freeze # yellow (end)
-        DUR    = 1.6               # duration of the dance + fade
+        COLOR = [255, 200, 0].freeze # yellow (end)
+        DUR = 1.6               # duration of the dance + fade
         MIN_DURATION = DUR
-        SWAYS  = 3                 # number of hip sways during the dance
+        SWAYS = 3                 # number of hip sways during the dance
         BASE_X = 2                 # left edge of the sprite (centered, 4 px wide)
-        SHEAR  = 1.0               # amplitude of the lean (px at the top of the sprite)
+        SHEAR = 1.0               # amplitude of the lean (px at the top of the sprite)
         SQUASH = 0                 # max vertical squash (slight)
-        BLINK  = 0.25              # half-period of the top blinking (s)
+        BLINK = 0.25              # half-period of the top blinking (s)
 
         # Phase offset of the dance per lateral face (staggered dances).
         FACE_PHASE = { front: 0.0, right: 0.2, back: 0.4, left: 0.6 }.freeze
@@ -46,7 +46,7 @@ module Claudine
 
         def render(t, panel)
           panel.clear
-          p    = [t / DUR, 1.0].min
+          p = [t / DUR, 1.0].min
           fade = 1.0 - p # progressive fade all along
           return if fade <= 0.0
 
@@ -64,7 +64,7 @@ module Claudine
         private
 
         def draw(panel, face, lean, fade)
-          sy    = 1.0 - (SQUASH * lean.abs) # vertical squash when leaning
+          sy = 1.0 - (SQUASH * lean.abs) # vertical squash when leaning
           color = dim(COLOR, fade)
           BODY.each do |dx, dy|
             x = BASE_X + dx + (lean * SHEAR * (dy / 4.0))

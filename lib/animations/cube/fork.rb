@@ -9,8 +9,8 @@ module Claudine
       # (central band), with a trail. Signature: a dot turning (orbit).
       class Fork < CubeBase
         MIN_DURATION = 0.6     # short lock (= default, made explicit)
-        SPEED        = 30.0    # columns per second
-        COLOR        = [160, 0, 220].freeze
+        SPEED = 30.0    # columns per second
+        COLOR = [160, 0, 220].freeze
 
         def render(t, panel)
           panel.clear

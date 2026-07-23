@@ -9,7 +9,7 @@ module Claudine
       # fades off (the orbit closes). Signature: a full ring that fades.
       class Join < CubeBase
         MIN_DURATION = 0.7
-        DUR   = 0.7
+        DUR = 0.7
         COLOR = [160, 0, 220].freeze
 
         def render(t, panel)
