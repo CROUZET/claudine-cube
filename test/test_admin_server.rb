@@ -9,6 +9,7 @@ require 'logger'
 
 ENV.delete('CLAUDINE_BRIGHTNESS')
 require_relative '../lib/config'
+require_relative '../lib/status'
 require_relative '../lib/connectors/admin_server'
 
 Claudine.logger.level = ::Logger::ERROR
@@ -35,7 +36,9 @@ end
 
 Dir.mktmpdir do |dir|
   cfg = Claudine::Config.new(path: File.join(dir, '.claudine'))
-  srv = Claudine::Connectors::AdminServer.new(config: cfg, port: PORT)
+  status = Claudine::Status.new
+  status.publish(state: 'working', animation: 'Think', uptime_s: 5)
+  srv = Claudine::Connectors::AdminServer.new(config: cfg, status: status, port: PORT)
   srv.start
 
   # wait for the listener to come up
@@ -96,6 +99,12 @@ Dir.mktmpdir do |dir|
     check('state reflects theme', JSON.parse(req(:get, '/api/state').body)['theme'] == 'bunny')
     r = req(:post, '/api/theme', JSON.generate('theme' => 'nope'))
     check('unknown theme → 400', r.code == '400')
+
+    # GET /api/status returns the published runtime snapshot (read-only)
+    r = req(:get, '/api/status')
+    check('GET /api/status → 200', r.code == '200')
+    sdata = JSON.parse(r.body)
+    check('status reflects published snapshot', sdata['state'] == 'working' && sdata['animation'] == 'Think')
 
     # GET / serves the HTML page
     r = req(:get, '/')

@@ -57,6 +57,11 @@
     select#theme { width: 100%; padding: 9px 10px; background: #14161a; color: var(--fg); border: 1px solid #3a3f49; border-radius: 8px; font-size: 14px; text-transform: capitalize; }
     select#theme:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+    .status-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid #2a2e36; font-size: 13px; }
+    .status-row:last-child { border-bottom: 0; }
+    .status-row .k { color: var(--muted); }
+    .status-row .v { font-variant-numeric: tabular-nums; text-align: right; }
+
     .readout { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
     .readout .pct { font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .readout .factor { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -99,6 +104,9 @@
     <h1>Cube — Admin</h1>
     <p class="sub">Contrôle à chaud du cube LED</p>
 
+    <div class="section-title">État</div>
+    <div id="status" class="status"><!-- polled from /api/status --></div>
+
     <div class="section-title">Intégrations</div>
     <div id="integrations"><!-- filled from /api/state --></div>
 
@@ -138,6 +146,7 @@
     const ceilingTick = document.getElementById('ceilingTick');
     const integDiv = document.getElementById('integrations');
     const themeSel = document.getElementById('theme');
+    const statusDiv = document.getElementById('status');
     let ceiling = 0.25;
     let postTimer = null;
 
@@ -200,6 +209,40 @@
         .catch(() => { themeSel.value = prev; });   // revert on failure
     });
 
+    // --- Status panel (read-only, polled) -----------------------------------
+    const STATE_LABEL = {
+      off: 'éteint (source coupée)', idle: 'en veille', working: 'au travail',
+      overlay: 'au travail', showing: 'affichage', blank: '—'
+    };
+
+    function fmtUptime(sec) {
+      if (sec == null) return '—';
+      const m = Math.floor(sec / 60), s = sec % 60;
+      return m ? `${m} min ${s}s` : `${s}s`;
+    }
+
+    function renderStatus(s) {
+      const rows = [
+        ['État', STATE_LABEL[s.state] || s.state || '—'],
+        ['Animation', s.animation || '—'],
+        ['Dernier event', s.last_event_ago == null ? '—' : `il y a ${s.last_event_ago}s`],
+        ['Uptime', fmtUptime(s.uptime_s)]
+      ];
+      statusDiv.innerHTML = '';
+      rows.forEach(([k, v]) => {
+        const row = document.createElement('div'); row.className = 'status-row';
+        const ke = document.createElement('span'); ke.className = 'k'; ke.textContent = k;
+        const ve = document.createElement('span'); ve.className = 'v'; ve.textContent = v;
+        row.appendChild(ke); row.appendChild(ve);
+        statusDiv.appendChild(row);
+      });
+    }
+
+    async function pollStatus() {
+      try { const r = await fetch('/api/status'); if (r.ok) renderStatus(await r.json()); }
+      catch (e) { /* keep the last snapshot on a transient error */ }
+    }
+
     function render(v) {
       pct.textContent    = Math.round(v * 100) + '%';
       factor.textContent = '×' + v.toFixed(2);
@@ -244,6 +287,8 @@
     // place the tick before the first paint, then sync from the daemon
     ceilingTick.style.left = (ceiling * 100) + '%';
     loadState();
+    pollStatus();
+    setInterval(pollStatus, 2000);   // keep the status panel live
   </script>
 </body>
 </html>

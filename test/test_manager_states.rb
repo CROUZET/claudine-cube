@@ -77,11 +77,18 @@ ok &= check('new user_prompt restarts the background loop',
 bg = mgr.instance_variable_get(:@background)
 ok &= check('a background is active after the new prompt', !bg.nil?, true)
 
+# status snapshot (for the admin panel): while a background loops it reads as
+# :working and reports the current animation.
+ok &= check('status: working while background', mgr.status(t_stop + 3.0)[:state], :working)
+ok &= check('status: animation is the think anim', mgr.status(t_stop + 3.0)[:animation], THINK)
+
 # reset (used by the Runner when all sources are off → the cube is blanked):
 # clears current + background so a later resume starts blank, not mid-loop.
 mgr.reset
 ok &= check('reset clears @current',    mgr.instance_variable_get(:@current).nil?,    true)
 ok &= check('reset clears @background', mgr.instance_variable_get(:@background).nil?, true)
+ok &= check('status: blank after reset',        mgr.status(100.0)[:state], :blank)
+ok &= check('status: no animation after reset', mgr.status(100.0)[:animation].nil?, true)
 
 # available_sets / switch_set (hot theme swap): both shipped sets are listed;
 # switching reloads the registry and resets; unknown sets are ignored.

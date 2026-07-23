@@ -221,10 +221,14 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    (`Config::BOOST_CEILING = 0.25`) caps what is persisted and restored; higher
    values are volatile **session boosts** (UI raises a "plug the DC jack"
    warning), never written — a fresh boot can't brown out on a stale high value.
-   Each new control is the same shape — a `Config` key + an endpoint + a widget;
-   the observe-in-the-loop plumbing is already there. Verified by
-   `test/test_config.rb`, `test/test_admin_server.rb`, `test/test_manager_states.rb`
-   (switch_set) and `test/test_claude_code_gate.rb`.
+   A read-only **status panel** (`GET /api/status`, polled) shows the live
+   runtime state: the Runner *publishes* a frozen snapshot into a shared
+   `Status` (`lib/status.rb`) each frame (mirror of config-observe; atomic ref
+   swap, no lock) and the page displays it. Each new control is the same shape —
+   a `Config` key + an endpoint + a widget; the plumbing is already there.
+   Verified by `test/test_config.rb`, `test/test_admin_server.rb`,
+   `test/test_manager_states.rb` (switch_set + status) and
+   `test/test_claude_code_gate.rb`.
 
 The `lib/text/` folder (3×5 font, renderer) is kept from Claudine but **not
 used** by the cube set (the renderer uses the old positional `set`; it
@@ -260,6 +264,8 @@ ruby test/test_cube_preview.rb   # watch the animations run
   observed by the Runner each frame (brightness hot-reload, safe-boot ceiling).
 - `lib/connectors/admin_server.rb` — admin control plane (WEBrick, `:9293`);
   page in `lib/connectors/admin/index.html`.
+- `lib/status.rb` — `Status`: thread-safe runtime snapshot the Runner publishes
+  each frame and the admin status panel reads (`/api/status`).
 - `lib/animations/cube/` — default set (16 hooks + `_base.rb`).
 - `lib/animations/bunny/` — complete "bunnies" set (16 hooks; reuses `Cube::CubeBase`).
 - `docs/HARDWARE.md` — full hardware.

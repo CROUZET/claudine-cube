@@ -102,6 +102,17 @@ module Claudine
       true
     end
 
+    # A small runtime snapshot for the admin status panel. Read on the render
+    # thread by the Runner (so it's self-consistent); `now` is the loop time.
+    def status(now)
+      {
+        set:            @set,
+        animation:      @current && @current.class.name.split('::').last,
+        state:          runtime_state,
+        last_event_ago: @last_event_t && (now - @last_event_t).round(1)
+      }
+    end
+
     # Clears all animation state (current, background, overlay, pending, idle).
     # Called by the Runner when output is suspended because every source
     # integration is off: a later resume then starts blank and waits for the
@@ -149,6 +160,16 @@ module Claudine
     end
 
     private
+
+    # Coarse runtime state for #status (a boundary anim showing itself reads as
+    # :showing; :off is added by the Runner when no source is enabled).
+    def runtime_state
+      return :blank   if @current.nil?
+      return :idle    if @is_idle
+      return :overlay if @overlay
+      return :working unless @background.nil?
+      :showing
+    end
 
     # Event type → intention (via profile) → intention the set actually provides
     # (via the fallback chain). Returns nil (and logs) if either step fails.

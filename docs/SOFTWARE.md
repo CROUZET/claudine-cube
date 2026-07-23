@@ -160,6 +160,7 @@ blanks the panel and skips dispatch (nothing is driving the cube) — see
 | `Claudine::Connectors::ClaudeCode` | `lib/connectors/claude_code.rb` | Small local HTTP server, pushes the raw hook type onto the bus (the profile does the hook→intention translation, in the manager) |
 | `Claudine::Connectors::AdminServer` | `lib/connectors/admin_server.rb` | Control-plane WEBrick server (`:9293`) — see [component 3](#3--the-admin-web-server--user-facing-control-plane) |
 | `Claudine::Config` | `lib/config.rb` | Live-tunable settings source of truth, persisted to `~/.claudine` — see [component 3](#3--the-admin-web-server--user-facing-control-plane) |
+| `Claudine::Status` | `lib/status.rb` | Thread-safe runtime-snapshot holder: the Runner publishes each frame, the AdminServer reads (`/api/status`) |
 | `Claudine::Settings` | `config/settings.rb` | The single home for tunables: serial (port, baud), geometry (8×8×5, faces), cadence/idle, HTTP (`LOCAL_HOST`, `CLAUDE_CODE_PORT`, `ADMIN_PORT`), `DEFAULT_ANIMATION_SET`, default brightness + `BRIGHTNESS_BOOST_CEILING` |
 | `Claudine::Logger` | `lib/logger.rb` | Simple logger, level via `CLAUDINE_LOG_LEVEL` |
 | Arduino firmware | `sketch_firmware/sketch_firmware.ino` | See [component 2](#2--the-esp32-firmware--dumb-adalight-decoder) |
@@ -254,7 +255,10 @@ The **control plane** uses a different, simpler channel: `AdminServer` (its own
 thread) mutates a shared `Config`, and the render loop *observes* it each frame
 (`panel.brightness = config.brightness`). A single float written on the admin
 thread and read on the render thread is safe under the GIL; a `Mutex` guards
-`Config`'s in-memory value and its file write. No command queue is needed.
+`Config`'s in-memory value and its file write. No command queue is needed. The
+**status panel** runs the same idea in reverse: the Runner *publishes* a frozen
+snapshot into a shared `Status` each frame, and the AdminServer reads it
+(`/api/status`) — again just an atomic reference swap.
 
 ### Animation sets
 
@@ -518,6 +522,7 @@ claudine-cube/
 │  ├─ panel.rb                  # 320 px buffer, Adalight, per-face mapping, brightness
 │  ├─ runner.rb                 # 30 fps loop, Config observe, bus drain, Ctrl-C
 │  ├─ config.rb                 # Live settings source of truth, persisted to ~/.claudine
+│  ├─ status.rb                 # Thread-safe runtime snapshot (Runner publishes, admin reads)
 │  ├─ event.rb                  # Data.define(:type, :payload)
 │  ├─ event_bus.rb              # Thread-safe Queue (push / drain)
 │  ├─ intentions.rb             # VOCAB (16 intentions: kind + fallback), CORE, resolve
@@ -689,7 +694,8 @@ Routes:
 | Route | Method | Behaviour |
 |---|---|---|
 | `/` | GET | serves the self-contained admin page |
-| `/api/state` | GET | `{ "brightness": .., "boost_ceiling": 0.25, "integrations": {..} }` |
+| `/api/state` | GET | `{ "brightness": .., "boost_ceiling": 0.25, "theme": .., "themes": [..], "integrations": {..} }` |
+| `/api/status` | GET | read-only live snapshot: `{ "state", "animation", "set", "source_active", "brightness", "last_event_ago", "uptime_s", "fps" }` |
 | `/api/brightness` | POST | body `{ "value": <0..1> }` → `204` (`400` on bad input); applies to `Config` (persisted if ≤ ceiling) |
 | `/api/integration` | POST | body `{ "name": "claude_code", "enabled": bool }` → `204` (`400` on bad input); toggles a source integration |
 
@@ -702,7 +708,9 @@ manager instead of rendering (see [Threading](#threading-and-thread-safety)).
 
 `lib/connectors/admin/index.html` — **vanilla HTML/CSS/JS**, self-contained (CSS
 and JS inline), no build step and no external asset (works offline). An
-**Integrations** section (top) lists each source with a labeled switch (state
+**État** panel (top) shows the live runtime snapshot (polled from `/api/status`
+every 2 s). An
+**Integrations** section lists each source with a labeled switch (state
 shown by knob position + "activé/désactivé" text — **not color alone**, the
 maintainer is slightly colorblind). A **Theme** `<select>` lists the available
 sets (from `/api/state`) and switches the active one. A **Brightness** slider
@@ -710,6 +718,19 @@ shows its value live
 and POSTs it debounced (~150 ms); the 0.25 boundary is a **labeled tick**, and
 crossing it raises a *"plug the DC jack"* banner (shape + text, not color alone).
 The `ClaudeCode` HTTP contract (`:9292`) is untouched — only its ingestion gate.
+
+### Status panel (read-only)
+
+The page also shows a live **État** panel (state, current animation, seconds
+since the last event, uptime), polled from `GET /api/status` every 2 s. This is
+the mirror of the observe-in-the-loop pattern: instead of the Runner reading
+`Config`, it **publishes** a status snapshot into a shared `Status`
+(`lib/status.rb`) each frame, and the AdminServer reads it. The Runner builds the
+snapshot on the render thread (so it's self-consistent — from
+`AnimationManager#status`) then swaps a single frozen-hash reference into
+`Status`; the admin thread reads that reference. Atomic under the GIL, no lock.
+`state` is `working`/`overlay`/`idle`/`showing`/`blank`, or `off` when no source
+is enabled (the cube is blanked).
 
 ### Extending it
 

@@ -2,6 +2,7 @@ require 'webrick'
 require 'json'
 require_relative '../logger'
 require_relative '../animation_manager'
+require_relative '../status'
 require_relative '../../config/settings'
 
 module Claudine
@@ -17,14 +18,16 @@ module Claudine
     # Routes:
     #   GET  /                → the admin page (self-contained HTML)
     #   GET  /api/state       → { "brightness", "boost_ceiling", "theme", "themes", "integrations" }
+    #   GET  /api/status      → live runtime snapshot (state, animation, uptime, …), read-only
     #   POST /api/brightness  → body { "value": <0..1> } → 204 (400 on bad input)
     #   POST /api/integration → body { "name": "claude_code", "enabled": bool } → 204
     #   POST /api/theme       → body { "theme": "<set>" } → 204 (400 if unknown)
     class AdminServer
       INDEX = File.expand_path('admin/index.html', __dir__)
 
-      def initialize(config:, port: Settings::ADMIN_PORT)
+      def initialize(config:, status: Status.new, port: Settings::ADMIN_PORT)
         @config = config
+        @status = status
         @port   = port
       end
 
@@ -59,6 +62,12 @@ module Claudine
           res.status = 200
           res['Content-Type'] = 'application/json'
           res.body = JSON.generate(@config.to_state.merge(themes: AnimationManager.available_sets))
+        end
+
+        @server.mount_proc('/api/status') do |_req, res|
+          res.status = 200
+          res['Content-Type'] = 'application/json'
+          res.body = JSON.generate(@status.current)
         end
 
         @server.mount_proc('/api/brightness') do |req, res|
