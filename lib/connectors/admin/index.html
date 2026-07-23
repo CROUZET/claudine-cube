@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -41,7 +41,7 @@
     .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 22px 0 8px; }
 
     /* Integrations: labeled switch. State is conveyed by knob position + the
-       "activé/désactivé" text, not by color alone (colorblind-safe). */
+       "on/off" text, not by color alone (colorblind-safe). */
     .integ-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #2a2e36; }
     .integ-row:last-child { border-bottom: 0; }
     .integ-name { font-weight: 600; }
@@ -110,22 +110,22 @@
 <body>
   <main class="card">
     <h1>Cube — Admin</h1>
-    <p class="sub">Contrôle à chaud du cube LED</p>
+    <p class="sub">Live control of the LED cube</p>
 
-    <div class="section-title">État</div>
+    <div class="section-title">Status</div>
     <div id="status" class="status"><!-- polled from /api/status --></div>
 
-    <div class="section-title">Intégrations</div>
+    <div class="section-title">Integrations</div>
     <div id="integrations"><!-- filled from /api/state --></div>
 
-    <div class="section-title">Thème</div>
-    <select id="theme" aria-label="Thème d'animation"><!-- filled from /api/state --></select>
+    <div class="section-title">Theme</div>
+    <select id="theme" aria-label="Animation theme"><!-- filled from /api/state --></select>
 
-    <div class="section-title">Déclencher une intention</div>
+    <div class="section-title">Trigger an intention</div>
     <div id="triggers" class="trigger-grid"><!-- filled from /api/state --></div>
-    <p class="trigger-hint" id="triggerHint">Réactive une intégration pour prévisualiser (le cube est éteint).</p>
+    <p class="trigger-hint" id="triggerHint">Re-enable an integration to preview (the cube is off).</p>
 
-    <div class="section-title">Luminosité</div>
+    <div class="section-title">Brightness</div>
     <div class="readout">
       <span class="pct" id="pct">—</span>
       <span class="factor" id="factor"></span>
@@ -134,19 +134,19 @@
 
     <div class="slider-wrap">
       <input type="range" id="slider" min="0" max="1" step="0.01" value="0.08"
-             aria-label="Luminosité (0 à 1)">
+             aria-label="Brightness (0 to 1)">
       <div class="track-marks">
-        <span class="tick ceiling" id="ceilingTick"><span class="lbl">0.25 · max sans DC</span></span>
+        <span class="tick ceiling" id="ceilingTick"><span class="lbl">0.25 · max without DC</span></span>
       </div>
     </div>
 
     <div class="warn" id="warn">
-      <span class="ico">⚠</span><b>Zone boost (&gt; 0.25)</b> — branche le <b>jack DC</b>.
-      En USB seul : risque de brownout, décalage de couleurs et chaleur.
-      Ce réglage <b>n'est pas conservé</b> au redémarrage (il repartira ≤ 0.25).
+      <span class="ico">⚠</span><b>Boost zone (&gt; 0.25)</b> — plug in the <b>DC jack</b>.
+      On USB alone: risk of brownout, color shift and heat.
+      This setting is <b>not saved</b> across restarts (it resumes ≤ 0.25).
     </div>
 
-    <p class="foot">Persisté dans <code>~/.claudine</code> (uniquement ≤ 0.25).</p>
+    <p class="foot">Persisted in <code>~/.claudine</code> (≤ 0.25 only).</p>
   </main>
 
   <script>
@@ -182,11 +182,11 @@
         label.textContent = INTEG_LABELS[name] || name;
 
         const st = document.createElement('span'); st.className = 'integ-state';
-        st.textContent = on ? 'activé' : 'désactivé';
+        st.textContent = on ? 'on' : 'off';
 
         cb.addEventListener('change', () => {
           const desired = cb.checked;
-          st.textContent = desired ? 'activé' : 'désactivé';
+          st.textContent = desired ? 'on' : 'off';
           fetch('/api/integration', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -194,7 +194,7 @@
           }).then((r) => { if (!r.ok) throw new Error('bad status'); })
             .catch(() => {                       // revert on failure
               cb.checked = !desired;
-              st.textContent = cb.checked ? 'activé' : 'désactivé';
+              st.textContent = cb.checked ? 'on' : 'off';
             });
         });
 
@@ -225,8 +225,8 @@
 
     // --- Status panel (read-only, polled) -----------------------------------
     const STATE_LABEL = {
-      off: 'éteint (source coupée)', idle: 'en veille', working: 'au travail',
-      overlay: 'au travail', showing: 'affichage', blank: '—'
+      off: 'off (source disabled)', idle: 'idle', working: 'working',
+      overlay: 'working', showing: 'showing', blank: '—'
     };
 
     function fmtUptime(sec) {
@@ -237,9 +237,9 @@
 
     function renderStatus(s) {
       const rows = [
-        ['État', STATE_LABEL[s.state] || s.state || '—'],
+        ['State', STATE_LABEL[s.state] || s.state || '—'],
         ['Animation', s.animation || '—'],
-        ['Dernier event', s.last_event_ago == null ? '—' : `il y a ${s.last_event_ago}s`],
+        ['Last event', s.last_event_ago == null ? '—' : `${s.last_event_ago}s ago`],
         ['Uptime', fmtUptime(s.uptime_s)]
       ];
       statusDiv.innerHTML = '';
@@ -290,7 +290,7 @@
       factor.textContent = '×' + v.toFixed(2);
       const boost = v > ceiling + 1e-9;
       warn.classList.toggle('show', boost);
-      state.textContent = boost ? 'boost (session)' : 'persisté';
+      state.textContent = boost ? 'boost (session)' : 'saved';
     }
 
     async function loadState() {
@@ -300,7 +300,7 @@
         if (typeof s.boost_ceiling === 'number') {
           ceiling = s.boost_ceiling;
           ceilingTick.style.left = (ceiling * 100) + '%';
-          ceilingTick.querySelector('.lbl').textContent = ceiling + ' · max sans DC';
+          ceilingTick.querySelector('.lbl').textContent = ceiling + ' · max without DC';
         }
         slider.value = s.brightness;
         render(s.brightness);
@@ -308,7 +308,7 @@
         if (s.themes) { renderThemes(s.themes, s.theme); themeSel.dataset.current = s.theme; }
         if (s.intentions) renderTriggers(s.intentions);
       } catch (e) {
-        state.textContent = 'hors ligne';
+        state.textContent = 'offline';
       }
     }
 
@@ -317,7 +317,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value: v })
-      }).catch(() => { state.textContent = 'échec envoi'; });
+      }).catch(() => { state.textContent = 'send failed'; });
     }
 
     slider.addEventListener('input', () => {

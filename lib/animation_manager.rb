@@ -63,6 +63,7 @@ module Claudine
       @background_activated = nil
       @overlay              = false  # is @current a transient overlay?
       @overlay_until        = nil    # time at which the overlay reverts to @background
+      @oneshot              = false  # overlay from a manual trigger: blank (not loop) when it ends
       @idle_off_at          = nil    # time at which the idle plays-once ends → cube off
     end
 
@@ -124,6 +125,7 @@ module Claudine
       @background_activated = nil
       @overlay              = false
       @overlay_until        = nil
+      @oneshot              = false
       @pending              = nil
       @is_idle              = false
       @idle_off_at          = nil
@@ -136,12 +138,22 @@ module Claudine
         @pending = nil
       end
 
-      # A finished transient overlay hands back to the working loop.
-      if @overlay && @background && t >= @overlay_until
-        @current   = @background
-        @activated = @background_activated
-        @overlay   = false
-        Claudine.logger.debug "AnimationManager: overlay done → resume background #{@current.class.name}"
+      # A finished transient overlay hands back to the working loop, or — for a
+      # one-shot manual trigger with no background — turns the cube off (so a
+      # triggered animation plays once instead of looping).
+      if @overlay && t >= @overlay_until
+        if @background
+          @current   = @background
+          @activated = @background_activated
+          @overlay   = false
+          @oneshot   = false
+          Claudine.logger.debug "AnimationManager: overlay done → resume background #{@current.class.name}"
+        elsif @oneshot
+          @current = nil
+          @overlay = false
+          @oneshot = false
+          Claudine.logger.debug 'AnimationManager: one-shot trigger done → cube off'
+        end
       end
 
       enter_idle(t, panel) if idle_due?(t)
@@ -203,6 +215,19 @@ module Claudine
       @current      = anim
       @activated    = t
       @min_duration = dur
+
+      if payload && payload[:once]
+        # Manual trigger (admin preview): play once as an overlay whatever the
+        # intention's kind, then revert to the background loop or, if none,
+        # blank. It never becomes the background itself.
+        d = klass.const_defined?(:DURATION) ? klass::DURATION : dur
+        @overlay       = true
+        @oneshot       = true
+        @overlay_until = t + d
+        Claudine.logger.info "AnimationManager: trigger :#{intention} → #{klass.name} (one-shot, #{d}s)"
+        return
+      end
+      @oneshot = false
 
       case Intentions.kind(intention)
       when :ambient

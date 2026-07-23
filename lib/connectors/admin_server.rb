@@ -153,7 +153,9 @@ module Claudine
           res.status = 400
           return
         end
-        @bus.push(Claudine::Event.new(type: name.to_sym, payload: {}))
+        # `once: true` → the manager plays it a single time (overlay), never as a
+        # looping background, then reverts to the working loop or blanks.
+        @bus.push(Claudine::Event.new(type: name.to_sym, payload: { once: true }))
         res.status = 204
       rescue JSON::ParserError
         res.status = 400

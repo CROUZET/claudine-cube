@@ -727,8 +727,11 @@ The `ClaudeCode` HTTP contract (`:9292`) is untouched — only its ingestion gat
 A **Déclencher une intention** grid (one button per vocabulary intention, from
 `/api/state`) plays any animation on demand — handy to preview a theme or demo
 without Claude Code. `POST /api/trigger` pushes an intention-typed event onto the
-`bus`; the Runner drains it and `AnimationManager#resolve` accepts it directly
-(a type that is itself a known intention bypasses the profile). Because a
+`bus` with `once: true`; the Runner drains it and `AnimationManager#resolve`
+accepts it directly (a type that is itself a known intention bypasses the
+profile). `once: true` makes the manager play it a **single time** (a one-shot
+overlay) — even an ambient like `think` never becomes a looping background —
+then revert to the working loop, or blank if there is none. Because a
 manually-triggered event still goes through the normal path, it only shows while
 the cube is on — the buttons are disabled (with a hint) when no source is
 enabled (the poll's `source_active` drives this).

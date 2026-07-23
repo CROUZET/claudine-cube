@@ -110,7 +110,9 @@ Dir.mktmpdir do |dir|
     bus.drain
     r = req(:post, '/api/trigger', JSON.generate('intention' => 'fork'))
     check('POST trigger fork → 204', r.code == '204')
-    check('trigger pushed :fork onto the bus', bus.drain.map(&:type).include?(:fork))
+    ev = bus.drain
+    check('trigger pushed :fork onto the bus', ev.map(&:type).include?(:fork))
+    check('trigger event carries once:true', ev.find { |e| e.type == :fork }&.payload == { once: true })
     r = req(:post, '/api/trigger', JSON.generate('intention' => 'nope'))
     check('unknown intention → 400', r.code == '400')
 

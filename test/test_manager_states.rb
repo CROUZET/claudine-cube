@@ -105,5 +105,14 @@ ok &= check('set unchanged after unknown', mgr.set, 'bunny')
 mgr2 = Claudine::AnimationManager.new
 ok &= check('direct intention :fork resolves', step(mgr2, panel, 0.0, :fork), 'Fork')
 
+# trigger animations play ONCE (payload once:true): an ambient like :think does
+# not become a looping background — it plays as a one-shot overlay, then blanks
+# when there is no background to revert to.
+mgr4 = Claudine::AnimationManager.new
+mgr4.handle(Claudine::Event.new(type: :think, payload: { once: true }), 0.0)
+ok &= check('trigger think: not a background', mgr4.instance_variable_get(:@background).nil?, true)
+mgr4.render(5.0, panel)   # well past the one-shot duration
+ok &= check('trigger think: blanks after one play', mgr4.instance_variable_get(:@current).nil?, true)
+
 puts ok ? "\nLAYER MODEL OK ✅" : "\nFAILURE ❌"
 exit(ok ? 0 : 1)

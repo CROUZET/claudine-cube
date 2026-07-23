@@ -226,9 +226,11 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    `Status` (`lib/status.rb`) each frame (mirror of config-observe; atomic ref
    swap, no lock) and the page displays it. A **trigger** grid (`POST
    /api/trigger`) plays any intention on demand (test/demo): the admin pushes an
-   intention-typed event onto the bus, and `AnimationManager#resolve` accepts a
-   type that is itself a known intention directly (bypassing the profile); the
-   buttons are disabled while the cube is off. Each new control is the same shape —
+   intention-typed event onto the bus (with `once: true`), and
+   `AnimationManager#resolve` accepts a type that is itself a known intention
+   directly (bypassing the profile). `once` makes it play a **single time** (even
+   `think` doesn't become a looping background) then revert/blank; the buttons
+   are disabled while the cube is off. Each new control is the same shape —
    a `Config` key + an endpoint + a widget; the plumbing is already there.
    Verified by `test/test_config.rb`, `test/test_admin_server.rb`,
    `test/test_manager_states.rb` (switch_set + status) and
