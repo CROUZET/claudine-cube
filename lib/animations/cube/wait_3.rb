@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -11,9 +13,9 @@ module Claudine
       # Wait2 (core) and Wait3 (frame).
       class Wait3 < CubeBase
         MIN_DURATION = 0.9
-        RATE  = 3.0             # blinks per second (approx)
-        COLOR = [255, 130, 0]
-        OUTER = [0, 1]          # the 2 outer concentric rings
+        RATE  = 3.0 # blinks per second (approx)
+        COLOR = [255, 130, 0].freeze
+        OUTER = [0, 1].freeze # the 2 outer concentric rings
 
         def render(t, panel)
           panel.clear

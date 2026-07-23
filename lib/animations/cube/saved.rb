@@ -1,4 +1,6 @@
-require_relative 'save'
+# frozen_string_literal: true
+
+require_relative "save"
 
 module Claudine
   module Animations
@@ -7,7 +9,7 @@ module Claudine
       # yellow. pre_compact and post_compact share the gesture; only the color
       # distinguishes them (gray before, yellow after).
       class Saved < Save
-        COLOR = [235, 200, 0]   # yellow
+        COLOR = [235, 200, 0].freeze # yellow
       end
     end
   end

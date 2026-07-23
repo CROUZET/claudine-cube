@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Claudine
   module Animations
     # Common interface for every animation.

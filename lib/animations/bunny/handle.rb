@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -10,8 +12,8 @@ module Claudine
       # Signature: a big bunny walking around the cube at a steady pace.
       class Handle < BunnyBase
         MIN_DURATION = 3.6
-        DURATION     = 4.5        # full duration (read by the preview)
-        COLOR = [120, 200, 255]   # light blue (start)
+        DURATION     = 4.5 # full duration (read by the preview)
+        COLOR = [120, 200, 255].freeze # light blue (start)
         SPEED = 7.0               # columns/second (calm walk)
         STEP  = 4                 # columns per step (paw alternation)
 

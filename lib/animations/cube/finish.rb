@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -14,14 +16,14 @@ module Claudine
         MERLON       = 3             # width of a merlon (upper part)
         PERIOD       = 4             # merlon + crenel (3 + 1 columns)
         SPEED        = 4.0           # columns per second (rotation)
-        COLOR        = [190, 80, 0]  # = Start::HEAD (orange/amber of the snake)
+        COLOR        = [190, 80, 0].freeze # = Start::HEAD (orange/amber of the snake)
 
         def render(t, panel)
           panel.clear
           shift = (t * SPEED).floor
           RING.times do |col|
             merlon = ((col + shift) % PERIOD) < MERLON
-            h      = merlon ? HEIGHT : 1     # tooth (HEIGHT px) or base (1 px)
+            h      = merlon ? HEIGHT : 1 # tooth (HEIGHT px) or base (1 px)
             h.times { |y| ring_px(panel, col, y, COLOR) }
           end
         end

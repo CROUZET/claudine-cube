@@ -1,8 +1,10 @@
-require_relative 'logger'
-require_relative '../config/settings'
-require_relative 'animations/base'
-require_relative 'intentions'
-require_relative 'profiles/claude_code'
+# frozen_string_literal: true
+
+require_relative "logger"
+require_relative "../config/settings"
+require_relative "animations/base"
+require_relative "intentions"
+require_relative "profiles/claude_code"
 
 module Claudine
   # Owns the current animation and swaps it on each incoming event.
@@ -36,7 +38,7 @@ module Claudine
   # MIN_DURATION constant), new events don't take over — the latest is buffered
   # in a 1-slot cache and applied when the lock expires (latest-wins).
   class AnimationManager
-    DEFAULT_SET    = Settings::DEFAULT_ANIMATION_SET
+    DEFAULT_SET = Settings::DEFAULT_ANIMATION_SET
     IDLE_INTENTION = :sleep
 
     attr_reader :set
@@ -44,32 +46,33 @@ module Claudine
     # The animation sets available to switch to: every sub-directory of
     # lib/animations/ (the top-level base.rb is a file, not a set).
     def self.available_sets
-      dir = File.expand_path('animations', __dir__)
+      dir = File.expand_path("animations", __dir__)
       Dir.children(dir).select { |c| File.directory?(File.join(dir, c)) }.sort
     end
 
-    def initialize(set: ENV['CLAUDINE_ANIMATION_SET'] || DEFAULT_SET,
+    def initialize(set: ENV["CLAUDINE_ANIMATION_SET"] || DEFAULT_SET,
                    profile: Profiles::CLAUDE_CODE)
-      @set                  = set
-      @profile              = profile
-      @registry             = load_set(set)
-      @current              = nil
-      @activated            = nil
-      @min_duration         = 0.0
-      @pending              = nil    # [intention, payload] buffered during the lock
-      @is_idle              = false
-      @last_event_t         = nil
-      @background           = nil    # persistent "working" animation instance (or nil)
+      @set = set
+      @profile = profile
+      @registry = load_set(set)
+      @current = nil
+      @activated = nil
+      @min_duration = 0.0
+      @pending = nil # [intention, payload] buffered during the lock
+      @is_idle = false
+      @last_event_t = nil
+      @background = nil # persistent "working" animation instance (or nil)
       @background_activated = nil
-      @overlay              = false  # is @current a transient overlay?
-      @overlay_until        = nil    # time at which the overlay reverts to @background
-      @oneshot              = false  # overlay from a manual trigger: blank (not loop) when it ends
-      @idle_off_at          = nil    # time at which the idle plays-once ends → cube off
+      @overlay = false # is @current a transient overlay?
+      @overlay_until = nil # time at which the overlay reverts to @background
+      @oneshot = false # overlay from a manual trigger: blank (not loop) when it ends
+      @idle_off_at = nil # time at which the idle plays-once ends → cube off
     end
 
     def handle(event, t)
       intention = resolve(event.type)
       return if intention.nil?
+
       @last_event_t = t
 
       if lock_open?(t)
@@ -88,16 +91,17 @@ module Claudine
     # `name` and resets state so the new set starts blank and waits for the next
     # event. Unknown sets are ignored (logged) — the current set stays. Called
     # by the Runner when Config#theme changes. Returns true on success.
-    def switch_set(name)
+    def switch_set(name) # rubocop:disable Naming/PredicateMethod
       name = name.to_s
       return true if name == @set
+
       dir = File.expand_path("animations/#{name}", __dir__)
       unless Dir.exist?(dir)
         Claudine.logger.warn "AnimationManager: switch_set('#{name}') ignored — unknown set"
         return false
       end
       @registry = load_set(name)
-      @set      = name
+      @set = name
       reset
       Claudine.logger.info "AnimationManager: switched to set '#{name}'"
       true
@@ -107,10 +111,10 @@ module Claudine
     # thread by the Runner (so it's self-consistent); `now` is the loop time.
     def status(now)
       {
-        set:            @set,
-        animation:      @current && @current.class.name.split('::').last,
-        state:          runtime_state,
-        last_event_ago: @last_event_t && (now - @last_event_t).round(1)
+        set: @set,
+        animation: @current && @current.class.name.split("::").last,
+        state: runtime_state,
+        last_event_ago: @last_event_t && (now - @last_event_t).round(1),
       }
     end
 
@@ -119,17 +123,17 @@ module Claudine
     # integration is off: a later resume then starts blank and waits for the
     # next event rather than replaying the last loop.
     def reset
-      @current              = nil
-      @activated            = nil
-      @background           = nil
+      @current = nil
+      @activated = nil
+      @background = nil
       @background_activated = nil
-      @overlay              = false
-      @overlay_until        = nil
-      @oneshot              = false
-      @pending              = nil
-      @is_idle              = false
-      @idle_off_at          = nil
-      @last_event_t         = nil
+      @overlay = false
+      @overlay_until = nil
+      @oneshot = false
+      @pending = nil
+      @is_idle = false
+      @idle_off_at = nil
+      @last_event_t = nil
     end
 
     def render(t, panel)
@@ -143,17 +147,17 @@ module Claudine
       # triggered animation plays once instead of looping).
       if @overlay && t >= @overlay_until
         if @background
-          @current   = @background
+          @current = @background
           @activated = @background_activated
-          @overlay   = false
-          @oneshot   = false
+          @overlay = false
+          @oneshot = false
           Claudine.logger.debug "AnimationManager: overlay done → resume background #{@current.class.name}"
         elsif @oneshot
-          panel.clear          # blank the buffer, else the last frame stays lit
+          panel.clear # blank the buffer, else the last frame stays lit
           @current = nil
           @overlay = false
           @oneshot = false
-          Claudine.logger.debug 'AnimationManager: one-shot trigger done → cube off'
+          Claudine.logger.debug "AnimationManager: one-shot trigger done → cube off"
         end
       end
 
@@ -163,12 +167,13 @@ module Claudine
       # and stop rendering (the blank frame keeps being pushed by the Runner).
       if @idle_off_at && t >= @idle_off_at
         panel.clear
-        @current     = nil
+        @current = nil
         @idle_off_at = nil
-        Claudine.logger.info 'AnimationManager: idle animation done → cube off'
+        Claudine.logger.info "AnimationManager: idle animation done → cube off"
       end
 
       return unless @current
+
       @current.render(t - @activated, panel)
     end
 
@@ -177,10 +182,11 @@ module Claudine
     # Coarse runtime state for #status (a boundary anim showing itself reads as
     # :showing; :off is added by the Runner when no source is enabled).
     def runtime_state
-      return :blank   if @current.nil?
-      return :idle    if @is_idle
+      return :blank if @current.nil?
+      return :idle if @is_idle
       return :overlay if @overlay
       return :working unless @background.nil?
+
       :showing
     end
 
@@ -201,20 +207,18 @@ module Claudine
         Claudine.logger.warn "AnimationManager: set '#{@set}' has no animation for :#{intention} (nor fallback)"
         return nil
       end
-      if resolved != intention
-        Claudine.logger.debug "AnimationManager: #{event_type} → :#{intention} (fallback → :#{resolved})"
-      end
+      Claudine.logger.debug "AnimationManager: #{event_type} → :#{intention} (fallback → :#{resolved})" if resolved != intention
       resolved
     end
 
     def activate(intention, payload, t)
       klass = @registry[intention].sample
-      anim  = klass.new(payload || {})
-      dur   = klass.const_defined?(:MIN_DURATION) ? klass::MIN_DURATION : Settings::MIN_ANIMATION_DURATION
-      @is_idle      = false
-      @idle_off_at  = nil
-      @current      = anim
-      @activated    = t
+      anim = klass.new(payload || {})
+      dur = klass.const_defined?(:MIN_DURATION) ? klass::MIN_DURATION : Settings::MIN_ANIMATION_DURATION
+      @is_idle = false
+      @idle_off_at = nil
+      @current = anim
+      @activated = t
       @min_duration = dur
 
       if payload && payload[:once]
@@ -222,8 +226,8 @@ module Claudine
         # intention's kind, then revert to the background loop or, if none,
         # blank. It never becomes the background itself.
         d = klass.const_defined?(:DURATION) ? klass::DURATION : dur
-        @overlay       = true
-        @oneshot       = true
+        @overlay = true
+        @oneshot = true
         @overlay_until = t + d
         Claudine.logger.info "AnimationManager: trigger :#{intention} → #{klass.name} (one-shot, #{d}s)"
         return
@@ -232,20 +236,20 @@ module Claudine
 
       case Intentions.kind(intention)
       when :ambient
-        @background           = anim
+        @background = anim
         @background_activated = t
-        @overlay              = false
+        @overlay = false
       when :boundary
-        @background           = nil
-        @overlay              = false
+        @background = nil
+        @overlay = false
       when :dormant
         # A source that explicitly emits a dormant intention behaves like idle.
-        @background  = nil
-        @overlay     = false
-        @is_idle     = true
+        @background = nil
+        @overlay = false
+        @is_idle = true
         @idle_off_at = klass.const_defined?(:DURATION) ? t + klass::DURATION : nil
       else # :pulse — plays once, then reverts to the background loop
-        @overlay       = true
+        @overlay = true
         @overlay_until = t + dur
       end
       Claudine.logger.info "AnimationManager: :#{intention} → #{klass.name} (#{Intentions.kind(intention)}, min #{dur}s)"
@@ -254,38 +258,41 @@ module Claudine
     def idle_due?(t)
       return false if @is_idle
       return false unless Settings::IDLE_TIMEOUT && @last_event_t
+
       (t - @last_event_t) >= Settings::IDLE_TIMEOUT
     end
 
     def enter_idle(t, panel)
       intention = Intentions.resolve(IDLE_INTENTION, @registry.keys)
       if intention
-        klass         = @registry[intention].sample
-        @current      = klass.new({})
-        @activated    = t
+        klass = @registry[intention].sample
+        @current = klass.new({})
+        @activated = t
         @min_duration = klass.const_defined?(:MIN_DURATION) ? klass::MIN_DURATION : Settings::MIN_ANIMATION_DURATION
         # Plays once: schedule the cube to turn off after the idle's lifetime.
-        @idle_off_at  = klass.const_defined?(:DURATION) ? t + klass::DURATION : nil
+        @idle_off_at = klass.const_defined?(:DURATION) ? t + klass::DURATION : nil
         Claudine.logger.info "AnimationManager: idle after #{Settings::IDLE_TIMEOUT}s → #{klass.name}"
       else
-        @current     = nil
-        @activated   = t
+        @current = nil
+        @activated = t
         @idle_off_at = nil
         panel.clear
         Claudine.logger.info "AnimationManager: idle after #{Settings::IDLE_TIMEOUT}s (no :sleep in set '#{@set}') → panel cleared"
       end
-      @is_idle    = true
-      @background = nil     # going idle ends any working state
-      @overlay    = false
+      @is_idle = true
+      @background = nil # going idle ends any working state
+      @overlay = false
     end
 
     def lock_open?(t)
       return true if @is_idle
+
       @current.nil? || (t - @activated) >= @min_duration
     end
 
     def remaining(t)
       return 0.0 if @activated.nil?
+
       [@min_duration - (t - @activated), 0.0].max
     end
 
@@ -299,17 +306,17 @@ module Claudine
       # class) — required so animations can `require_relative` them, but not
       # registered. Files ending with `_<digits>` (e.g. `wait_2.rb`) are extra
       # variations of the base intention (`wait`); one is picked at random.
-      Dir.glob("#{dir}/*.rb").sort.each do |path|
-        base = File.basename(path, '.rb')
-        if base.start_with?('_')
+      Dir.glob("#{dir}/*.rb").each do |path|
+        base = File.basename(path, ".rb")
+        if base.start_with?("_")
           require path
           next
         end
         class_name = camelize(base)
         require path
-        full_name  = "Claudine::Animations::#{set_module_name}::#{class_name}"
-        klass      = Object.const_get(full_name)
-        intention  = base.sub(/_\d+\z/, '').to_sym
+        full_name = "Claudine::Animations::#{set_module_name}::#{class_name}"
+        klass = Object.const_get(full_name)
+        intention = base.sub(/_\d+\z/, "").to_sym
         registry[intention] << klass
       end
 
@@ -324,7 +331,7 @@ module Claudine
     end
 
     def camelize(snake)
-      snake.split('_').map { |w| w[0].upcase + w[1..] }.join
+      snake.split("_").map { |w| w[0].upcase + w[1..] }.join
     end
   end
 end

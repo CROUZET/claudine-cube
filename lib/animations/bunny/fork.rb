@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -9,13 +11,13 @@ module Claudine
       # turn). Light blue (start event -> light color). Overlay.
       # Signature: the bunnies spring up then turn around the cube jumping.
       class Fork < BunnyBase
-        COLOR  = [120, 200, 255]   # light blue (start)
+        COLOR  = [120, 200, 255].freeze # light blue (start)
         POP    = 0.45              # duration of the spring-up (s)
         JUMPS  = 4                 # number of jumps (full turn)
         JUMP_T = 1.0               # duration of one jump (s)
         HOP_H  = 3.0               # height of one jump (px)
         BASE_X = 2                 # position of the bunny in its face (centered, 4 px)
-        MIN_DURATION = POP + JUMPS * JUMP_T
+        MIN_DURATION = POP + (JUMPS * JUMP_T)
         DURATION     = MIN_DURATION
 
         # Small bunny (dx, dy; 0 = paws).
@@ -35,7 +37,7 @@ module Claudine
         def render(t, panel)
           panel.clear
           4.times do |i|
-            base = i * SIDE + BASE_X          # starting column of bunny i
+            base = (i * SIDE) + BASE_X # starting column of bunny i
             col, by = pose(t, base)
             BODY.each { |dx, dy| plot(panel, col + dx, by + dy, self.class::COLOR) }
           end
@@ -45,16 +47,16 @@ module Claudine
 
         # Returns [column, vertical_offset] of the bunny at time t.
         def pose(t, base)
-          if t < POP                          # vertical spring-up, in place
+          if t < POP # vertical spring-up, in place
             off = (-5 * (1.0 - ease_out_back(t / POP))).round
             [base, off]
           else
-            total = (t - POP) / JUMP_T         # progress in "jumps" (0..JUMPS)
+            total = (t - POP) / JUMP_T # progress in "jumps" (0..JUMPS)
             if total >= JUMPS
-              [base + JUMPS * SIDE, 0]         # landed (= home, modulo the ring)
+              [base + (JUMPS * SIDE), 0] # landed (= home, modulo the ring)
             else
-              p = total - total.floor          # phase of the current jump
-              [base + total * SIDE, Math.sin(Math::PI * p) * HOP_H]
+              p = total - total.floor # phase of the current jump
+              [base + (total * SIDE), Math.sin(Math::PI * p) * HOP_H]
             end
           end
         end
@@ -63,7 +65,7 @@ module Claudine
         def ease_out_back(p)
           c1 = 3.2
           c3 = c1 + 1
-          1 + c3 * (p - 1)**3 + c1 * (p - 1)**2
+          1 + (c3 * ((p - 1)**3)) + (c1 * ((p - 1)**2))
         end
 
         # Pixel on the ring; overflows onto the top if y >= 8 (cf. user_prompt).

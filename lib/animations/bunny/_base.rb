@@ -1,4 +1,6 @@
-require_relative '../cube/_base'
+# frozen_string_literal: true
+
+require_relative "../cube/_base"
 
 module Claudine
   module Animations

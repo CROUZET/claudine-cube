@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Display limit test — all 320 LEDs lit, ramping up brightness.
 #
 # Goal: find the real limit of the cube (5 V / 10 A power supply + thermal + integrity
@@ -31,22 +33,22 @@
 #   COLOR=white|red|green|blue    fill color (default white)
 #   STEPS=0.08,0.25,0.5,0.75,1.0  brightness steps (default below)
 #   AUTO=1                        chains the steps without waiting (3 s each)
-require 'logger'
-require_relative '../lib/panel'
+require "logger"
+require_relative "../lib/panel"
 
-Claudine.logger.level = ::Logger::INFO
+Claudine.logger.level = Logger::INFO
 
 COLORS = {
-  'white' => [255, 255, 255],
-  'red'   => [255,   0,   0],
-  'green' => [  0, 255,   0],
-  'blue'  => [  0,   0, 255],
-}
-color_name = (ENV['COLOR'] || 'white').downcase
-base = COLORS[color_name] or abort "unknown COLOR: #{color_name} (choices: #{COLORS.keys.join(', ')})"
+  "white" => [255, 255, 255],
+  "red" => [255, 0, 0],
+  "green" => [0, 255, 0],
+  "blue" => [0, 0, 255],
+}.freeze
+color_name = (ENV["COLOR"] || "white").downcase
+base = COLORS[color_name] or abort "unknown COLOR: #{color_name} (choices: #{COLORS.keys.join(", ")})"
 
-steps = (ENV['STEPS'] || '0.08,0.25,0.5,0.75,1.0').split(',').map(&:to_f)
-auto  = ENV['AUTO'] == '1'
+steps = (ENV["STEPS"] || "0.08,0.25,0.5,0.75,1.0").split(",").map(&:to_f)
+auto = ENV["AUTO"] == "1"
 
 # Approx. current per LED at full white ≈ 60 mA; we weight by the fraction
 # of channels lit and by the brightness of the step.
@@ -56,13 +58,13 @@ def est_current(brightness, channels_on)
 end
 
 panel = Claudine::Panel.new
-panel.brightness = 1.0   # we manage the brightness ourselves, step by step
+panel.brightness = 1.0 # we manage the brightness ourselves, step by step
 
 puts <<~MSG
 
   === DISPLAY LIMIT TEST ===
   Color: #{color_name} #{base.inspect}   |   320 LEDs lit
-  Steps: #{steps.map { |s| (s * 100).round }.join('%, ')}%
+  Steps: #{steps.map { |s| (s * 100).round }.join("%, ")}%
   Power supply: 5 V / 10 A — beyond ~10 A the power supply limits (expected voltage drop).
   Ctrl-C to cut at any time.
 
@@ -75,25 +77,25 @@ begin
     panel.show
 
     amps = est_current(b, channels_on)
-    warn_flag = amps > 10 ? '  ⚠️ >10 A: beyond power supply capacity' : ''
-    puts format('Step %d/%d — brightness %3d%% → bytes %-15s ~%.1f A%s',
+    warn_flag = amps > 10 ? "  ⚠️ >10 A: beyond power supply capacity" : ""
+    puts format("Step %d/%d — brightness %3d%% → bytes %-15s ~%.1f A%s",
                 i + 1, steps.size, (b * 100).round, val.inspect, amps, warn_flag)
 
     if auto
       sleep 3
     else
-      print '  [Enter] next step, [Ctrl-C] stop… '
+      print "  [Enter] next step, [Ctrl-C] stop… "
       $stdin.gets
     end
   end
 
   puts "\nMax reached. Observe: uniform white? hue shift? flicker?"
   puts "ESP reset (brownout)? end-of-chain LEDs dropping out?"
-  unless auto
-    print 'Leave it on, [Enter] to turn off… '
-    $stdin.gets
-  else
+  if auto
     sleep 3
+  else
+    print "Leave it on, [Enter] to turn off… "
+    $stdin.gets
   end
 rescue Interrupt
   puts "\nInterrupted."

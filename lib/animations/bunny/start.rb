@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -11,7 +13,7 @@ module Claudine
       # Bluish white (start event -> light color). Short overlay.
       # Signature: bunnies jumping then dancing all around the facade.
       class Start < BunnyBase
-        COLOR  = [210, 232, 255]   # bluish white (start)
+        COLOR  = [210, 232, 255].freeze # bluish white (start)
         T1     = 0.60              # end of the left -> right jump
         T2     = 1.20              # end of the right -> left jump
         DUR    = 2.30              # end of the dance
@@ -50,9 +52,7 @@ module Claudine
           draw_on(panel, :right, DUR - t, false)   # 2 : reversed (dance -> jumps)
           draw_on(panel, :left,  DUR - t, true)    # 4 : reversed + mirror
           # Top: 8 corner pixels that blink in rhythm.
-          if (t / BLINK).floor.even?
-            TOP_DOTS.each { |x, y| px(panel, :top, x, y, COLOR) }
-          end
+          TOP_DOTS.each { |x, y| px(panel, :top, x, y, COLOR) } if (t / BLINK).floor.even?
         end
 
         private
@@ -60,10 +60,10 @@ module Claudine
         # Draws the bunny on a face at time tt (optional horizontal mirror).
         def draw_on(panel, face, tt, mirror)
           bx, by, lean = pose(tt.clamp(0.0, DUR))
-          sy = 1.0 - SQUASH * lean.abs          # vertical squash when leaning
+          sy = 1.0 - (SQUASH * lean.abs) # vertical squash when leaning
           BODY.each do |dx, dy|
-            x = bx + dx + lean * SHEAR * (dy / 4.0)   # lean: the top shifts more
-            y = by + dy * sy
+            x = bx + dx + (lean * SHEAR * (dy / 4.0)) # lean: the top shifts more
+            y = by + (dy * sy)
             x = 7 - x if mirror
             px(panel, face, x, y, COLOR)
           end

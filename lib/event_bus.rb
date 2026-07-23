@@ -1,4 +1,6 @@
-require_relative 'logger'
+# frozen_string_literal: true
+
+require_relative "logger"
 
 module Claudine
   # Thread-safe event queue: several producers (connectors) push,

@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -14,8 +16,8 @@ module Claudine
       class Start < CubeBase
         BODY  = 18             # length of the snake (in 2 px "rungs")
         SPEED = 30.0           # rungs per second
-        HEAD  = [190, 80, 0]   # orange/amber (head)
-        TAIL  = [28, 8, 0]     # very dark amber (tail)
+        HEAD  = [190, 80, 0].freeze   # orange/amber (head)
+        TAIL  = [28, 8, 0].freeze     # very dark amber (tail)
 
         # Track: ordered list of "rungs", each rung = the 2 pixels (width of
         # the snake) lit at one step of the path. Two consecutive rungs are
@@ -58,8 +60,9 @@ module Claudine
           head = t * SPEED
           BODY.times do |i|
             pos = (head - i).floor
-            next if pos < 0 || pos >= TRACK.size
-            f   = BODY == 1 ? 0.0 : i.to_f / (BODY - 1)   # 0 head ... 1 tail
+            next if pos.negative? || pos >= TRACK.size
+
+            f   = BODY == 1 ? 0.0 : i.to_f / (BODY - 1) # 0 head ... 1 tail
             rgb = mix(HEAD, TAIL, f)
             TRACK[pos].each { |(face, x, y)| px(panel, face, x, y, rgb) }
           end
@@ -69,7 +72,7 @@ module Claudine
 
         # Linear interpolation between two colors (f: 0 -> a, 1 -> b).
         def mix(a, b, f)
-          a.zip(b).map { |ca, cb| (ca + (cb - ca) * f).round.clamp(0, 255) }
+          a.zip(b).map { |ca, cb| (ca + ((cb - ca) * f)).round.clamp(0, 255) }
         end
       end
     end

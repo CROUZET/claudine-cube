@@ -1,11 +1,13 @@
-require_relative '../base'
+# frozen_string_literal: true
+
+require_relative "../base"
 
 module Claudine
   module Animations
     module Cube
       # Shared faces and geometric landmarks.
       ALL_FACES = %i[front right back left top].freeze
-      LATERAL   = %i[front right back left].freeze   # the 4 side faces
+      LATERAL   = %i[front right back left].freeze # the 4 side faces
       SIDE      = 8                                   # side of a face
       RING      = LATERAL.size * SIDE                 # 32 columns around the cube
 
@@ -17,14 +19,13 @@ module Claudine
       # Convention: x = column (0 left), y = row (0 bottom). The :top face
       # connects to the front in increasing y (validated on hardware).
       class CubeBase < Base
-        def initialize(_payload = {})
-        end
+        def initialize(_payload = {}); end
 
         private
 
         # Sine wave 0..1 with period `period` seconds.
         def wave(t, period)
-          Math.sin(2 * Math::PI * t / period) * 0.5 + 0.5
+          (Math.sin(2 * Math::PI * t / period) * 0.5) + 0.5
         end
 
         # Multiplies a color by a factor 0..1 (rounded, clamped).
@@ -44,7 +45,8 @@ module Claudine
         def px(panel, face, x, y, rgb)
           xi = x.to_i
           yi = y.to_i
-          return if xi < 0 || xi >= SIDE || yi < 0 || yi >= SIDE
+          return if xi.negative? || xi >= SIDE || yi.negative? || yi >= SIDE
+
           panel.set(face: face, x: xi, y: yi, r: rgb[0], g: rgb[1], b: rgb[2])
         end
 
@@ -91,6 +93,7 @@ module Claudine
           SIDE.times do |x|
             SIDE.times do |y|
               next unless [x, y, SIDE - 1 - x, SIDE - 1 - y].min == d
+
               px(panel, face, x, y, rgb)
             end
           end

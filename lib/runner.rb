@@ -1,8 +1,10 @@
-require_relative 'panel'
-require_relative 'logger'
-require_relative 'event_bus'
-require_relative 'config'
-require_relative 'status'
+# frozen_string_literal: true
+
+require_relative "panel"
+require_relative "logger"
+require_relative "event_bus"
+require_relative "config"
+require_relative "status"
 
 module Claudine
   # Fixed-cadence render loop.
@@ -15,13 +17,13 @@ module Claudine
 
     def initialize(manager:, bus: EventBus.new, fps: Settings::FPS,
                    config: Config.new, status: Status.new)
-      @manager    = manager
-      @bus        = bus
-      @fps        = fps
+      @manager = manager
+      @bus = bus
+      @fps = fps
       @frame_time = 1.0 / fps
-      @config     = config
-      @status     = status
-      @applied_theme = config.theme   # the set the manager was built with
+      @config = config
+      @status = status
+      @applied_theme = config.theme # the set the manager was built with
     end
 
     def start
@@ -48,9 +50,9 @@ module Claudine
         t = frame_start - t0
 
         active = @config.any_integration_enabled?
-        panel.brightness = @config.brightness    # live control-plane value (hot)
+        panel.brightness = @config.brightness # live control-plane value (hot)
 
-        if @config.theme != @applied_theme       # hot theme swap (only on change)
+        if @config.theme != @applied_theme # hot theme swap (only on change)
           @manager.switch_set(@config.theme)
           @applied_theme = @config.theme
         end
@@ -90,10 +92,10 @@ module Claudine
     # the manager's state when no source is driving the cube (it's blanked).
     def publish_status(t, active)
       snap = @manager.status(t).merge(
-        uptime_s:      t.round,
-        fps:           @fps,
+        uptime_s: t.round,
+        fps: @fps,
         source_active: active,
-        brightness:    @config.brightness.round(3)
+        brightness: @config.brightness.round(3)
       )
       snap[:state] = :off unless active
       @status.publish(snap)

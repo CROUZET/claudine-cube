@@ -1,12 +1,14 @@
-require_relative 'rubyserial_patch'  # must be required before any use of rubyserial
-require_relative '../config/settings'
-require_relative 'cube_mapping'
-require_relative 'logger'
+# frozen_string_literal: true
+
+require_relative "rubyserial_patch" # must be required before any use of rubyserial
+require_relative "../config/settings"
+require_relative "cube_mapping"
+require_relative "logger"
 
 module Claudine
   class Panel
-    WIDTH    = Settings::WIDTH   # 8, per face
-    HEIGHT   = Settings::HEIGHT  # 8, per face
+    WIDTH = Settings::WIDTH # 8, per face
+    HEIGHT = Settings::HEIGHT # 8, per face
     NUM_LEDS = Settings::NUM_LEDS
 
     # ~1500 baud-time after the last byte is enough for FastLED.show() to latch.
@@ -44,7 +46,8 @@ module Claudine
     #   y    : row    0..7 (0 = bottom)
     # The physical wiring of each face is absorbed by CubeMapping.
     def set(face:, x:, y:, r:, g:, b:)
-      return if x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT
+      return if x.negative? || x >= WIDTH || y.negative? || y >= HEIGHT
+
       @buffer[CubeMapping.index(face, x, y)] = [r, g, b]
     end
 
@@ -60,13 +63,14 @@ module Claudine
     # Writes directly into the buffer by LED index, bypassing the x/y mapping.
     # Useful for diagnosing the panel's physical wiring.
     def set_raw(index, r, g, b)
-      return if index < 0 || index >= NUM_LEDS
+      return if index.negative? || index >= NUM_LEDS
+
       @buffer[index] = [r, g, b]
     end
 
     def show
       pixels = @buffer.flat_map { |r, g, b| [scale(r), scale(g), scale(b)] }
-      frame = (adalight_header + pixels).pack('C*')
+      frame = (adalight_header + pixels).pack("C*")
       @serial.write(frame)
       Claudine.logger.debug "Panel: frame sent (#{frame.bytesize} bytes, #{NUM_LEDS} pixels)"
     end

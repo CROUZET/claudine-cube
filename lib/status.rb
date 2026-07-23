@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Claudine
   # Thread-safe holder for a runtime status snapshot, for the admin status panel.
   #

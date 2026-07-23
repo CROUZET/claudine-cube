@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -55,11 +57,10 @@ module Claudine
         def self.ring_path(d)
           lo = d
           hi = 7 - d
-          path = []
-          (lo..hi).each        { |x| path << [x, lo] }   # bottom: left -> right
-          ((lo + 1)..hi).each  { |y| path << [hi, y] }   # right: bottom -> top
-          (hi - 1).downto(lo).each     { |x| path << [x, hi] }  # top: right -> left
-          (hi - 1).downto(lo + 1).each { |y| path << [lo, y] }  # left: top -> bottom
+          path = (lo..hi).map { |x| [x, lo] } # bottom: left -> right
+          ((lo + 1)..hi).each { |y| path << [hi, y] } # right: bottom -> top
+          (hi - 1).downto(lo).each { |x| path << [x, hi] } # top: right -> left
+          (hi - 1).downto(lo + 1).each { |y| path << [lo, y] } # left: top -> bottom
           path
         end
 
@@ -68,7 +69,7 @@ module Claudine
 
         def render(t, panel)
           panel.clear
-          k       = [t / RISE, 1.0].min      # appearance fade 0 -> 1
+          k       = [t / RISE, 1.0].min # appearance fade 0 -> 1
           ear_top = 4 + (k * 3).round
           wink    = t >= RISE && blinking?(t)
 
@@ -125,7 +126,7 @@ module Claudine
         def warm(face, x, y, k)
           wx, wy, wz = world(face, x, y)
           d   = wx + wy + wz
-          hue = (self.class::HUE0 + (d.to_f / DMAX) * (self.class::HUE1 - self.class::HUE0)) % 1.0
+          hue = (self.class::HUE0 + ((d.to_f / DMAX) * (self.class::HUE1 - self.class::HUE0))) % 1.0
           dim(hsv(hue), k)
         end
 
@@ -143,7 +144,7 @@ module Claudine
         # HSV (h 0..1, s=v=1) -> [r, g, b] full (0..255).
         def hsv(h)
           i = (h * 6.0).floor
-          f = h * 6.0 - i
+          f = (h * 6.0) - i
           q = 1.0 - f
           r, g, b = case i % 6
                     when 0 then [1.0, f,   0.0]

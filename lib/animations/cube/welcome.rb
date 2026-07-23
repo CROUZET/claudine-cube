@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -19,7 +21,7 @@ module Claudine
         DURATION     = UP + DOWN    # full lifetime (read by the preview)
         DMAX         = 21           # d max = (7 + 7 + 7), opposite corner
         EDGE         = 3.5          # thickness of the light front (in units of d)
-        SPAN         = DMAX + 2 * EDGE
+        SPAN         = DMAX + (2 * EDGE)
 
         # Hue range (h 0..1) spread along the diagonal d=0..DMAX.
         # Warm: yellow-orange (0.15) -> red (0.0) -> magenta (-0.18 == 0.82).
@@ -41,7 +43,7 @@ module Claudine
                 b = ((front - d) / EDGE).clamp(0.0, 1.0)
                 next if b <= 0.0
 
-                hue = (self.class::HUE0 + (d.to_f / DMAX) * (self.class::HUE1 - self.class::HUE0)) % 1.0
+                hue = (self.class::HUE0 + ((d.to_f / DMAX) * (self.class::HUE1 - self.class::HUE0))) % 1.0
                 px(panel, face, x, y, dim(hsv(hue), b))
               end
             end
@@ -54,9 +56,9 @@ module Claudine
         # then descends back down to -EDGE over DOWN (ebb, opposite corner first).
         def front_at(t)
           if t <= UP
-            -EDGE + (t / UP).clamp(0.0, 1.0) * SPAN
+            -EDGE + ((t / UP).clamp(0.0, 1.0) * SPAN)
           else
-            (DMAX + EDGE) - ((t - UP) / DOWN).clamp(0.0, 1.0) * SPAN
+            (DMAX + EDGE) - (((t - UP) / DOWN).clamp(0.0, 1.0) * SPAN)
           end
         end
 
@@ -75,7 +77,7 @@ module Claudine
         # HSV (h 0..1, s=v=1) -> [r, g, b] full (0..255). Saturated rainbow.
         def hsv(h)
           i = (h * 6.0).floor
-          f = h * 6.0 - i
+          f = (h * 6.0) - i
           q = 1.0 - f
           r, g, b = case i % 6
                     when 0 then [1.0, f,   0.0]

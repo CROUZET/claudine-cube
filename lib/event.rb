@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Claudine
   # Immutable event flowing on the bus.
   #

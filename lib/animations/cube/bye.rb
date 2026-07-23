@@ -1,4 +1,6 @@
-require_relative 'welcome'
+# frozen_string_literal: true
+
+require_relative "welcome"
 
 module Claudine
   module Animations

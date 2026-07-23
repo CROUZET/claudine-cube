@@ -1,4 +1,6 @@
-require_relative 'retry'
+# frozen_string_literal: true
+
+require_relative "retry"
 
 module Claudine
   module Animations

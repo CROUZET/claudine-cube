@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -11,9 +13,9 @@ module Claudine
       # Signature: bunny waving + carrot jumping.
       class Wait < BunnyBase
         MIN_DURATION = 1.5
-        COLOR  = [255, 200, 0]   # yellow (bunny)
-        BODY_C = [255, 0, 0]     # carrot body (red)
-        LEAF   = [0, 170, 0]     # tops
+        COLOR  = [255, 200, 0].freeze   # yellow (bunny)
+        BODY_C = [255, 0, 0].freeze     # carrot body (red)
+        LEAF   = [0, 170, 0].freeze     # tops
         FREQ   = 2.5             # frequency (Hz)
         SPIN     = 0.15          # turns/second of the top ring
         SEGMENTS = 8             # number of segments (yellow arcs / holes) of the ring
@@ -88,10 +90,11 @@ module Claudine
           rot = t * SPIN
           SIDE.times do |x|
             SIDE.times do |y|
-              next unless [x, y, SIDE - 1 - x, SIDE - 1 - y].min <= 1  # 2 outer rings
-              u   = Math.atan2(y - 3.5, x - 3.5) / (2 * Math::PI) + 0.5 # 0..1 (angle)
+              next unless [x, y, SIDE - 1 - x, SIDE - 1 - y].min <= 1 # 2 outer rings
+
+              u   = (Math.atan2(y - 3.5, x - 3.5) / (2 * Math::PI)) + 0.5 # 0..1 (angle)
               seg = ((u + rot) * SEGMENTS).floor
-              px(panel, :top, x, y, COLOR) if seg.even?   # yellow arcs (holes otherwise)
+              px(panel, :top, x, y, COLOR) if seg.even? # yellow arcs (holes otherwise)
             end
           end
         end

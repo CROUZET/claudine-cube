@@ -1,7 +1,9 @@
-require 'socket'
-require_relative '../event'
-require_relative '../logger'
-require_relative '../../config/settings'
+# frozen_string_literal: true
+
+require "socket"
+require_relative "../event"
+require_relative "../logger"
+require_relative "../../config/settings"
 
 module Claudine
   module Connectors
@@ -18,8 +20,8 @@ module Claudine
       # integration is disabled, incoming hooks still get a 204 (hooks never
       # error) but are dropped rather than pushed onto the bus.
       def initialize(bus:, port: Settings::CLAUDE_CODE_PORT, config: nil)
-        @bus    = bus
-        @port   = port
+        @bus = bus
+        @port = port
         @config = config
       end
 
@@ -31,7 +33,7 @@ module Claudine
       end
 
       def stop
-        @server&.close     # unblocks accept()
+        @server&.close # unblocks accept()
         @thread&.join
         Claudine.logger.info "ClaudeCode: stopped"
       end
@@ -40,14 +42,12 @@ module Claudine
 
       def serve
         loop do
-          begin
-            client = @server.accept
-            handle_client(client)
-          rescue IOError
-            break  # server closed, clean exit
-          rescue => e
-            Claudine.logger.error "ClaudeCode: error — #{e.class}: #{e.message}"
-          end
+          client = @server.accept
+          handle_client(client)
+        rescue IOError
+          break # server closed, clean exit
+        rescue StandardError => e
+          Claudine.logger.error "ClaudeCode: error — #{e.class}: #{e.message}"
         end
       end
 
@@ -55,14 +55,14 @@ module Claudine
         request_line = client.gets
         return unless request_line
 
-        method, path, _http = request_line.split(' ', 3)
+        method, path, _http = request_line.split(" ", 3)
 
         # Drain the headers; body ignored (not needed for the MVP).
         while (line = client.gets) && line != "\r\n"
         end
 
-        if method == 'POST' && path&.start_with?('/event/')
-          type = path.sub('/event/', '').chomp.to_sym
+        if method == "POST" && path&.start_with?("/event/")
+          type = path.sub("/event/", "").chomp.to_sym
           if enabled?
             Claudine.logger.debug "ClaudeCode: #{type}"
             @bus.push(Claudine::Event.new(type: type, payload: {}))
@@ -82,7 +82,7 @@ module Claudine
       end
 
       def respond(client, status)
-        reason = { 204 => 'No Content', 404 => 'Not Found' }.fetch(status, 'OK')
+        reason = { 204 => "No Content", 404 => "Not Found" }.fetch(status, "OK")
         client.write("HTTP/1.1 #{status} #{reason}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
       end
     end

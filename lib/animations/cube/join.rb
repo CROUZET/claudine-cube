@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -8,11 +10,11 @@ module Claudine
       class Join < CubeBase
         MIN_DURATION = 0.7
         DUR   = 0.7
-        COLOR = [160, 0, 220]
+        COLOR = [160, 0, 220].freeze
 
         def render(t, panel)
           panel.clear
-          c = dim(COLOR, [1.0 - t / DUR, 0.0].max)
+          c = dim(COLOR, [1.0 - (t / DUR), 0.0].max)
           ring_row(panel, 3, c)
           ring_row(panel, 4, c)
         end

@@ -1,5 +1,7 @@
-require_relative '_base'
-require_relative 'think'
+# frozen_string_literal: true
+
+require_relative "_base"
+require_relative "think"
 
 module Claudine
   module Animations
@@ -14,7 +16,7 @@ module Claudine
         DUR = 2.3                  # hatching of the merged bunny
         MIN_DURATION = DUR
         DURATION     = DUR
-        COLOR = [120, 200, 255]    # light blue (start)
+        COLOR = [120, 200, 255].freeze # light blue (start)
 
         # Bunny head (4x5, dx/dy ; 0 = bottom).
         #   # . . #   ears
@@ -36,7 +38,7 @@ module Claudine
 
         # Merged bunny = the nice bunny (profile) from user_prompt, centered.
         NEW   = Think::RABBIT
-        NEW_X = 2                    # offset to center (5 px wide)
+        NEW_X = 2 # offset to center (5 px wide)
         NEW_Y = 1
 
         def render(t, panel)
@@ -49,12 +51,12 @@ module Claudine
           elsif t < T2                                     # convergence on the top
             cp = (t - T1) / (T2 - T1)
             EDGES.each do |sx, sy|
-              ox = (sx + cp * (CENTER[0] - sx)).round
-              oy = (sy + cp * (CENTER[1] - sy)).round
+              ox = (sx + (cp * (CENTER[0] - sx))).round
+              oy = (sy + (cp * (CENTER[1] - sy))).round
               HEAD.each { |dx, dy| px(panel, :top, ox + dx, oy + dy, COLOR) }
             end
           else                                             # hatching of the merged bunny
-            a = 1.0 - (1.0 - [(t - T2) / (DUR - T2), 1.0].min)**2
+            a = 1.0 - ((1.0 - [(t - T2) / (DUR - T2), 1.0].min)**2)
             NEW.each { |dx, dy| px(panel, :top, NEW_X + dx, NEW_Y + dy, dim(COLOR, a)) }
           end
         end

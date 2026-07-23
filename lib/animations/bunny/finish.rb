@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -10,7 +12,7 @@ module Claudine
       # Signature: bunnies dancing, top corners blinking, then everything
       # fades out.
       class Finish < BunnyBase
-        COLOR  = [255, 200, 0]     # yellow (end)
+        COLOR  = [255, 200, 0].freeze # yellow (end)
         DUR    = 1.6               # duration of the dance + fade
         MIN_DURATION = DUR
         SWAYS  = 3                 # number of hip sways during the dance
@@ -45,26 +47,27 @@ module Claudine
         def render(t, panel)
           panel.clear
           p    = [t / DUR, 1.0].min
-          fade = 1.0 - p                     # progressive fade all along
+          fade = 1.0 - p # progressive fade all along
           return if fade <= 0.0
+
           FACE_PHASE.each do |face, off|
-            lean = -Math.sin(2 * Math::PI * (SWAYS * p + off))
+            lean = -Math.sin(2 * Math::PI * ((SWAYS * p) + off))
             draw(panel, face, lean, fade)
           end
           # Top: 8 corner pixels that blink in rhythm, fading out.
-          if (t / BLINK).floor.even?
-            c = dim(COLOR, fade)
-            TOP_DOTS.each { |x, y| px(panel, :top, x, y, c) }
-          end
+          return unless (t / BLINK).floor.even?
+
+          c = dim(COLOR, fade)
+          TOP_DOTS.each { |x, y| px(panel, :top, x, y, c) }
         end
 
         private
 
         def draw(panel, face, lean, fade)
-          sy    = 1.0 - SQUASH * lean.abs    # vertical squash when leaning
+          sy    = 1.0 - (SQUASH * lean.abs) # vertical squash when leaning
           color = dim(COLOR, fade)
           BODY.each do |dx, dy|
-            x = BASE_X + dx + lean * SHEAR * (dy / 4.0)
+            x = BASE_X + dx + (lean * SHEAR * (dy / 4.0))
             y = dy * sy
             px(panel, face, x, y, color)
           end

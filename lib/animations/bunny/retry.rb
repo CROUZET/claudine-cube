@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -10,15 +12,15 @@ module Claudine
       # Signature: bunny shaking red, brief blip.
       class Retry < BunnyBase
         MIN_DURATION = 0.5
-        COLOR = [255, 0, 0]        # red (error)
+        COLOR = [255, 0, 0].freeze # red (error)
         SHAKE = 1.0                # amplitude of the shaking (px)
         FREQ  = 5.0                # frequency of the shaking (Hz) -- anger
         BLINK = 0.2                # half-period of the X blinking (s)
 
         # Top: big thick X (2 px) -- the 2 widened diagonals.
         X_TOP = (0..7).to_a.product((0..7).to_a)
-                      .select { |x, y| (x - y).abs <= 1 || (x + y - 7).abs <= 1 }
-                      .freeze
+          .select { |x, y| (x - y).abs <= 1 || (x + y - 7).abs <= 1 }
+          .freeze
 
         # Classic bunny head (dx, dy ; 0 = bottom). 2 px ears, head,
         # eyes, simple body. Occupies columns 1..6, leaving 0 and 7 for the
@@ -50,9 +52,7 @@ module Claudine
             BODY.each { |dx, dy| px(panel, face, dx + shake, dy, COLOR) }
           end
           # Top: big red X that blinks.
-          if (t / BLINK).floor.even?
-            X_TOP.each { |x, y| px(panel, :top, x, y, COLOR) }
-          end
+          X_TOP.each { |x, y| px(panel, :top, x, y, COLOR) } if (t / BLINK).floor.even?
         end
       end
     end

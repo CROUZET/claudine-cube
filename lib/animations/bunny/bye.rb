@@ -1,4 +1,6 @@
-require_relative 'welcome'
+# frozen_string_literal: true
+
+require_relative "welcome"
 
 module Claudine
   module Animations
@@ -15,14 +17,15 @@ module Claudine
         MIN_DURATION = DUR
         DURATION     = DUR        # duration shown by the preview
 
-        EYES = [[2, 3], [5, 3]].freeze   # eye gaps (same positions A and B)
+        EYES = [[2, 3], [5, 3]].freeze # eye gaps (same positions A and B)
 
         def render(t, panel)
           panel.clear
-          fade = [1.0 - t / DUR, 0.0].max        # progressive fade all along
-          return if fade <= 0.0                  # asleep: cube off
-          ear_top = 7 - ([t / SINK, 1.0].min * 3).round   # ears 7 -> 4
-          asleep  = t >= SINK                    # eyes closed once dozed off
+          fade = [1.0 - (t / DUR), 0.0].max # progressive fade all along
+          return if fade <= 0.0 # asleep: cube off
+
+          ear_top = 7 - ([t / SINK, 1.0].min * 3).round # ears 7 -> 4
+          asleep  = t >= SINK # eyes closed once dozed off
 
           # Model A: front + back (mirror). No wink (it's sleeping).
           draw_a(panel, :front, fade, ear_top, false, false)

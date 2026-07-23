@@ -1,0 +1,106 @@
+# Base RuboCop config — starting point, tune to taste.
+# Philosophy: keep the high-value Lint/Performance cops,
+# but don't let default Style/Metrics fight the codebase's deliberate choices
+# (short domain names like x/y/r/g/b/t, aligned assignments, dense animation render math).
+
+plugins:
+  - rubocop-minitest
+  - rubocop-rake
+  - rubocop-performance
+
+AllCops:
+  NewCops: enable
+  SuggestExtensions: false
+  TargetRubyVersion: 3.4 # RuboCop doesn't model 4.0 yet; 3.4 is close enough
+  Exclude:
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+
+Layout/ArrayAlignment:
+  Exclude:
+    - "lib/animations/**/*" # representations of models on the cube
+
+# No cosmetic alignment by spaces — except the animation files, where aligned
+# arrays/sprites represent the models drawn on the cube.
+Layout/ExtraSpacing:
+  AllowForAlignment: false
+  Exclude:
+    - "lib/animations/**/*" # representations of models on the cube
+
+Layout/FirstArrayElementIndentation:
+  Exclude:
+    - "lib/animations/**/*" # representations of models on the cube
+
+# personal taste
+Layout/LineLength:
+  Enabled: false
+
+# personal taste
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+# Base/Stub parents have no stateful initialize — super would only reach
+# Object#initialize (no-op), so requiring it here is cargo-cult.
+Lint/MissingSuper:
+  Exclude:
+    - "lib/animations/**/*" # animation base + subclasses
+    - "test/**/*" # test stub panels
+
+# --- Animations are compact math by nature; relax the size/complexity metrics
+Metrics/AbcSize:
+  Max: 45
+Metrics/BlockLength:
+  Max: 30
+  Exclude:
+    - "test/**/*" # long test blocks are fine
+Metrics/ClassLength:
+  Max: 250
+Metrics/CyclomaticComplexity:
+  Max: 15
+Metrics/MethodLength:
+  Max: 40
+Metrics/ParameterLists:
+  Max: 8 # Panel#set(face:, x:, y:, r:, g:, b:) is fine
+Metrics/PerceivedComplexity:
+  Max: 15
+
+# personal taste
+Minitest/MultipleAssertions:
+  Enabled: false
+
+# (x/y = coordinates, r/g/b = color channels, t = time, d = distance…)
+Naming/MethodParameterName:
+  Enabled: false
+
+# personal taste
+Style/BlockDelimiters:
+  EnforcedStyle: braces_for_chaining
+
+# Repetition are useful to mirror cube facets
+Style/CombinableLoops:
+  Enabled: false
+
+# only when useful
+Style/Documentation:
+  Enabled: false
+
+# flexibility
+Style/FormatStringToken:
+  Exclude:
+    - "diagnostics/**/*"
+
+# personal taste
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+# personal taste
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+# personal taste
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: diff_comma
+
+# personal taste
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: diff_comma

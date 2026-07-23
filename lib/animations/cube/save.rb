@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -10,15 +12,16 @@ module Claudine
         MIN_DURATION = 1.0
         PHASE  = 0.3             # duration of a phase before the checkerboard inverts
         SQUARE = 2               # side of a square (px)
-        COLOR  = [210, 210, 210] # neutral gray
+        COLOR  = [210, 210, 210].freeze # neutral gray
 
         def render(t, panel)
           panel.clear
-          lit = (t / PHASE).to_i.even? ? 0 : 1   # which parity is lit
+          lit = (t / PHASE).to_i.even? ? 0 : 1 # which parity is lit
           ALL_FACES.each do |face|
             SIDE.times do |x|
               SIDE.times do |y|
-                next unless (x / SQUARE + y / SQUARE) % 2 == lit
+                next unless ((x / SQUARE) + (y / SQUARE)) % 2 == lit
+
                 px(panel, face, x, y, self.class::COLOR)
               end
             end

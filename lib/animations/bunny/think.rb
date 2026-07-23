@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -11,7 +13,7 @@ module Claudine
       # Signature: small light-blue bunnies hopping around the cube.
       class Think < BunnyBase
         MIN_DURATION = 0.6
-        COLOR   = [140, 200, 255]         # light blue
+        COLOR   = [140, 200, 255].freeze # light blue
         SPEED   = 12.0                    # columns/second (around the cube)
         HOP_LEN = 8                       # length of one jump (columns) -- 32 = 4 jumps/turn
         HOP_H   = [3.0, 5.0, 4.0].freeze  # jump height per bunny (the top can go out)
@@ -40,7 +42,7 @@ module Claudine
           panel.clear
           head = t * SPEED
           NB.times do |i|
-            col    = head + i * (RING.to_f / NB)
+            col    = head + (i * (RING.to_f / NB))
             hop    = Math.sin(Math::PI * ((col % HOP_LEN) / HOP_LEN))  # arc 0..1
             base_y = hop * HOP_H[i]                                    # height specific to the bunny
             RABBIT.each { |dx, dy| plot(panel, col + dx, base_y + dy, COLOR) }

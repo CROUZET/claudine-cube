@@ -1,4 +1,6 @@
-require_relative '_base'
+# frozen_string_literal: true
+
+require_relative "_base"
 
 module Claudine
   module Animations
@@ -13,7 +15,7 @@ module Claudine
         HOLD     = 4.0                  # visible sleep before the fade
         FADE     = 2.0                  # extinction
         DURATION = HOLD + FADE          # lifetime (read by the manager)
-        COLOR    = [80, 150, 220]       # soft blue (idle)
+        COLOR    = [80, 150, 220].freeze # soft blue (idle)
         FACES    = %i[front right back left].freeze
 
         # Sleep bubbles: little dots that rise in zigzag and fade away.
@@ -39,18 +41,19 @@ module Claudine
 
         def render(t, panel)
           panel.clear
-          env    = t < HOLD ? 1.0 : (1.0 - (t - HOLD) / FADE).clamp(0.0, 1.0)
+          env    = t < HOLD ? 1.0 : (1.0 - ((t - HOLD) / FADE)).clamp(0.0, 1.0)
           return if env <= 0.0
-          breath = 0.35 + 0.35 * wave(t, PERIOD)     # breathing 0.35..0.70
+
+          breath = 0.35 + (0.35 * wave(t, PERIOD)) # breathing 0.35..0.70
           loaf_c = dim(COLOR, breath * env)
 
           FACES.each do |face|
             LOAF.each { |x, y| px(panel, face, x, y, loaf_c) }
             NB_BUB.times do |i|
-              ph = ((t / RISE) + i.to_f / NB_BUB) % 1.0        # 0..1: the bubble rises
-              bx = BUB_X + (AMP * Math.sin(ph * ZIG * 2 * Math::PI)).round  # zigzag
-              by = (5 + ph * 5).round                          # y from 5 to 10 (overflows onto the top)
-              bubble(panel, face, bx, by, dim(COLOR, (1.0 - ph) * env))     # fades away
+              ph = ((t / RISE) + (i.to_f / NB_BUB)) % 1.0 # 0..1: the bubble rises
+              bx = BUB_X + (AMP * Math.sin(ph * ZIG * 2 * Math::PI)).round # zigzag
+              by = (5 + (ph * 5)).round # y from 5 to 10 (overflows onto the top)
+              bubble(panel, face, bx, by, dim(COLOR, (1.0 - ph) * env)) # fades away
             end
           end
         end

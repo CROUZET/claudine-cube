@@ -1,11 +1,13 @@
-require_relative 'lib/event'
-require_relative 'lib/event_bus'
-require_relative 'lib/animation_manager'
-require_relative 'lib/config'
-require_relative 'lib/status'
-require_relative 'lib/runner'
-require_relative 'lib/connectors/claude_code'
-require_relative 'lib/connectors/admin_server'
+# frozen_string_literal: true
+
+require_relative "lib/event"
+require_relative "lib/event_bus"
+require_relative "lib/animation_manager"
+require_relative "lib/config"
+require_relative "lib/status"
+require_relative "lib/runner"
+require_relative "lib/connectors/claude_code"
+require_relative "lib/connectors/admin_server"
 
 config = Claudine::Config.new
 status = Claudine::Status.new
@@ -18,10 +20,10 @@ unless Claudine::AnimationManager.available_sets.include?(theme)
 end
 
 manager = Claudine::AnimationManager.new(set: theme)
-runner  = Claudine::Runner.new(manager: manager, config: config, status: status)
+runner = Claudine::Runner.new(manager: manager, config: config, status: status)
 
 claude_code = Claudine::Connectors::ClaudeCode.new(bus: runner.bus, config: config)
-admin       = Claudine::Connectors::AdminServer.new(config: config, status: status, bus: runner.bus)
+admin = Claudine::Connectors::AdminServer.new(config: config, status: status, bus: runner.bus)
 
 begin
   claude_code.start

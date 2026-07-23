@@ -1,4 +1,6 @@
-require_relative 'fork'
+# frozen_string_literal: true
+
+require_relative "fork"
 
 module Claudine
   module Animations
@@ -9,7 +11,7 @@ module Claudine
       # downward). Yellow (end event -> yellow). Overlay.
       # Signature: the bunnies turn jumping then vanish underground.
       class Join < Fork
-        COLOR = [255, 200, 0]   # yellow (end)
+        COLOR = [255, 200, 0].freeze # yellow (end)
 
         private
 
@@ -19,13 +21,13 @@ module Claudine
           if t < jt                                  # around the cube jumping
             total = t / JUMP_T
             p = total - total.floor
-            [base + total * SIDE, Math.sin(Math::PI * p) * HOP_H]
+            [base + (total * SIDE), Math.sin(Math::PI * p) * HOP_H]
           elsif t < jt + POP                         # dive into the burrow (0 -> -5)
             p = (t - jt) / POP
             off = (-5 * (1.0 - ease_out_back(1.0 - p))).round
-            [base + JUMPS * SIDE, off]
+            [base + (JUMPS * SIDE), off]
           else
-            [base + JUMPS * SIDE, -5]                 # underground
+            [base + (JUMPS * SIDE), -5] # underground
           end
         end
       end
