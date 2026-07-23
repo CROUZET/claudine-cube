@@ -138,15 +138,18 @@ bundle exec rake test
 
 ### On-cube diagnostics (need the real cube)
 
-`diagnostics/` holds manual, on-cube utilities (not part of the test suite):
+`diagnostics/` holds manual, on-cube utilities (not part of the test suite),
+exposed as rake tasks — `bundle exec rake -T` lists them:
 
 ```bash
-ruby diagnostics/cube_preview.rb                 # play every intention in sequence
-ruby diagnostics/cube_preview.rb think handled   # only these intentions
-ruby diagnostics/cube_faces.rb                   # one color per face (order + mapping)
-ruby diagnostics/cube_edge.rb                    # all shared edges, both sides
-ruby diagnostics/cube_stress.rb                  # brightness / current stress (DC vs USB)
+bundle exec rake diagnostics:preview                      # play every intention in sequence
+INTENTIONS="think handled" bundle exec rake diagnostics:preview   # only these
+bundle exec rake diagnostics:faces                        # one color per face (order + mapping)
+bundle exec rake diagnostics:edge                         # all shared edges, both sides
+bundle exec rake diagnostics:stress                       # brightness / current stress (DC vs USB)
 ```
+
+(Or run a script directly, e.g. `ruby diagnostics/cube_preview.rb think handled`.)
 
 ### Testing hooks manually
 

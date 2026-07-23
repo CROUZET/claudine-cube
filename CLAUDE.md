@@ -255,22 +255,23 @@ Two distinct things, in two places:
 | `claude_code_gate_test.rb` | ClaudeCode ingestion gate (drops events when off) |
 | `test_helper.rb` | shared stubs (`TestPanels`), `free_port`, quiet logs |
 
-**On-cube diagnostics** (`diagnostics/`, need the real cube — **not** the test suite, run by hand):
+**On-cube diagnostics** (`diagnostics/`, need the real cube — **not** the test suite),
+exposed as rake tasks (`bundle exec rake diagnostics:<name>`, or run the script directly):
 
-| File | Role |
+| Task / file | Role |
 |---|---|
-| `cube_faces.rb` | 1 color/face (order + mapping) |
-| `cube_edge.rb` | calibration/check of the 8 edges (pixels 2→6 on both sides) |
-| `cube_preview.rb [intentions…]` | preview of the animations on the cube |
-| `cube_stress.rb` | brightness / current stress (DC vs USB) |
+| `diagnostics:faces` / `cube_faces.rb` | 1 color/face (order + mapping) |
+| `diagnostics:edge` / `cube_edge.rb` | calibration/check of the 8 edges (pixels 2→6 on both sides) |
+| `diagnostics:preview` / `cube_preview.rb` | preview of the animations (`INTENTIONS="think handled"` to filter) |
+| `diagnostics:stress` / `cube_stress.rb` | brightness / current stress (DC vs USB) |
 
 ### Running
 
 ```bash
 bundle install
-ruby claudine.rb                   # daemon, default 'cube' set (+ admin on :9293)
-bundle exec rake test              # automated suite (no hardware)
-ruby diagnostics/cube_preview.rb   # watch the animations on the cube
+ruby claudine.rb                          # daemon, default 'cube' set (+ admin on :9293)
+bundle exec rake test                     # automated suite (no hardware)
+bundle exec rake diagnostics:preview      # watch the animations on the cube (needs it)
 ```
 
 ---

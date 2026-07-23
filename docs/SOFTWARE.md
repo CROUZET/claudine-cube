@@ -508,8 +508,9 @@ bundle exec rake test       # the automated suite (hardware-free)
 ```
 
 The on-cube diagnostics live under `diagnostics/` (run by hand with the cube
-plugged in, e.g. `ruby diagnostics/cube_preview.rb`) — they are not part of the
-automated suite.
+plugged in) and are exposed as rake tasks — `bundle exec rake -T` lists them,
+e.g. `bundle exec rake diagnostics:preview`. They are not part of the automated
+suite.
 
 Env vars: `CLAUDINE_LOG_LEVEL=DEBUG` (default `INFO`), `CLAUDINE_ANIMATION_SET`
 (default `cube`; `bunny` complete — all 16 intentions), `CLAUDINE_BRIGHTNESS`
@@ -558,7 +559,7 @@ claudine-cube/
 │  ├─ cube_edge.rb              # all 8 shared edges, both sides (edge calibration)
 │  ├─ cube_preview.rb           # play the animations on the cube
 │  └─ cube_stress.rb            # brightness / current stress on the cube
-├─ Rakefile                     # `bundle exec rake test` → the automated suite
+├─ Rakefile                     # `rake test` + `rake diagnostics:<name>` tasks
 └─ test/                        # automated, hardware-free (minitest)
    ├─ test_helper.rb            # stub panels, free_port, quiet logs
    ├─ config_test.rb            # Config: precedence / ceiling / boost / integrations / I/O
