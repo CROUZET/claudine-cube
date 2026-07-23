@@ -224,7 +224,11 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    A read-only **status panel** (`GET /api/status`, polled) shows the live
    runtime state: the Runner *publishes* a frozen snapshot into a shared
    `Status` (`lib/status.rb`) each frame (mirror of config-observe; atomic ref
-   swap, no lock) and the page displays it. Each new control is the same shape —
+   swap, no lock) and the page displays it. A **trigger** grid (`POST
+   /api/trigger`) plays any intention on demand (test/demo): the admin pushes an
+   intention-typed event onto the bus, and `AnimationManager#resolve` accepts a
+   type that is itself a known intention directly (bypassing the profile); the
+   buttons are disabled while the cube is off. Each new control is the same shape —
    a `Config` key + an endpoint + a widget; the plumbing is already there.
    Verified by `test/test_config.rb`, `test/test_admin_server.rb`,
    `test/test_manager_states.rb` (switch_set + status) and

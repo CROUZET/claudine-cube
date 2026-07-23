@@ -62,6 +62,14 @@
     .status-row .k { color: var(--muted); }
     .status-row .v { font-variant-numeric: tabular-nums; text-align: right; }
 
+    .trigger-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .trigger-grid button { padding: 9px 4px; background: #22262e; color: var(--fg); border: 1px solid #3a3f49; border-radius: 7px; font-size: 12px; cursor: pointer; text-transform: capitalize; transition: background .1s; }
+    .trigger-grid button:hover:not(:disabled) { background: #2c313b; }
+    .trigger-grid button.flash { background: var(--accent); color: #06121f; border-color: var(--accent); }
+    .trigger-grid button:disabled { opacity: .4; cursor: not-allowed; }
+    .trigger-hint { display: none; font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .trigger-hint.show { display: block; }
+
     .readout { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
     .readout .pct { font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .readout .factor { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -113,6 +121,10 @@
     <div class="section-title">Thème</div>
     <select id="theme" aria-label="Thème d'animation"><!-- filled from /api/state --></select>
 
+    <div class="section-title">Déclencher une intention</div>
+    <div id="triggers" class="trigger-grid"><!-- filled from /api/state --></div>
+    <p class="trigger-hint" id="triggerHint">Réactive une intégration pour prévisualiser (le cube est éteint).</p>
+
     <div class="section-title">Luminosité</div>
     <div class="readout">
       <span class="pct" id="pct">—</span>
@@ -147,6 +159,8 @@
     const integDiv = document.getElementById('integrations');
     const themeSel = document.getElementById('theme');
     const statusDiv = document.getElementById('status');
+    const triggersDiv = document.getElementById('triggers');
+    const triggerHint = document.getElementById('triggerHint');
     let ceiling = 0.25;
     let postTimer = null;
 
@@ -236,11 +250,39 @@
         row.appendChild(ke); row.appendChild(ve);
         statusDiv.appendChild(row);
       });
+      setTriggersEnabled(s.source_active !== false);  // no source → cube off → discarded
     }
 
     async function pollStatus() {
       try { const r = await fetch('/api/status'); if (r.ok) renderStatus(await r.json()); }
       catch (e) { /* keep the last snapshot on a transient error */ }
+    }
+
+    // --- Trigger buttons ----------------------------------------------------
+    function renderTriggers(list) {
+      triggersDiv.innerHTML = '';
+      list.forEach((name) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = name;
+        b.addEventListener('click', () => {
+          fetch('/api/trigger', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ intention: name })
+          }).then((r) => {
+            if (!r.ok) return;
+            b.classList.add('flash');
+            setTimeout(() => b.classList.remove('flash'), 250);
+            pollStatus();   // refresh the panel promptly
+          });
+        });
+        triggersDiv.appendChild(b);
+      });
+    }
+
+    function setTriggersEnabled(on) {
+      triggersDiv.querySelectorAll('button').forEach((b) => { b.disabled = !on; });
+      triggerHint.classList.toggle('show', !on);
     }
 
     function render(v) {
@@ -264,6 +306,7 @@
         render(s.brightness);
         if (s.integrations) renderIntegrations(s.integrations);
         if (s.themes) { renderThemes(s.themes, s.theme); themeSel.dataset.current = s.theme; }
+        if (s.intentions) renderTriggers(s.intentions);
       } catch (e) {
         state.textContent = 'hors ligne';
       }

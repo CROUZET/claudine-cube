@@ -1,6 +1,8 @@
 require 'webrick'
 require 'json'
 require_relative '../logger'
+require_relative '../event'
+require_relative '../intentions'
 require_relative '../animation_manager'
 require_relative '../status'
 require_relative '../../config/settings'
@@ -22,12 +24,16 @@ module Claudine
     #   POST /api/brightness  → body { "value": <0..1> } → 204 (400 on bad input)
     #   POST /api/integration → body { "name": "claude_code", "enabled": bool } → 204
     #   POST /api/theme       → body { "theme": "<set>" } → 204 (400 if unknown)
+    #   POST /api/trigger     → body { "intention": "<name>" } → 204 (pushes onto the bus)
     class AdminServer
       INDEX = File.expand_path('admin/index.html', __dir__)
 
-      def initialize(config:, status: Status.new, port: Settings::ADMIN_PORT)
+      # `bus` (optional) lets the trigger buttons push an intention event; when
+      # nil, POST /api/trigger is unavailable (503).
+      def initialize(config:, status: Status.new, bus: nil, port: Settings::ADMIN_PORT)
         @config = config
         @status = status
+        @bus    = bus
         @port   = port
       end
 
@@ -61,7 +67,10 @@ module Claudine
         @server.mount_proc('/api/state') do |_req, res|
           res.status = 200
           res['Content-Type'] = 'application/json'
-          res.body = JSON.generate(@config.to_state.merge(themes: AnimationManager.available_sets))
+          res.body = JSON.generate(@config.to_state.merge(
+            themes:     AnimationManager.available_sets,
+            intentions: Intentions::VOCAB.keys
+          ))
         end
 
         @server.mount_proc('/api/status') do |_req, res|
@@ -80,6 +89,10 @@ module Claudine
 
         @server.mount_proc('/api/theme') do |req, res|
           req.request_method == 'POST' ? handle_theme(req, res) : (res.status = 405)
+        end
+
+        @server.mount_proc('/api/trigger') do |req, res|
+          req.request_method == 'POST' ? handle_trigger(req, res) : (res.status = 405)
         end
       end
 
@@ -125,6 +138,22 @@ module Claudine
           return
         end
         @config.theme = theme
+        res.status = 204
+      rescue JSON::ParserError
+        res.status = 400
+      end
+
+      def handle_trigger(req, res)
+        if @bus.nil?
+          res.status = 503
+          return
+        end
+        name = JSON.parse(req.body || '{}')['intention']
+        unless name.is_a?(String) && Intentions.known?(name.to_sym)
+          res.status = 400
+          return
+        end
+        @bus.push(Claudine::Event.new(type: name.to_sym, payload: {}))
         res.status = 204
       rescue JSON::ParserError
         res.status = 400

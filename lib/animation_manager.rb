@@ -175,6 +175,10 @@ module Claudine
     # (via the fallback chain). Returns nil (and logs) if either step fails.
     def resolve(event_type)
       intention = @profile[event_type]
+      # A source may also push an intention *directly* (e.g. the admin "trigger"
+      # buttons): if the profile doesn't know the type but it is itself a known
+      # intention, use it as-is.
+      intention = event_type if intention.nil? && Intentions.known?(event_type)
       if intention.nil?
         Claudine.logger.warn "AnimationManager: event #{event_type} not in profile — ignored"
         return nil

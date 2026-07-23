@@ -21,7 +21,7 @@ manager = Claudine::AnimationManager.new(set: theme)
 runner  = Claudine::Runner.new(manager: manager, config: config, status: status)
 
 claude_code = Claudine::Connectors::ClaudeCode.new(bus: runner.bus, config: config)
-admin       = Claudine::Connectors::AdminServer.new(config: config, status: status)
+admin       = Claudine::Connectors::AdminServer.new(config: config, status: status, bus: runner.bus)
 
 begin
   claude_code.start

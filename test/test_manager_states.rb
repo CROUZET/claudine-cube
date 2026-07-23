@@ -100,5 +100,10 @@ ok &= check('set is now bunny',          mgr.set, 'bunny')
 ok &= check('switch_set unknown ignored', mgr.switch_set('nope'), false)
 ok &= check('set unchanged after unknown', mgr.set, 'bunny')
 
+# direct-intention trigger (admin "trigger" buttons): an event whose type is
+# itself a known intention resolves to it, bypassing the profile.
+mgr2 = Claudine::AnimationManager.new
+ok &= check('direct intention :fork resolves', step(mgr2, panel, 0.0, :fork), 'Fork')
+
 puts ok ? "\nLAYER MODEL OK ✅" : "\nFAILURE ❌"
 exit(ok ? 0 : 1)

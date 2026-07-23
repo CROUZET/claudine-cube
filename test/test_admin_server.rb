@@ -8,6 +8,8 @@ require 'tmpdir'
 require 'logger'
 
 ENV.delete('CLAUDINE_BRIGHTNESS')
+require_relative '../lib/event'
+require_relative '../lib/event_bus'
 require_relative '../lib/config'
 require_relative '../lib/status'
 require_relative '../lib/connectors/admin_server'
@@ -38,7 +40,8 @@ Dir.mktmpdir do |dir|
   cfg = Claudine::Config.new(path: File.join(dir, '.claudine'))
   status = Claudine::Status.new
   status.publish(state: 'working', animation: 'Think', uptime_s: 5)
-  srv = Claudine::Connectors::AdminServer.new(config: cfg, status: status, port: PORT)
+  bus = Claudine::EventBus.new
+  srv = Claudine::Connectors::AdminServer.new(config: cfg, status: status, bus: bus, port: PORT)
   srv.start
 
   # wait for the listener to come up
@@ -99,6 +102,17 @@ Dir.mktmpdir do |dir|
     check('state reflects theme', JSON.parse(req(:get, '/api/state').body)['theme'] == 'bunny')
     r = req(:post, '/api/theme', JSON.generate('theme' => 'nope'))
     check('unknown theme → 400', r.code == '400')
+
+    # /api/state advertises the intention vocabulary (for the trigger buttons)
+    check('state has intentions list', JSON.parse(req(:get, '/api/state').body)['intentions'].include?('fork'))
+
+    # POST /api/trigger pushes the intention onto the bus
+    bus.drain
+    r = req(:post, '/api/trigger', JSON.generate('intention' => 'fork'))
+    check('POST trigger fork → 204', r.code == '204')
+    check('trigger pushed :fork onto the bus', bus.drain.map(&:type).include?(:fork))
+    r = req(:post, '/api/trigger', JSON.generate('intention' => 'nope'))
+    check('unknown intention → 400', r.code == '400')
 
     # GET /api/status returns the published runtime snapshot (read-only)
     r = req(:get, '/api/status')

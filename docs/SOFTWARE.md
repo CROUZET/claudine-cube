@@ -694,10 +694,12 @@ Routes:
 | Route | Method | Behaviour |
 |---|---|---|
 | `/` | GET | serves the self-contained admin page |
-| `/api/state` | GET | `{ "brightness": .., "boost_ceiling": 0.25, "theme": .., "themes": [..], "integrations": {..} }` |
+| `/api/state` | GET | `{ "brightness", "boost_ceiling", "theme", "themes": [..], "integrations": {..}, "intentions": [..] }` |
 | `/api/status` | GET | read-only live snapshot: `{ "state", "animation", "set", "source_active", "brightness", "last_event_ago", "uptime_s", "fps" }` |
 | `/api/brightness` | POST | body `{ "value": <0..1> }` → `204` (`400` on bad input); applies to `Config` (persisted if ≤ ceiling) |
 | `/api/integration` | POST | body `{ "name": "claude_code", "enabled": bool }` → `204` (`400` on bad input); toggles a source integration |
+| `/api/theme` | POST | body `{ "theme": "<set>" }` → `204` (`400` if unknown); switches the active set |
+| `/api/trigger` | POST | body `{ "intention": "<name>" }` → `204` (`400` unknown, `503` if no bus); pushes the intention onto the bus |
 
 The `Runner` observes `config` at the top of each frame: it reflects
 `config.brightness` onto the panel (hot-reload) and, when
@@ -709,7 +711,8 @@ manager instead of rendering (see [Threading](#threading-and-thread-safety)).
 `lib/connectors/admin/index.html` — **vanilla HTML/CSS/JS**, self-contained (CSS
 and JS inline), no build step and no external asset (works offline). An
 **État** panel (top) shows the live runtime snapshot (polled from `/api/status`
-every 2 s). An
+every 2 s). A **Déclencher** grid plays any intention on demand (disabled when
+the cube is off). An
 **Integrations** section lists each source with a labeled switch (state
 shown by knob position + "activé/désactivé" text — **not color alone**, the
 maintainer is slightly colorblind). A **Theme** `<select>` lists the available
@@ -718,6 +721,17 @@ shows its value live
 and POSTs it debounced (~150 ms); the 0.25 boundary is a **labeled tick**, and
 crossing it raises a *"plug the DC jack"* banner (shape + text, not color alone).
 The `ClaudeCode` HTTP contract (`:9292`) is untouched — only its ingestion gate.
+
+### Trigger buttons
+
+A **Déclencher une intention** grid (one button per vocabulary intention, from
+`/api/state`) plays any animation on demand — handy to preview a theme or demo
+without Claude Code. `POST /api/trigger` pushes an intention-typed event onto the
+`bus`; the Runner drains it and `AnimationManager#resolve` accepts it directly
+(a type that is itself a known intention bypasses the profile). Because a
+manually-triggered event still goes through the normal path, it only shows while
+the cube is on — the buttons are disabled (with a hint) when no source is
+enabled (the poll's `source_active` drives this).
 
 ### Status panel (read-only)
 
