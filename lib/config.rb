@@ -21,11 +21,17 @@ module Claudine
     # stale high value. See docs/HARDWARE.md (thermal / power / brownout).
     BOOST_CEILING = 0.25
 
+    # Source integrations and their default state (all on). Turning one off gates
+    # that source's event ingestion (the connector still answers, it just doesn't
+    # push) — the render path is untouched. Only `claude_code` exists today.
+    DEFAULT_INTEGRATIONS = { 'claude_code' => true }.freeze
+
     def initialize(path: PATH)
       @path       = path
       @mutex      = Mutex.new
-      @brightness = load_brightness
-      Claudine.logger.info "Config: brightness=#{@brightness} (source: #{@source})"
+      @brightness   = load_brightness
+      @integrations = load_integrations
+      Claudine.logger.info "Config: brightness=#{@brightness} (source: #{@source}), integrations=#{@integrations}"
     end
 
     def brightness
@@ -52,8 +58,27 @@ module Claudine
       brightness > BOOST_CEILING
     end
 
+    # Is the named source integration on? Unknown names default to on.
+    def integration_enabled?(name)
+      @mutex.synchronize { @integrations.fetch(name.to_s, true) }
+    end
+
+    # Enables/disables a source integration and persists the whole map.
+    def set_integration(name, enabled)
+      on = !!enabled
+      @mutex.synchronize do
+        @integrations[name.to_s] = on
+        persist_key('integrations', @integrations)
+      end
+      on
+    end
+
     def to_state
-      { brightness: brightness, boost_ceiling: BOOST_CEILING }
+      { brightness: brightness, boost_ceiling: BOOST_CEILING, integrations: integrations }
+    end
+
+    def integrations
+      @mutex.synchronize { @integrations.dup }
     end
 
     private
@@ -73,6 +98,15 @@ module Claudine
       end
       @source = 'default'
       Settings::BRIGHTNESS
+    end
+
+    # Defaults (all on) overlaid with whatever the file stored; unknown/future
+    # keys in the file are preserved. Values are coerced to booleans.
+    def load_integrations
+      base   = DEFAULT_INTEGRATIONS.dup
+      stored = read_file['integrations']
+      base.merge!(stored.transform_values { |v| !!v }) if stored.is_a?(Hash)
+      base
     end
 
     def read_file

@@ -10,11 +10,12 @@ config  = Claudine::Config.new
 manager = Claudine::AnimationManager.new
 runner  = Claudine::Runner.new(manager: manager, config: config)
 
-claude_code = Claudine::Connectors::ClaudeCode.new(bus: runner.bus)
+claude_code = Claudine::Connectors::ClaudeCode.new(bus: runner.bus, config: config)
 admin       = Claudine::Connectors::AdminServer.new(config: config)
-claude_code.start
-admin.start
+
 begin
+  claude_code.start
+  admin.start
   runner.start
 ensure
   admin.stop

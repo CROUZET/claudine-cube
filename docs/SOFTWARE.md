@@ -457,6 +457,12 @@ Which visual you get therefore depends on both the profile and the set. The
 [README.md](../README.md#the-cube-animation-set). The last event received stays
 displayed until the next one (or until idle).
 
+The connector reads a **gate** from `Config`: if the `claude_code` integration is
+switched off in the [admin page](#3--the-admin-web-server--user-facing-control-plane),
+it still answers `204` (hooks never error) but drops the event instead of pushing
+it — so the cube stops reacting and falls to idle, with no effect on the render
+path.
+
 #### Extensibility: adding a source
 
 Adding a source is **data + a connector**, with zero changes to the render path:
@@ -537,8 +543,9 @@ claudine-cube/
    ├─ test_cube_preview.rb      # play the animations on the cube
    ├─ test_cube_animations.rb   # dry-run all animations (no hardware)
    ├─ test_manager_states.rb    # two-layer background/overlay model (no hardware)
-   ├─ test_config.rb            # Config precedence / ceiling / boost / I/O (no hardware)
-   └─ test_admin_server.rb      # admin HTTP API (WEBrick, no hardware)
+   ├─ test_config.rb            # Config precedence / ceiling / boost / integrations / I/O (no hw)
+   ├─ test_admin_server.rb      # admin HTTP API (WEBrick, no hardware)
+   └─ test_claude_code_gate.rb  # ClaudeCode ingestion gate (no hardware)
 ```
 
 ---
@@ -649,15 +656,20 @@ sequenceDiagram
 **`Config`** (`lib/config.rb`) is the single source of truth for live-tunable
 settings, persisted to **`~/.claudine`** (JSON, user-level, outside the repo).
 
-- v1 holds only `brightness`.
-- Precedence at load: `CLAUDINE_BRIGHTNESS` (ENV, honored as-is — may exceed the
-  ceiling since it is a deliberate act) > `~/.claudine` (clamped to
+- It holds `brightness` and `integrations` (a `name → bool` map, all on by
+  default).
+- Brightness precedence at load: `CLAUDINE_BRIGHTNESS` (ENV, honored as-is — may
+  exceed the ceiling since it is a deliberate act) > `~/.claudine` (clamped to
   `BOOST_CEILING` as a defense against a hand-edited file) > `Settings::BRIGHTNESS`.
-- Writes are **atomic** (tmp + rename) and **merge** existing keys, so future
-  keys (theme, integrations) survive a brightness write.
+- Writes are **atomic** (tmp + rename) and **merge** existing keys, so brightness
+  and integrations (and future keys, e.g. theme) coexist in one file.
 - Values above `BOOST_CEILING` (**0.25**) are applied but **not persisted**
   (volatile session boost), so a fresh boot — possibly USB-only — can never
   restore a brownout-inducing level.
+- **Integration toggles** are read by the source connectors: `ClaudeCode` calls
+  `config.integration_enabled?(:claude_code)` before pushing. When off it still
+  answers `204` but drops the event — a gate on *ingestion*, never on the render
+  path, so the cube simply idles.
 
 ### AdminServer (HTTP API)
 
@@ -668,8 +680,9 @@ Routes:
 | Route | Method | Behaviour |
 |---|---|---|
 | `/` | GET | serves the self-contained admin page |
-| `/api/state` | GET | `{ "brightness": .., "boost_ceiling": 0.25 }` |
+| `/api/state` | GET | `{ "brightness": .., "boost_ceiling": 0.25, "integrations": {..} }` |
 | `/api/brightness` | POST | body `{ "value": <0..1> }` → `204` (`400` on bad input); applies to `Config` (persisted if ≤ ceiling) |
+| `/api/integration` | POST | body `{ "name": "claude_code", "enabled": bool }` → `204` (`400` on bad input); toggles a source integration |
 
 The `Runner` reflects `config.brightness` onto the panel at the top of each
 frame — the whole hot-reload mechanism (see
@@ -678,27 +691,32 @@ frame — the whole hot-reload mechanism (see
 ### The page
 
 `lib/connectors/admin/index.html` — **vanilla HTML/CSS/JS**, self-contained (CSS
-and JS inline), no build step and no external asset (works offline). A brightness
-slider shows its value live and POSTs it debounced (~150 ms). The 0.25 boundary
-is drawn as a **labeled tick**, and crossing it raises a *"plug the DC jack"*
-banner — signalled by shape + text, **not color alone** (the maintainer is
-slightly colorblind). The `ClaudeCode` connector (`:9292`) is untouched.
+and JS inline), no build step and no external asset (works offline). An
+**Integrations** section (top) lists each source with a labeled switch (state
+shown by knob position + "activé/désactivé" text — **not color alone**, the
+maintainer is slightly colorblind). A **Brightness** slider shows its value live
+and POSTs it debounced (~150 ms); the 0.25 boundary is a **labeled tick**, and
+crossing it raises a *"plug the DC jack"* banner (shape + text, not color alone).
+The `ClaudeCode` HTTP contract (`:9292`) is untouched — only its ingestion gate.
 
 ### Extending it
 
 Adding a future control is the same shape everywhere: a key in `Config` + an
-endpoint in `AdminServer` + a widget in the page; the render loop already
-observes `Config`. Planned next: **theme** (active animation set) and
-**integration on/off** toggles.
+endpoint in `AdminServer` + a widget in the page; the render loop (or, for
+integrations, the connector) already observes `Config`. Shipped so far:
+**brightness** and **integration on/off**. Planned next: **theme** (active
+animation set).
 
 ### Tests
 
 Both run without hardware (no `Panel`, no serial):
 
-- `test/test_config.rb` — precedence, safe-boot ceiling, volatile boost,
-  file-I/O robustness, key preservation.
-- `test/test_admin_server.rb` — the HTTP API end-to-end via `Net::HTTP` against a
-  temp `Config` on a test port.
+- `test/test_config.rb` — brightness precedence, safe-boot ceiling, volatile
+  boost, integration toggles, file-I/O robustness, key preservation.
+- `test/test_admin_server.rb` — the HTTP API (brightness + integration) end-to-end
+  via `Net::HTTP` against a temp `Config` on a test port.
+- `test/test_claude_code_gate.rb` — the connector's ingestion gate: events reach
+  the bus when on, are dropped (still `204`) when off.
 
 ---
 

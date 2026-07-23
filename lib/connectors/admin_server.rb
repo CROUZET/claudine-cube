@@ -14,8 +14,9 @@ module Claudine
     #
     # Routes:
     #   GET  /                → the admin page (self-contained HTML)
-    #   GET  /api/state       → { "brightness": .., "boost_ceiling": 0.25 }
+    #   GET  /api/state       → { "brightness": .., "boost_ceiling": .., "integrations": {..} }
     #   POST /api/brightness  → body { "value": <0..1> } → 204 (400 on bad input)
+    #   POST /api/integration → body { "name": "claude_code", "enabled": bool } → 204
     class AdminServer
       DEFAULT_PORT = 9293
       HOST         = '127.0.0.1'
@@ -62,6 +63,10 @@ module Claudine
         @server.mount_proc('/api/brightness') do |req, res|
           req.request_method == 'POST' ? handle_brightness(req, res) : (res.status = 405)
         end
+
+        @server.mount_proc('/api/integration') do |req, res|
+          req.request_method == 'POST' ? handle_integration(req, res) : (res.status = 405)
+        end
       end
 
       def serve_index(res)
@@ -80,6 +85,20 @@ module Claudine
           return
         end
         @config.brightness = value
+        res.status = 204
+      rescue JSON::ParserError
+        res.status = 400
+      end
+
+      def handle_integration(req, res)
+        data    = JSON.parse(req.body || '{}')
+        name    = data['name']
+        enabled = data['enabled']
+        unless name.is_a?(String) && !name.empty? && [true, false].include?(enabled)
+          res.status = 400
+          return
+        end
+        @config.set_integration(name, enabled)
         res.status = 204
       rescue JSON::ParserError
         res.status = 400

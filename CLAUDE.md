@@ -203,14 +203,18 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    is a *control plane*, not an event source — it never touches the render path;
    it mutates a shared **`Config`** (persisted to **`~/.claudine`**, JSON,
    user-level) that the Runner **observes each frame** (`panel.brightness =
-   config.brightness`), so changes apply **hot**. v1 exposes **brightness** only.
-   Precedence: `CLAUDINE_BRIGHTNESS` (ENV) > `~/.claudine` > `Settings` default.
-   A **safe-boot ceiling** (`Config::BOOST_CEILING = 0.25`) caps what is persisted
-   and restored; higher values are volatile **session boosts** (UI raises a "plug
-   the DC jack" warning), never written — a fresh boot can't brown out on a stale
-   high value. Adding the next control (theme, integration on/off) = a `Config`
-   key + an endpoint + a widget; the observe-in-the-loop plumbing is already there.
-   Verified by `test/test_config.rb` and `test/test_admin_server.rb`.
+   config.brightness`), so changes apply **hot**. It exposes **brightness** and
+   **per-source integration on/off** (ClaudeCode): turning a source off gates its
+   *event ingestion* — the connector still answers `204` (hooks never error) but
+   drops the event instead of pushing, so the cube just falls to idle. No
+   render-path exception. Brightness precedence: `CLAUDINE_BRIGHTNESS` (ENV) >
+   `~/.claudine` > `Settings` default. A **safe-boot ceiling**
+   (`Config::BOOST_CEILING = 0.25`) caps what is persisted and restored; higher
+   values are volatile **session boosts** (UI raises a "plug the DC jack"
+   warning), never written — a fresh boot can't brown out on a stale high value.
+   Adding the next control (theme) = a `Config` key + an endpoint + a widget; the
+   observe-in-the-loop plumbing is already there. Verified by `test/test_config.rb`,
+   `test/test_admin_server.rb` and `test/test_claude_code_gate.rb`.
 
 The `lib/text/` folder (3×5 font, renderer) is kept from Claudine but **not
 used** by the cube set (the renderer uses the old positional `set`; it
@@ -227,6 +231,7 @@ would need to be ported to the per-face API to draw text on an 8×8 face).
 | `test_manager_states.rb` | two-layer model (background/overlay) of the manager | no |
 | `test_config.rb` | Config: precedence, safe-boot ceiling, volatile boost, file I/O | no |
 | `test_admin_server.rb` | AdminServer control-plane HTTP API (WEBrick, no panel) | no |
+| `test_claude_code_gate.rb` | ClaudeCode integration gate (drops events when off) | no |
 
 ### Running
 

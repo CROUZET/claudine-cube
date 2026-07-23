@@ -84,6 +84,29 @@ Dir.mktmpdir do |dir|
   c = Claudine::Config.new(path: file)
   c.brightness = 0.2
   check('other keys preserved on write', JSON.parse(File.read(file))['theme'], 'bunny')
+
+  # 10. integrations: default on, unknown name defaults on
+  File.delete(file) if File.exist?(file)
+  c = Claudine::Config.new(path: file)
+  check('claude_code on by default', c.integration_enabled?(:claude_code), true)
+  check('unknown integration defaults on', c.integration_enabled?(:whatever), true)
+  check('to_state exposes integrations', c.to_state[:integrations]['claude_code'], true)
+
+  # 11. set_integration false → applied, persisted, restored on reload
+  c.set_integration('claude_code', false)
+  check('set false applied', c.integration_enabled?(:claude_code), false)
+  check('set false written', JSON.parse(File.read(file))['integrations']['claude_code'], false)
+  check('set false restored on reload', Claudine::Config.new(path: file).integration_enabled?(:claude_code), false)
+
+  # 12. integrations and brightness coexist in the file
+  c = Claudine::Config.new(path: file)
+  c.brightness = 0.1
+  data = JSON.parse(File.read(file))
+  check('brightness + integrations coexist', [data['brightness'], data['integrations']['claude_code']], [0.1, false])
+
+  # 13. stored integrations map is loaded
+  write_file(file, 'integrations' => { 'claude_code' => false })
+  check('stored integration loaded', Claudine::Config.new(path: file).integration_enabled?(:claude_code), false)
 end
 
 puts(ALL[0] ? "\nALL OK" : "\nFAILURES")

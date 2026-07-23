@@ -16,9 +16,13 @@ module Claudine
       DEFAULT_PORT = 9292
       HOST = '127.0.0.1'
 
-      def initialize(bus:, port: DEFAULT_PORT)
-        @bus  = bus
-        @port = port
+      # `config` (optional) gates event ingestion: when the `claude_code`
+      # integration is disabled, incoming hooks still get a 204 (hooks never
+      # error) but are dropped rather than pushed onto the bus.
+      def initialize(bus:, port: DEFAULT_PORT, config: nil)
+        @bus    = bus
+        @port   = port
+        @config = config
       end
 
       def start
@@ -61,14 +65,22 @@ module Claudine
 
         if method == 'POST' && path&.start_with?('/event/')
           type = path.sub('/event/', '').chomp.to_sym
-          Claudine.logger.debug "ClaudeCode: #{type}"
-          @bus.push(Claudine::Event.new(type: type, payload: {}))
+          if enabled?
+            Claudine.logger.debug "ClaudeCode: #{type}"
+            @bus.push(Claudine::Event.new(type: type, payload: {}))
+          else
+            Claudine.logger.debug "ClaudeCode: #{type} dropped (integration disabled)"
+          end
           respond(client, 204)
         else
           respond(client, 404)
         end
       ensure
         client&.close
+      end
+
+      def enabled?
+        @config.nil? || @config.integration_enabled?(:claude_code)
       end
 
       def respond(client, status)

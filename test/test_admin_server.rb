@@ -55,6 +55,7 @@ Dir.mktmpdir do |dir|
     state = JSON.parse(r.body)
     check('state has brightness', state.key?('brightness'))
     check('state has boost_ceiling 0.25', state['boost_ceiling'] == 0.25)
+    check('state has integrations', state['integrations'].is_a?(Hash) && state['integrations'].key?('claude_code'))
 
     # POST /api/brightness (<= ceiling) applies to Config
     r = req(:post, '/api/brightness', JSON.generate('value' => 0.1))
@@ -70,6 +71,20 @@ Dir.mktmpdir do |dir|
     check('POST without value → 400', r.code == '400')
     r = req(:post, '/api/brightness', 'not json')
     check('POST invalid JSON → 400', r.code == '400')
+
+    # POST /api/integration toggles a source integration
+    r = req(:post, '/api/integration', JSON.generate('name' => 'claude_code', 'enabled' => false))
+    check('POST integration off → 204', r.code == '204')
+    check('config integration disabled', cfg.integration_enabled?(:claude_code) == false)
+    state = JSON.parse(req(:get, '/api/state').body)
+    check('state reflects integration off', state['integrations']['claude_code'] == false)
+    r = req(:post, '/api/integration', JSON.generate('name' => 'claude_code', 'enabled' => true))
+    check('POST integration on → 204', r.code == '204')
+    check('config integration re-enabled', cfg.integration_enabled?(:claude_code) == true)
+
+    # bad integration input → 400
+    r = req(:post, '/api/integration', JSON.generate('name' => 'claude_code'))
+    check('integration without enabled → 400', r.code == '400')
 
     # GET / serves the HTML page
     r = req(:get, '/')
