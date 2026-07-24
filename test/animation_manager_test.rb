@@ -86,10 +86,24 @@ class AnimationManagerTest < Minitest::Test
     @mgr.handle(Claudine::Event.new(type: :think, payload: { once: true }), 0.0)
 
     assert_nil @mgr.instance_variable_get(:@background) # never becomes a background
+    assert_predicate @mgr, :rendering? # something is on screen
     spy = TestPanels::ClearSpy.new
     @mgr.render(5.0, spy) # well past the one-shot duration
 
     assert_nil @mgr.instance_variable_get(:@current) # blanked
+    refute_predicate @mgr, :rendering?
     assert_predicate spy, :cleared? # buffer cleared, not left lit
+  end
+
+  def test_trigger_honors_custom_duration
+    # A caller-supplied duration keeps the one-shot up for that long, overriding the animation's own.
+    @mgr.handle(Claudine::Event.new(type: :fork, payload: { once: true, duration: 30.0 }), 0.0)
+    @mgr.render(10.0, @panel) # long past Fork's natural duration, well before 30s
+
+    assert_predicate @mgr, :rendering? # still up thanks to the custom duration
+
+    @mgr.render(31.0, TestPanels::Stub.new)
+
+    refute_predicate @mgr, :rendering? # blanked once the custom duration elapses
   end
 end

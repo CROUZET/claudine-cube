@@ -156,6 +156,11 @@ module Claudine
       @current.render(t - @activated, panel)
     end
 
+    # True while an animation is on screen (used by the Runner to decide whether to keep the cube dark while sources are off).
+    def rendering?
+      !@current.nil?
+    end
+
     private
 
     # Coarse runtime state for #status (a boundary anim showing itself reads as :showing; :off is added by the Runner when no source is enabled).
@@ -200,7 +205,8 @@ module Claudine
       if payload && payload[:once]
         # Manual trigger (admin preview): play once as an overlay whatever the intention's kind, then revert to the background loop or, if none, blank.
         # It never becomes the background itself.
-        d = klass.const_defined?(:DURATION) ? klass::DURATION : dur
+        # A caller-supplied `:duration` (admin) overrides how long it stays up; otherwise the animation's own DURATION (or MIN_DURATION).
+        d = payload[:duration] || (klass.const_defined?(:DURATION) ? klass::DURATION : dur)
         @overlay = true
         @oneshot = true
         @overlay_until = t + d

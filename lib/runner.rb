@@ -55,17 +55,7 @@ module Claudine
           @applied_theme = @config.theme
         end
 
-        if active
-          @bus.drain.each { |event| @manager.handle(event, t) }
-          @manager.render(t, panel)
-        else
-          # No source is driving the cube → turn it off.
-          # Reset once on the on→off transition so a later resume starts blank, and drop any already-queued events so they don't replay on resume.
-          @manager.reset if @sources_active
-          @bus.drain
-          panel.clear
-        end
-        @sources_active = active
+        drive(panel, t, active)
         publish_status(t, active)
         panel.show
         frames += 1
@@ -81,8 +71,34 @@ module Claudine
       end
     end
 
+    # One frame's worth of event handling + render, given whether any source is active.
+    # When active: drain every event onto the manager and render.
+    # When inactive: the cube is off — *except* for manual triggers (a control-plane action, not a source event), which still play their one-shot; ordinary source events are dropped.
+    def drive(panel, t, active)
+      if active
+        @bus.drain.each { |event| @manager.handle(event, t) }
+        @manager.render(t, panel)
+      else
+        # Reset once on the on→off transition so a later resume starts blank.
+        @manager.reset if @sources_active
+        @bus.drain.each { |event| @manager.handle(event, t) if manual_trigger?(event) }
+        @manager.render(t, panel)
+        # Nothing playing → keep the cube dark, and clear the manager's timers so the idle animation never wakes it while sources are off.
+        unless @manager.rendering?
+          panel.clear
+          @manager.reset
+        end
+      end
+      @sources_active = active
+    end
+
     def monotonic
       Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    end
+
+    # A manual admin trigger carries `once: true` in its payload (see AdminServer#handle_trigger); source events don't.
+    def manual_trigger?(event)
+      event.payload.is_a?(Hash) && event.payload[:once]
     end
 
     # Publishes a runtime snapshot for the admin status panel.

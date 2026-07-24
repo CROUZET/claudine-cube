@@ -94,6 +94,27 @@ class AdminServerTest < Minitest::Test
     assert_equal "400", post("/api/trigger", JSON.generate("intention" => "nope")).code
   end
 
+  def test_trigger_with_duration
+    @bus.drain
+
+    assert_equal "204", post("/api/trigger", JSON.generate("intention" => "think", "duration" => 8)).code
+    ev = @bus.drain.find { |e| e.type == :think }
+
+    assert_equal({ once: true, duration: 8.0 }, ev.payload)
+
+    # Over the cap is clamped, not rejected.
+    @bus.drain
+
+    assert_equal "204", post("/api/trigger", JSON.generate("intention" => "think", "duration" => 9999)).code
+
+    assert_in_delta Claudine::Connectors::AdminServer::MAX_TRIGGER_DURATION,
+                    @bus.drain.find { |e| e.type == :think }.payload[:duration], 1e-9
+
+    # Non-positive / non-numeric durations are rejected.
+    assert_equal "400", post("/api/trigger", JSON.generate("intention" => "think", "duration" => 0)).code
+    assert_equal "400", post("/api/trigger", JSON.generate("intention" => "think", "duration" => "long")).code
+  end
+
   def test_index_page
     r = get("/")
 

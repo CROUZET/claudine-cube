@@ -23,9 +23,12 @@ module Claudine
     #   POST /api/brightness  → body { "value": <0..1> } → 204 (400 on bad input)
     #   POST /api/integration → body { "name": "claude_code", "enabled": bool } → 204
     #   POST /api/theme       → body { "theme": "<set>" } → 204 (400 if unknown)
-    #   POST /api/trigger     → body { "intention": "<name>" } → 204 (pushes onto the bus)
+    #   POST /api/trigger     → body { "intention": "<name>", "duration": <seconds, optional> } → 204 (pushes onto the bus)
     class AdminServer
       INDEX = File.expand_path("admin/index.html", __dir__)
+
+      # Upper bound for a manual trigger's `duration` (seconds): a preview shouldn't be able to pin the cube for minutes.
+      MAX_TRIGGER_DURATION = 120.0
 
       # `bus` (optional) lets the trigger buttons push an intention event; when nil, POST /api/trigger is unavailable (503).
       def initialize(config:, status: Status.new, bus: nil, port: Settings::ADMIN_PORT)
@@ -145,13 +148,24 @@ module Claudine
           res.status = 503
           return
         end
-        name = JSON.parse(req.body || "{}")["intention"]
+        data = JSON.parse(req.body || "{}")
+        name = data["intention"]
         unless name.is_a?(String) && Intentions.known?(name.to_sym)
           res.status = 400
           return
         end
         # `once: true` → the manager plays it a single time (overlay), never as a looping background, then reverts to the working loop or blanks.
-        @bus.push(Claudine::Event.new(type: name.to_sym, payload: { once: true }))
+        payload = { once: true }
+        # Optional `duration` (seconds): how long the one-shot stays up before it blanks. Must be a positive number; clamped to MAX_TRIGGER_DURATION. Absent → the animation's own duration.
+        if data.key?("duration")
+          duration = data["duration"]
+          unless duration.is_a?(Numeric) && duration.positive?
+            res.status = 400
+            return
+          end
+          payload[:duration] = [duration.to_f, MAX_TRIGGER_DURATION].min
+        end
+        @bus.push(Claudine::Event.new(type: name.to_sym, payload:))
         res.status = 204
       rescue JSON::ParserError
         res.status = 400

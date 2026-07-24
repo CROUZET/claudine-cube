@@ -66,8 +66,12 @@
     .trigger-grid button:hover:not(:disabled) { background: #2c313b; }
     .trigger-grid button.flash { background: var(--accent); color: #06121f; border-color: var(--accent); }
     .trigger-grid button:disabled { opacity: .4; cursor: not-allowed; }
-    .trigger-hint { display: none; font-size: 12px; color: var(--muted); margin-top: 8px; }
-    .trigger-hint.show { display: block; }
+    .trigger-hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    .trigger-dur { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
+    .trigger-dur input { width: 72px; padding: 6px 8px; background: #14161a; color: var(--fg); border: 1px solid #3a3f49; border-radius: 7px; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .trigger-dur input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .trigger-dur .unit { margin-left: -4px; }
 
     .readout { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
     .readout .pct { font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -120,8 +124,13 @@
     <select id="theme" aria-label="Animation theme"><!-- filled from /api/state --></select>
 
     <div class="section-title">Trigger an intention</div>
+    <div class="trigger-dur">
+      <label for="triggerDur">Duration</label>
+      <input type="number" id="triggerDur" min="0" step="0.5" placeholder="auto">
+      <span class="unit">s</span>
+    </div>
     <div id="triggers" class="trigger-grid"><!-- filled from /api/state --></div>
-    <p class="trigger-hint" id="triggerHint">Re-enable an integration to preview (the cube is off).</p>
+    <p class="trigger-hint" id="triggerHint">Plays once on the cube — works even with every integration off. Leave the duration blank for the animation's natural length.</p>
 
     <div class="section-title">Brightness</div>
     <div class="readout">
@@ -158,7 +167,7 @@
     const themeSel = document.getElementById('theme');
     const statusDiv = document.getElementById('status');
     const triggersDiv = document.getElementById('triggers');
-    const triggerHint = document.getElementById('triggerHint');
+    const triggerDur = document.getElementById('triggerDur');
     let ceiling = 0.25;
     let postTimer = null;
 
@@ -248,7 +257,6 @@
         row.appendChild(ke); row.appendChild(ve);
         statusDiv.appendChild(row);
       });
-      setTriggersEnabled(s.source_active !== false);  // no source → cube off → discarded
     }
 
     async function pollStatus() {
@@ -263,10 +271,13 @@
         const b = document.createElement('button');
         b.type = 'button'; b.textContent = name;
         b.addEventListener('click', () => {
+          const body = { intention: name };
+          const d = parseFloat(triggerDur.value);
+          if (Number.isFinite(d) && d > 0) body.duration = d;   // else: animation's natural length
           fetch('/api/trigger', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ intention: name })
+            body: JSON.stringify(body)
           }).then((r) => {
             if (!r.ok) return;
             b.classList.add('flash');
@@ -276,11 +287,6 @@
         });
         triggersDiv.appendChild(b);
       });
-    }
-
-    function setTriggersEnabled(on) {
-      triggersDiv.querySelectorAll('button').forEach((b) => { b.disabled = !on; });
-      triggerHint.classList.toggle('show', !on);
     }
 
     function render(v) {

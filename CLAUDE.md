@@ -226,14 +226,20 @@ All of Claudine's source ↔ rendering decoupling is preserved. What changed:
    `Status` (`lib/status.rb`) each frame (mirror of config-observe; atomic ref
    swap, no lock) and the page displays it. A **trigger** grid (`POST
    /api/trigger`) plays any intention on demand (test/demo): the admin pushes an
-   intention-typed event onto the bus (with `once: true`), and
-   `AnimationManager#resolve` accepts a type that is itself a known intention
-   directly (bypassing the profile). `once` makes it play a **single time** (even
-   `think` doesn't become a looping background) then revert/blank; the buttons
-   are disabled while the cube is off. Each new control is the same shape —
-   a `Config` key + an endpoint + a widget; the plumbing is already there.
-   Verified by `test/config_test.rb`, `test/admin_server_test.rb`,
-   `test/animation_manager_test.rb` (switch_set + status) and
+   intention-typed event onto the bus (with `once: true`, plus an optional
+   `duration` in seconds), and `AnimationManager#resolve` accepts a type that is
+   itself a known intention directly (bypassing the profile). `once` makes it
+   play a **single time** (even `think` doesn't become a looping background) then
+   revert/blank; `duration` overrides how long the one-shot stays up (clamped to
+   `AdminServer::MAX_TRIGGER_DURATION`, blank → the animation's own length). A
+   trigger is a **control-plane action, not a source event**, so — unlike a
+   source hook — it **plays even when every integration is off**: the Runner's
+   per-frame `drive` lets `once:`-tagged events through while the cube is
+   otherwise dark, then re-blanks when the one-shot ends (the buttons stay
+   enabled). Each new control is the same shape — a `Config` key + an endpoint +
+   a widget; the plumbing is already there. Verified by `test/config_test.rb`,
+   `test/admin_server_test.rb`, `test/animation_manager_test.rb` (switch_set +
+   status + custom duration), `test/runner_test.rb` (trigger-while-off) and
    `test/claude_code_gate_test.rb`.
 
 The `lib/text/` folder (3×5 font, renderer) is kept from Claudine but **not
@@ -249,9 +255,10 @@ Two distinct things, in two places:
 | File | Role |
 |---|---|
 | `config_test.rb` | Config: precedence, safe-boot ceiling, volatile boost, integrations, theme, I/O |
-| `animation_manager_test.rb` | two-layer model, status snapshot, `switch_set`, direct-intention & one-shot triggers |
+| `animation_manager_test.rb` | two-layer model, status snapshot, `switch_set`, direct-intention & one-shot triggers (incl. custom duration) |
 | `animations_smoke_test.rb` | every animation of every set renders without crashing / out-of-bounds |
-| `admin_server_test.rb` | the whole admin HTTP API (state, status, brightness, integration, theme, trigger) |
+| `admin_server_test.rb` | the whole admin HTTP API (state, status, brightness, integration, theme, trigger + duration) |
+| `runner_test.rb` | per-frame `drive`: manual triggers play while sources are off; source events are gated |
 | `claude_code_gate_test.rb` | ClaudeCode ingestion gate (drops events when off) |
 | `test_helper.rb` | shared stubs (`TestPanels`), `free_port`, quiet logs |
 
