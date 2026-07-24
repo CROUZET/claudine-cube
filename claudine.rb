@@ -15,15 +15,15 @@ status = Claudine::Status.new
 # Boot with the persisted theme, guarding against a hand-edited unknown set.
 theme = config.theme
 unless Claudine::AnimationManager.available_sets.include?(theme)
-  Claudine.logger.warn "claudine: unknown theme '#{theme}' — using '#{Claudine::AnimationManager::DEFAULT_SET}'"
+  Claudine.logger.warn("claudine: unknown theme '#{theme}' — using '#{Claudine::AnimationManager::DEFAULT_SET}'")
   config.theme = theme = Claudine::AnimationManager::DEFAULT_SET
 end
 
 manager = Claudine::AnimationManager.new(set: theme)
-runner = Claudine::Runner.new(manager: manager, config: config, status: status)
+runner = Claudine::Runner.new(manager:, config:, status:)
 
-claude_code = Claudine::Connectors::ClaudeCode.new(bus: runner.bus, config: config)
-admin = Claudine::Connectors::AdminServer.new(config: config, status: status, bus: runner.bus)
+claude_code = Claudine::Connectors::ClaudeCode.new(bus: runner.bus, config:)
+admin = Claudine::Connectors::AdminServer.new(config:, status:, bus: runner.bus)
 
 begin
   claude_code.start

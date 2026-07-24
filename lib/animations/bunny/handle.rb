@@ -5,10 +5,10 @@ require_relative "_base"
 module Claudine
   module Animations
     module Bunny
-      # New task: a close-up bunny (in profile) walks calmly
-      # around the cube, along the ring of the 4 lateral faces, with a
-      # paw cycle. Crosses the edges seamlessly (ring_px). Light blue (start
-      # event -> light color). Overlay.
+      # New task: a close-up bunny (in profile) walks calmly around the cube, along the ring of the 4 lateral faces, with a paw cycle.
+      # Crosses the edges seamlessly (ring_px).
+      # Light blue (start event -> light color).
+      # Overlay.
       # Signature: a big bunny walking around the cube at a steady pace.
       class Handle < BunnyBase
         MIN_DURATION = 3.6
@@ -17,8 +17,10 @@ module Claudine
         SPEED = 7.0 # columns/second (calm walk)
         STEP = 4 # columns per step (paw alternation)
 
-        # Profile bunny, turned toward the walk (increasing dx = front). dy=0=bottom.
-        # Eye = hollow at (5,4). Close-up (7 px wide, 7 tall).
+        # Profile bunny, turned toward the walk (increasing dx = front).
+        # dy=0=bottom.
+        # Eye = hollow at (5,4).
+        # Close-up (7 px wide, 7 tall).
         #   . . . # # . .   ear
         #   . . . . # # .
         #   . . # # # . #   head (hollow eye) + back

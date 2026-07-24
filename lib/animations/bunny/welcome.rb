@@ -5,10 +5,8 @@ require_relative "_base"
 module Claudine
   module Animations
     module Bunny
-      # Wake-up: bunnies appear on 4 faces, colored by the WARM rainbow
-      # of the cube session_start (hue based on the cube diagonal d=X+Y+Z).
-      #  - front (1) + back (3): model A (straight ears), in mirror
-      #    symmetry; the ears rise then a wink (left eye).
+      # Wake-up: bunnies appear on 4 faces, colored by the WARM rainbow of the cube session_start (hue based on the cube diagonal d=X+Y+Z).
+      #  - front (1) + back (3): model A (straight ears), in mirror symmetry; the ears rise then a wink (left eye).
       #  - right (2) + left (4): model B (spread ears), in symmetry.
       # (The top stays empty for now.)
       # Signature: bunnies waking up all around the facade.
@@ -18,8 +16,7 @@ module Claudine
         MIN_DURATION = 1.4
         DURATION = 4.0 # duration shown by the preview (see 2 blinks)
 
-        # Warm palette, identical to the cube session_start: hue along the
-        # diagonal d=0..DMAX (orange-yellow -> red -> magenta).
+        # Warm palette, identical to the cube session_start: hue along the diagonal d=0..DMAX (orange-yellow -> red -> magenta).
         DMAX = 21
         HUE0 = 0.15
         HUE1 = -0.18
@@ -29,7 +26,8 @@ module Claudine
         BLINK_OFFSET = 1.3 # sets the 1st blink shortly after wake-up
 
         # --- Model A: front bunny, straight ears, full width. ---
-        # Body + head (without ears). Eyes (x=2,5 at y=3) left off.
+        # Body + head (without ears).
+        # Eyes (x=2,5 at y=3) left off.
         A_BODY = [
           [0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4],
           [0, 3], [1, 3],         [3, 3], [4, 3],         [6, 3], [7, 3],
@@ -101,15 +99,14 @@ module Claudine
           pixels.each { |x, y| put(panel, face, x, y, k, mirror) }
         end
 
-        # Lights a pixel with the warm hue corresponding to its 3D position,
-        # dimmed by k (fade). The mirror applies to the column.
+        # Lights a pixel with the warm hue corresponding to its 3D position, dimmed by k (fade).
+        # The mirror applies to the column.
         def put(panel, face, x, y, k, mirror)
           dx = mirror ? 7 - x : x
           px(panel, face, dx, y, warm(face, dx, y, k))
         end
 
-        # Loader: cumulatively fills the top path up to the head,
-        # which advances over TOP_FILL seconds (then stays full).
+        # Loader: cumulatively fills the top path up to the head, which advances over TOP_FILL seconds (then stays full).
         def draw_top_loader(panel, t)
           path = top_path
           n = ((t / TOP_FILL).clamp(0.0, 1.0) * path.size).floor
@@ -121,8 +118,8 @@ module Claudine
           TOP_PATH
         end
 
-        # Hue based on 3D position and the palette (HUE0..HUE1 of the class),
-        # dimmed by k. Warm by default; cold for Bye.
+        # Hue based on 3D position and the palette (HUE0..HUE1 of the class), dimmed by k.
+        # Warm by default; cold for Bye.
         def warm(face, x, y, k)
           wx, wy, wz = world(face, x, y)
           d = wx + wy + wz

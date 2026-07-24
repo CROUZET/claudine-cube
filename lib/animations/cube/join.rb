@@ -5,8 +5,8 @@ require_relative "_base"
 module Claudine
   module Animations
     module Cube
-      # A subagent finishes: the full central violet ring lights up then
-      # fades off (the orbit closes). Signature: a full ring that fades.
+      # A subagent finishes: the full central violet ring lights up then fades off (the orbit closes).
+      # Signature: a full ring that fades.
       class Join < CubeBase
         MIN_DURATION = 0.7
         DUR = 0.7

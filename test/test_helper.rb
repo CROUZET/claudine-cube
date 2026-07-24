@@ -27,8 +27,7 @@ module TestPanels
     def cleared? = @cleared
   end
 
-  # Validates coordinates/colors like the real Panel + CubeMapping, so the
-  # animation smoke test catches out-of-bounds writes.
+  # Validates coordinates/colors like the real Panel + CubeMapping, so the animation smoke test catches out-of-bounds writes.
   class Fake
     FACES = %i[front right back left top].freeze
 

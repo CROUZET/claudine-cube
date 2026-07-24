@@ -2,11 +2,8 @@
 
 module Claudine
   module Profiles
-    # Maps Claude Code hook events (the raw <type> the connector POSTs) onto
-    # intentions (see docs/INTENTIONS.md and lib/intentions.rb). This is *data*,
-    # not code: adding another source (CI, a build tool, …) means writing a
-    # profile like this one — the render path never changes.
-    #
+    # Maps Claude Code hook events (the raw <type> the connector POSTs) onto intentions (see docs/INTENTIONS.md and lib/intentions.rb).
+    # This is *data*, not code: adding another source (CI, a build tool, …) means writing a profile like this one — the render path never changes.
     # The 16 hooks map 1:1 onto the 16 intentions.
     CLAUDE_CODE = {
       session_start: :welcome,

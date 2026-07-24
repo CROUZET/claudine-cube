@@ -6,12 +6,7 @@ module Claudine
   module Animations
     module Cube
       # Before a tool: a yellow snake 2 px wide crosses the cube.
-      # Path (face numbering: 1 front, 2 right, 3 back, 4 left,
-      # 5 top): starts from the bottom-middle of the front, rises, passes over
-      # the top, descends on the back down to the middle, turns right to reach
-      # the right face, crosses it to its middle, turns right again and rises
-      # back up, passes over the top again, arrives on the left and goes out
-      # there.
+      # Path (face numbering: 1 front, 2 right, 3 back, 4 left, 5 top): starts from the bottom-middle of the front, rises, passes over the top, descends on the back down to the middle, turns right to reach the right face, crosses it to its middle, turns right again and rises back up, passes over the top again, arrives on the left and goes out there.
       # Signature: a single bright snake that "navigates" through the volume.
       class Start < CubeBase
         BODY = 18 # length of the snake (in 2 px "rungs")
@@ -19,18 +14,14 @@ module Claudine
         HEAD = [190, 80, 0].freeze # orange/amber (head)
         TAIL = [28, 8, 0].freeze # very dark amber (tail)
 
-        # Track: ordered list of "rungs", each rung = the 2 pixels (width of
-        # the snake) lit at one step of the path. Two consecutive rungs are
-        # adjacent on the cube (edge crossings validated by the geometry of
-        # CubeMapping).
+        # Track: ordered list of "rungs", each rung = the 2 pixels (width of the snake) lit at one step of the path.
+        # Two consecutive rungs are adjacent on the cube (edge crossings validated by the geometry of CubeMapping).
         def self.build_track
           t = []
           add = ->(face, a, b) { t << [[face, a[0], a[1]], [face, b[0], b[1]]] }
 
-          # Path shifted 1 px to the left (columns 2,3 instead of the center
-          # 3,4); the turns happen 1 px past the middle (rows/columns 2,3). The
-          # "mirror" columns (4,5) on back/left follow from the continuity of
-          # the top<->faces edges (see CubeMapping).
+          # Path shifted 1 px to the left (columns 2,3 instead of the center 3,4); the turns happen 1 px past the middle (rows/columns 2,3).
+          # The "mirror" columns (4,5) on back/left follow from the continuity of the top<->faces edges (see CubeMapping).
           # 1. Front: bottom -> top (columns 2,3, shifted left).
           (0..7).each { |y| add.call(:front, [2, y], [3, y]) }
           # 2. Top: near -> far.

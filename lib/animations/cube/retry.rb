@@ -6,8 +6,7 @@ module Claudine
   module Animations
     module Cube
       # After a tool (failure): DOUBLE sharp red blink of the whole cube.
-      # Signature: two brief flashes (distinct from the single flash of
-      # post_tool), readable even without perceiving the color.
+      # Signature: two brief flashes (distinct from the single flash of post_tool), readable even without perceiving the color.
       class Retry < CubeBase
         MIN_DURATION = 0.8
         COLOR = [255, 0, 0].freeze

@@ -35,10 +35,8 @@ hooks &= wanted unless wanted.empty?
 FPS = 30
 DT = 1.0 / FPS
 DUR = 2.5
-# CLAUDINE_PREVIEW_REALTIME=1 plays each animation for its real on-cube lifetime
-# (DURATION if it declares one, else its overlay MIN_DURATION) instead of the
-# fixed inspection window — so short/long overlays (e.g. retry vs fail) feel as
-# they do in operation. Default: fixed DUR window, better for judging shape.
+# CLAUDINE_PREVIEW_REALTIME=1 plays each animation for its real on-cube lifetime (DURATION if it declares one, else its overlay MIN_DURATION) instead of the fixed inspection window — so short/long overlays (e.g. retry vs fail) feel as they do in operation.
+# Default: fixed DUR window, better for judging shape.
 REALTIME = ENV["CLAUDINE_PREVIEW_REALTIME"] == "1"
 
 panel = Claudine::Panel.new
@@ -47,8 +45,8 @@ begin
     variants = registry[intention]
     next if variants.nil? || variants.empty?
 
-    # Plays ALL the variants of an intention (not just the first), so they can
-    # be compared. In operation, the manager picks one at random.
+    # Plays ALL the variants of an intention (not just the first), so they can be compared.
+    # In operation, the manager picks one at random.
     variants.each do |klass|
       dur =
         if REALTIME
@@ -57,8 +55,7 @@ begin
           else DUR
           end
         else
-          # An animation with its own lifetime (e.g. sleep) plays in full;
-          # otherwise we loop it over DUR seconds for the preview.
+          # An animation with its own lifetime (e.g. sleep) plays in full; otherwise we loop it over DUR seconds for the preview.
           klass.const_defined?(:DURATION) ? [DUR, klass::DURATION].max : DUR
         end
       label = variants.size > 1 ? "#{intention} (#{klass.name.split("::").last})" : intention.to_s

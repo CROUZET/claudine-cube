@@ -5,10 +5,7 @@ require_relative "_base"
 module Claudine
   module Animations
     module Cube
-      # Wait (complementary variant of Wait): only lights up
-      # the 2nd ring (d=1) and the 4th central ring (d=3) of each face -- the
-      # exact negative of Wait (d=0 + d=2), i.e. two concentric frames
-      # nested in the gaps of the original.
+      # Wait (complementary variant of Wait): only lights up the 2nd ring (d=1) and the 4th central ring (d=3) of each face -- the exact negative of Wait (d=0 + d=2), i.e. two concentric frames nested in the gaps of the original.
       # Signature: fast, crisp square blinking (a "hollow" target).
       class Wait4 < CubeBase
         MIN_DURATION = 0.9

@@ -18,12 +18,12 @@ module Claudine
     attr_accessor :brightness
 
     def initialize(port: Settings::PORT, baud: Settings::BAUD, brightness: Settings::BRIGHTNESS)
-      Claudine.logger.info "Panel: opening #{port} @ #{baud} baud"
+      Claudine.logger.info("Panel: opening #{port} @ #{baud} baud")
       @serial = Serial.new(port, baud)
       @brightness = brightness
-      Claudine.logger.debug "Panel: waiting for ESP32 boot (2s)"
+      Claudine.logger.debug("Panel: waiting for ESP32 boot (2s)")
       sleep 2
-      Claudine.logger.info "Panel: ESP32 ready (brightness=#{@brightness})"
+      Claudine.logger.info("Panel: ESP32 ready (brightness=#{@brightness})")
       @buffer = Array.new(NUM_LEDS) { [0, 0, 0] }
       clear
     end
@@ -72,14 +72,14 @@ module Claudine
       pixels = @buffer.flat_map { |r, g, b| [scale(r), scale(g), scale(b)] }
       frame = (adalight_header + pixels).pack("C*")
       @serial.write(frame)
-      Claudine.logger.debug "Panel: frame sent (#{frame.bytesize} bytes, #{NUM_LEDS} pixels)"
+      Claudine.logger.debug("Panel: frame sent (#{frame.bytesize} bytes, #{NUM_LEDS} pixels)")
     end
 
     def close
-      Claudine.logger.debug "Panel: flush (#{CLOSE_FLUSH_DELAY}s) before close"
+      Claudine.logger.debug("Panel: flush (#{CLOSE_FLUSH_DELAY}s) before close")
       sleep CLOSE_FLUSH_DELAY
       @serial.close
-      Claudine.logger.info "Panel: serial closed"
+      Claudine.logger.info("Panel: serial closed")
     end
 
     private

@@ -2,9 +2,10 @@
 
 module Claudine
   module Text
-    # Bitmap font, 3 columns × 5 rows. Each glyph: 5 integers, bit 2 = left column.
-    # TomThumb-inspired style. Covers A-Z, 0-9, space and hyphen — enough for all
-    # the connector's short event codes.
+    # Bitmap font, 3 columns × 5 rows.
+    # Each glyph: 5 integers, bit 2 = left column.
+    # TomThumb-inspired style.
+    # Covers A-Z, 0-9, space and hyphen — enough for all the connector's short event codes.
     module Font3x5
       WIDTH = 3
       HEIGHT = 5

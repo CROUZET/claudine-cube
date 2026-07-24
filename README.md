@@ -57,28 +57,24 @@ bus.
 
 ## The cube
 
-Five faces are lit; the sixth (the bottom, hidden on the table) is a
-**removable wooden panel** giving access to the central PCB.
+Five faces are lit; the sixth (the bottom, hidden on the table) is a **removable wooden panel** giving access to the central PCB.
 
 ```
-        ┌───────────┐
-        │  top (4)  │        Chain order (DIN → DOUT):
-        │           │          0  front
-   ┌────┼───────────┼────┐     1  right
-   │left│  front(0) │rght│     2  back
-   │(3) │           │(1) │     3  left
-   └────┼───────────┼────┘     4  top
-        │ (bottom:  │
-        │ removable │        320 LEDs = 5 × 64
-        │  access)  │
-        └───────────┘
+          ┌──────────┐
+          │  back(3) │         Chain order (DOUT → DIN):
+          │          │            1  front
+   ┌──────┼──────────┼──────┐     2  right
+   │ left │  top(5)  │ right│     3  back
+   │ (4)  │          │ (2)  │     4  left
+   └──────┼──────────┼──────┘     5  top
+          │   front  │
+          │    (1)   │         320 LEDs = 5 × 64
+          └──────────┘
 ```
 
-- 5 × BTF-LIGHTING WS2812B 8×8 (64 px each), glued on plywood faces.
-- Central PCB (XIAO + level shifter + passives) mounted inside on nylon
-  standoffs.
-- 18 mm plywood base holding the DC jack, on/off switch and panel-mount
-  USB-C (data) connector; raised on rubber feet for airflow.
+- 5 × BTF-LIGHTING WS2812B 8×8 (64 px each), screwed on plywood faces.
+- Central PCB (XIAO + level shifter + passives) mounted inside on nylon standoffs.
+- 18 mm plywood base holding the DC jack, panel-mount USB-C (data) connector
 
 Logical coordinates used everywhere: **x = column (0 left … 7 right),
 y = row (0 bottom … 7 top)** per face; `CubeMapping.index(face, x, y)` absorbs

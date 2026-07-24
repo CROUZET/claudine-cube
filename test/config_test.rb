@@ -7,8 +7,8 @@ require "fileutils"
 require_relative "../lib/config"
 require_relative "../config/settings"
 
-# Config: precedence, safe-boot ceiling, volatile boost, integrations, theme,
-# and robust file I/O. No hardware.
+# Config: precedence, safe-boot ceiling, volatile boost, integrations, theme, and robust file I/O.
+# No hardware.
 class ConfigTest < Minitest::Test
   DEFAULT = Claudine::Settings::BRIGHTNESS
   CEILING = Claudine::Config::BOOST_CEILING

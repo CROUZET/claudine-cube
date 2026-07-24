@@ -11,13 +11,11 @@ module Claudine
       SIDE = 8 # side of a face
       RING = LATERAL.size * SIDE # 32 columns around the cube
 
-      # Common base for the cube animations. Provides "volumetric" rendering
-      # helpers: ring around the 4 side faces, pulsing, per-face fill. Each
-      # animation reasons in (face, x, y) via the Panel (the physical mapping
-      # is absorbed by CubeMapping).
-      #
-      # Convention: x = column (0 left), y = row (0 bottom). The :top face
-      # connects to the front in increasing y (validated on hardware).
+      # Common base for the cube animations.
+      # Provides "volumetric" rendering helpers: ring around the 4 side faces, pulsing, per-face fill.
+      # Each animation reasons in (face, x, y) via the Panel (the physical mapping is absorbed by CubeMapping).
+      # Convention: x = column (0 left), y = row (0 bottom).
+      # The :top face connects to the front in increasing y (validated on hardware).
       class CubeBase < Base
         def initialize(_payload = {}); end
 
@@ -47,11 +45,10 @@ module Claudine
           yi = y.to_i
           return if xi.negative? || xi >= SIDE || yi.negative? || yi >= SIDE
 
-          panel.set(face: face, x: xi, y: yi, r: rgb[0], g: rgb[1], b: rgb[2])
+          panel.set(face:, x: xi, y: yi, r: rgb[0], g: rgb[1], b: rgb[2])
         end
 
-        # Pixel on the "ring" of the 4 side faces: col 0..31 goes around
-        # (front 0..7, right 8..15, back 16..23, left 24..31) and loops.
+        # Pixel on the "ring" of the 4 side faces: col 0..31 goes around (front 0..7, right 8..15, back 16..23, left 24..31) and loops.
         def ring_px(panel, col, y, rgb)
           c = col.to_i % RING
           px(panel, LATERAL[c / SIDE], c % SIDE, y, rgb)
@@ -63,8 +60,7 @@ module Claudine
         end
 
         # Mapping from a side column -> pixel on the top border.
-        # For a side face and its local column x (0..7), returns [tx, ty]
-        # on the top's `ring` (0 = border, 1 = inner ring).
+        # For a side face and its local column x (0..7), returns [tx, ty] on the top's `ring` (0 = border, 1 = inner ring).
         # Traversing the 4 faces traces a full loop around the top's perimeter.
         def top_edge_px(face, x, ring)
           i = x.to_i
@@ -87,8 +83,7 @@ module Claudine
           end
         end
 
-        # Concentric square ring on a face: d = distance to the border
-        # (0 = outer border ... 3 = central 2x2 square).
+        # Concentric square ring on a face: d = distance to the border (0 = outer border ... 3 = central 2x2 square).
         def face_ring(panel, face, d, rgb)
           SIDE.times do |x|
             SIDE.times do |y|

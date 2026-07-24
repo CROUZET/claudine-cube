@@ -5,10 +5,9 @@ require_relative "_base"
 module Claudine
   module Animations
     module Bunny
-      # Subagent start: a small bunny springs up from the bottom (spring effect)
-      # on each of the 4 lateral faces, then the 4 bunnies go around the cube
-      # jumping to the right, each to the next one's spot, 4 times (full
-      # turn). Light blue (start event -> light color). Overlay.
+      # Subagent start: a small bunny springs up from the bottom (spring effect) on each of the 4 lateral faces, then the 4 bunnies go around the cube jumping to the right, each to the next one's spot, 4 times (full turn).
+      # Light blue (start event -> light color).
+      # Overlay.
       # Signature: the bunnies spring up then turn around the cube jumping.
       class Fork < BunnyBase
         COLOR = [120, 200, 255].freeze # light blue (start)

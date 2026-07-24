@@ -5,11 +5,7 @@ require_relative "_base"
 module Claudine
   module Animations
     module Cube
-      # End of turn (success): the cube first appears speckled with SHADES
-      # shades of yellow (from light to dark, randomly distributed), then
-      # turns off shade by shade -- all pixels of the same shade disappear
-      # together, at a regular interval (STEP), from the lightest to the
-      # darkest, until fully off.
+      # End of turn (success): the cube first appears speckled with SHADES shades of yellow (from light to dark, randomly distributed), then turns off shade by shade -- all pixels of the same shade disappear together, at a regular interval (STEP), from the lightest to the darkest, until fully off.
       # Signature: yellow dissolve in steps, from light toward dark.
       class Stop < CubeBase
         SHADES = 8 # number of shades (n), from light to dark
@@ -20,8 +16,7 @@ module Claudine
         MIN_DURATION = SHADES * STEP # plays until fully off
 
         def initialize(_payload = {})
-          # Palette light -> dark, and fixed assignment of a shade per pixel
-          # (once only: otherwise the speckle would flicker on every frame).
+          # Palette light -> dark, and fixed assignment of a shade per pixel (once only: otherwise the speckle would flicker on every frame).
           @palette = (0...SHADES).map { |i| mix(LIGHT, DARK, i.to_f / (SHADES - 1)) }
           @tint = {}
           ALL_FACES.each do |face|

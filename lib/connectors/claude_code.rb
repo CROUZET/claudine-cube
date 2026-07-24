@@ -12,13 +12,10 @@ module Claudine
     # Expected protocol: POST /event/<type>   (body ignored)
     # Each Claude Code hook typically runs: curl -sX POST http://localhost:9292/event/session_start
     #
-    # The incoming <type> is pushed onto the bus as-is; the AnimationManager
-    # picks the animation for that type from the active set (see
-    # CLAUDINE_ANIMATION_SET). No translation table lives here anymore.
+    # The incoming <type> is pushed onto the bus as-is; the AnimationManager picks the animation for that type from the active set (see CLAUDINE_ANIMATION_SET).
+    # No translation table lives here anymore.
     class ClaudeCode
-      # `config` (optional) gates event ingestion: when the `claude_code`
-      # integration is disabled, incoming hooks still get a 204 (hooks never
-      # error) but are dropped rather than pushed onto the bus.
+      # `config` (optional) gates event ingestion: when the `claude_code` integration is disabled, incoming hooks still get a 204 (hooks never error) but are dropped rather than pushed onto the bus.
       def initialize(bus:, port: Settings::CLAUDE_CODE_PORT, config: nil)
         @bus = bus
         @port = port
@@ -27,7 +24,7 @@ module Claudine
 
       def start
         @server = TCPServer.new(Settings::LOCAL_HOST, @port)
-        Claudine.logger.info "ClaudeCode: listening on http://#{Settings::LOCAL_HOST}:#{@port}"
+        Claudine.logger.info("ClaudeCode: listening on http://#{Settings::LOCAL_HOST}:#{@port}")
         @thread = Thread.new { serve }
         @thread.report_on_exception = true
       end
@@ -35,7 +32,7 @@ module Claudine
       def stop
         @server&.close # unblocks accept()
         @thread&.join
-        Claudine.logger.info "ClaudeCode: stopped"
+        Claudine.logger.info("ClaudeCode: stopped")
       end
 
       private
@@ -47,7 +44,7 @@ module Claudine
         rescue IOError
           break # server closed, clean exit
         rescue StandardError => e
-          Claudine.logger.error "ClaudeCode: error — #{e.class}: #{e.message}"
+          Claudine.logger.error("ClaudeCode: error — #{e.class}: #{e.message}")
         end
       end
 
@@ -64,10 +61,10 @@ module Claudine
         if method == "POST" && path&.start_with?("/event/")
           type = path.sub("/event/", "").chomp.to_sym
           if enabled?
-            Claudine.logger.debug "ClaudeCode: #{type}"
-            @bus.push(Claudine::Event.new(type: type, payload: {}))
+            Claudine.logger.debug("ClaudeCode: #{type}")
+            @bus.push(Claudine::Event.new(type:, payload: {}))
           else
-            Claudine.logger.debug "ClaudeCode: #{type} dropped (integration disabled)"
+            Claudine.logger.debug("ClaudeCode: #{type} dropped (integration disabled)")
           end
           respond(client, 204)
         else

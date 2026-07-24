@@ -5,10 +5,9 @@ require_relative "fork"
 module Claudine
   module Animations
     module Bunny
-      # Subagent stop: same gesture as subagent_start but in yellow and in
-      # reverse order -- the 4 bunnies start by going around the cube
-      # jumping (4 jumps to the right), then dive into their burrow (pop
-      # downward). Yellow (end event -> yellow). Overlay.
+      # Subagent stop: same gesture as subagent_start but in yellow and in reverse order -- the 4 bunnies start by going around the cube jumping (4 jumps to the right), then dive into their burrow (pop downward).
+      # Yellow (end event -> yellow).
+      # Overlay.
       # Signature: the bunnies turn jumping then vanish underground.
       class Join < Fork
         COLOR = [255, 200, 0].freeze # yellow (end)

@@ -5,9 +5,7 @@ require_relative "handle"
 module Claudine
   module Animations
     module Bunny
-      # Task done: the same bunny as task_new (close-up profile) walks,
-      # but in yellow, over only a half-turn of the cube, leaving a little
-      # dropping (brown) at its starting position; then everything fades out.
+      # Task done: the same bunny as task_new (close-up profile) walks, but in yellow, over only a half-turn of the cube, leaving a little dropping (brown) at its starting position; then everything fades out.
       # Signature: the bunny does an about-turn and leaves a dropping, then fades away.
       class Handled < Handle
         COLOR = [255, 200, 0].freeze # yellow (end)
@@ -18,8 +16,7 @@ module Claudine
         MIN_DURATION = T_WALK + T_FADE
         DURATION = T_WALK + T_FADE
 
-        # Little dropping at the starting position (front face, revealed when the
-        # bunny moves away).
+        # Little dropping at the starting position (front face, revealed when the bunny moves away).
         CACA = [[1, 0], [2, 0], [3, 0], [2, 1]].freeze
 
         def render(t, panel)

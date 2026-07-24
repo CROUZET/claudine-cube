@@ -5,11 +5,9 @@ require_relative "_base"
 module Claudine
   module Animations
     module Cube
-      # Wait: bold amber blinking (attention request). Only lights up
-      # the outer ring (d=0) and the 3rd ring (d=2) of each face, as a
-      # target/two concentric frames -- rings d=1 and d=3 stay off.
-      # Signature: fast square blinking (crisp on/off), very different from the
-      # breathing and fades.
+      # Wait: bold amber blinking (attention request).
+      # Only lights up the outer ring (d=0) and the 3rd ring (d=2) of each face, as a target/two concentric frames -- rings d=1 and d=3 stay off.
+      # Signature: fast square blinking (crisp on/off), very different from the breathing and fades.
       class Wait < CubeBase
         MIN_DURATION = 0.9
         RATE = 3.0 # blinks per second (approx)

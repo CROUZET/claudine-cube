@@ -3,8 +3,8 @@
 require_relative "test_helper"
 require_relative "../lib/animation_manager"
 
-# Smoke test: every animation in every shipped set renders across a range of
-# instants without raising and without writing out of bounds. No hardware.
+# Smoke test: every animation in every shipped set renders across a range of instants without raising and without writing out of bounds.
+# No hardware.
 class AnimationsSmokeTest < Minitest::Test
   TIMES = [0.0, 0.05, 0.2, 0.5, 1.0, 2.0, 5.0, 12.0].freeze
 

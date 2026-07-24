@@ -5,15 +5,9 @@ require_relative "_base"
 module Claudine
   module Animations
     module Cube
-      # The cube wakes up: a rainbow of warm colors sweeps the whole
-      # volume diagonally (bottom-front-left corner -> top-back-right corner),
-      # reaches full, then ebbs back and turns off from the opposite corner. A
-      # wave rising then descending, across the 5 faces.
-      #
-      # Signature (colorblind-safe): the diagonal wave that envelops then empties
-      # the whole volume is unique; the warm palette (yellow->red->magenta)
-      # distinguishes it from session_end (cool) -- movement AND temperature, not
-      # hue alone.
+      # The cube wakes up: a rainbow of warm colors sweeps the whole volume diagonally (bottom-front-left corner -> top-back-right corner), reaches full, then ebbs back and turns off from the opposite corner.
+      # A wave rising then descending, across the 5 faces.
+      # Signature (colorblind-safe): the diagonal wave that envelops then empties the whole volume is unique; the warm palette (yellow->red->magenta) distinguishes it from session_end (cool) -- movement AND temperature, not hue alone.
       class Welcome < CubeBase
         UP = 2.4 # fill duration (s)
         DOWN = 2.0 # ebb duration (s)
@@ -52,8 +46,7 @@ module Claudine
 
         private
 
-        # Front position: rises from -EDGE to DMAX+EDGE over UP (fill),
-        # then descends back down to -EDGE over DOWN (ebb, opposite corner first).
+        # Front position: rises from -EDGE to DMAX+EDGE over UP (fill), then descends back down to -EDGE over DOWN (ebb, opposite corner first).
         def front_at(t)
           if t <= UP
             -EDGE + ((t / UP).clamp(0.0, 1.0) * SPAN)
@@ -62,8 +55,7 @@ module Claudine
           end
         end
 
-        # World coordinates (X left->right, Y front->back, Z bottom->top),
-        # 0..7 on each axis, from (face, x=col, y=row).
+        # World coordinates (X left->right, Y front->back, Z bottom->top), 0..7 on each axis, from (face, x=col, y=row).
         def world(face, x, y)
           case face
           when :front then [x,     0,     y]
@@ -74,7 +66,8 @@ module Claudine
           end
         end
 
-        # HSV (h 0..1, s=v=1) -> [r, g, b] full (0..255). Saturated rainbow.
+        # HSV (h 0..1, s=v=1) -> [r, g, b] full (0..255).
+        # Saturated rainbow.
         def hsv(h)
           i = (h * 6.0).floor
           f = (h * 6.0) - i

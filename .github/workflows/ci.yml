@@ -18,8 +18,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: .ruby-version   # 4.0.5, matches local rbenv
-          bundler-cache: true            # bundle install + cache gems
+          ruby-version: .ruby-version # 4.0.5, matches local rbenv
+          bundler-cache: true # bundle install + cache gems
       - name: Run the automated test suite
         run: bundle exec rake test
 

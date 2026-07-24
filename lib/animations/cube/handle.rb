@@ -5,9 +5,7 @@ require_relative "_base"
 module Claudine
   module Animations
     module Cube
-      # New task: on the 5 faces, the 2 outer rings and the 2
-      # inner rings light up in regular alternation ("inside / outside"
-      # breathing synchronized across the whole cube).
+      # New task: on the 5 faces, the 2 outer rings and the 2 inner rings light up in regular alternation ("inside / outside" breathing synchronized across the whole cube).
       # Signature: alternating concentric blinking, identical on each face.
       class Handle < CubeBase
         MIN_DURATION = 0.6

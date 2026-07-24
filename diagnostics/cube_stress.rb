@@ -2,29 +2,25 @@
 
 # Display limit test — all 320 LEDs lit, ramping up brightness.
 #
-# Goal: find the real limit of the cube (5 V / 10 A power supply + thermal + integrity
-# of the serial stream on a "full" frame) by pushing ALL the LEDs to max.
+# Goal: find the real limit of the cube (5 V / 10 A power supply + thermal + integrity of the serial stream on a "full" frame) by pushing ALL the LEDs to max.
 # This is deliberately the worst case: full white on all 320 LEDs.
 #
 # ⚠️ SAFETY — read before launching:
-#   - Full white (255,255,255) at brightness 1.0 on 320 LEDs draws
-#     ~19 A in theory (320 × 60 mA). The power supply is only 10 A: it will limit
-#     (voltage drop → LEDs shifting, ESP brownout → reset). This is
-#     precisely what we want to observe.
-#   - KEEP THE DC JACK PLUGGED IN. USB alone does not hold full white.
-#   - It HEATS UP. The test ramps up in STEPS and waits for a keypress between each
-#     so it can be stopped (Ctrl-C) as soon as the display goes off track or heats up.
+#   - Full white (255,255,255) at brightness 1.0 on 320 LEDs draws ~19 A in theory (320 × 60 mA).
+#     The power supply is only 10 A: it will limit (voltage drop → LEDs shifting, ESP brownout → reset).
+#     This is precisely what we want to observe.
+#   - KEEP THE DC JACK PLUGGED IN.
+#     USB alone does not hold full white.
+#   - It HEATS UP.
+#     The test ramps up in STEPS and waits for a keypress between each so it can be stopped (Ctrl-C) as soon as the display goes off track or heats up.
 #   - Do not leave at max unattended.
 #
-# The test bypasses the Panel's scaling (@brightness) and pushes the raw bytes
-# to the firmware: the displayed step IS the value sent to the LEDs.
+# The test bypasses the Panel's scaling (@brightness) and pushes the raw bytes to the firmware: the displayed step IS the value sent to the LEDs.
 #
 # MEASURED RESULTS (2026-07, cf. docs/HARDWARE.md "Hardware lessons"):
-#   - DC jack plugged in: full white 100% on all 320 LEDs → nothing to report, no artifact
-#     (no hue shift, no flicker, no ESP brownout).
+#   - DC jack plugged in: full white 100% on all 320 LEDs → nothing to report, no artifact (no hue shift, no flicker, no ESP brownout).
 #     The ~19 A theoretical is very pessimistic; the 10 A power supply handles it cleanly.
-#   - USB alone (no jack): OK at ~8%, but the ESP browns out (LEDs blinking)
-#     BETWEEN 20% and 25% of full white (USB source caps at ~4 A theo. worst-case).
+#   - USB alone (no jack): OK at ~8%, but the ESP browns out (LEDs blinking) BETWEEN 20% and 25% of full white (USB source caps at ~4 A theo. worst-case).
 #   → The practical limit is thermal (prolonged use), not the display.
 #
 # Close the serial monitor of the Arduino IDE before launching ("port busy").

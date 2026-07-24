@@ -8,50 +8,33 @@ require_relative "profiles/claude_code"
 
 module Claudine
   # Owns the current animation and swaps it on each incoming event.
-  #
   # Animations are indexed by *intention* (see lib/intentions.rb), not by hook.
-  # A connector pushes a raw source event (e.g. :pre_tool); a *profile* maps that
-  # event onto an intention (:start); the manager renders the animation the
-  # active set provides for that intention. Adding a source = a new profile.
-  #
-  # The set is picked at construction from ENV['CLAUDINE_ANIMATION_SET']
-  # (default 'cube'). Each set lives under lib/animations/<set>/ with one .rb per
-  # intention; the filename is the intention (e.g. think.rb → Think class).
-  #
-  # An intention may declare several *variations* in extra files whose basename
-  # ends with `_<digits>` (e.g. `wait_2.rb`, `wait_3.rb` alongside `wait.rb`).
-  # They share the same intention; one is picked at random per event, so
-  # frequent intentions don't look repetitive.
-  #
-  # If the active set doesn't provide the resolved intention, the manager walks
-  # the vocabulary fallback chain (Intentions.resolve) until it finds one it has.
-  #
+  # A connector pushes a raw source event (e.g. :pre_tool); a *profile* maps that event onto an intention (:start); the manager renders the animation the active set provides for that intention.
+  # Adding a source = a new profile.
+  # The set is picked at construction from ENV['CLAUDINE_ANIMATION_SET'] (default 'cube').
+  # Each set lives under lib/animations/<set>/ with one .rb per intention; the filename is the intention (e.g. think.rb → Think class).
+  # An intention may declare several *variations* in extra files whose basename ends with `_<digits>` (e.g. `wait_2.rb`, `wait_3.rb` alongside `wait.rb`).
+  # They share the same intention; one is picked at random per event, so frequent intentions don't look repetitive.
+  # If the active set doesn't provide the resolved intention, the manager walks the vocabulary fallback chain (Intentions.resolve) until it finds one it has.
   # The temporal role comes from the intention's `kind` (Intentions.kind):
   #   :ambient  → persistent "working" background loop
   #   :boundary → cuts the background and shows itself (terminal)
-  #   :pulse    → transient overlay: plays once (its MIN_DURATION) then reverts
-  #               to the background loop, if one is active
+  #   :pulse    → transient overlay: plays once (its MIN_DURATION) then reverts to the background loop, if one is active
   #   :dormant  → the idle animation (see #enter_idle)
-  #
-  # Display lock: while an animation has shown for less than its minimum duration
-  # (Settings::MIN_ANIMATION_DURATION, overridable per animation via a
-  # MIN_DURATION constant), new events don't take over — the latest is buffered
-  # in a 1-slot cache and applied when the lock expires (latest-wins).
+  # Display lock: while an animation has shown for less than its minimum duration (Settings::MIN_ANIMATION_DURATION, overridable per animation via a MIN_DURATION constant), new events don't take over — the latest is buffered in a 1-slot cache and applied when the lock expires (latest-wins).
   class AnimationManager
     DEFAULT_SET = Settings::DEFAULT_ANIMATION_SET
     IDLE_INTENTION = :sleep
 
     attr_reader :set
 
-    # The animation sets available to switch to: every sub-directory of
-    # lib/animations/ (the top-level base.rb is a file, not a set).
+    # The animation sets available to switch to: every sub-directory of lib/animations/ (the top-level base.rb is a file, not a set).
     def self.available_sets
       dir = File.expand_path("animations", __dir__)
       Dir.children(dir).select { |c| File.directory?(File.join(dir, c)) }.sort
     end
 
-    def initialize(set: ENV["CLAUDINE_ANIMATION_SET"] || DEFAULT_SET,
-                   profile: Profiles::CLAUDE_CODE)
+    def initialize(set: ENV["CLAUDINE_ANIMATION_SET"] || DEFAULT_SET, profile: Profiles::CLAUDE_CODE)
       @set = set
       @profile = profile
       @registry = load_set(set)
@@ -79,36 +62,37 @@ module Claudine
         activate(intention, event.payload, t)
       else
         if @pending
-          Claudine.logger.debug "AnimationManager: dropping buffered :#{@pending[0]} (superseded by :#{intention})"
+          Claudine.logger.debug("AnimationManager: dropping buffered :#{@pending[0]} (superseded by :#{intention})")
         else
-          Claudine.logger.debug "AnimationManager: buffering :#{intention} (#{remaining(t).round(2)}s left on #{@current.class.name})"
+          Claudine.logger.debug("AnimationManager: buffering :#{intention} (#{remaining(t).round(2)}s left on #{@current.class.name})")
         end
         @pending = [intention, event.payload]
       end
     end
 
-    # Swaps the active animation set at runtime (hot). Reloads the registry for
-    # `name` and resets state so the new set starts blank and waits for the next
-    # event. Unknown sets are ignored (logged) — the current set stays. Called
-    # by the Runner when Config#theme changes. Returns true on success.
+    # Swaps the active animation set at runtime (hot).
+    # Reloads the registry for `name` and resets state so the new set starts blank and waits for the next event.
+    # Unknown sets are ignored (logged) — the current set stays.
+    # Called by the Runner when Config#theme changes.
+    # Returns true on success.
     def switch_set(name) # rubocop:disable Naming/PredicateMethod
       name = name.to_s
       return true if name == @set
 
       dir = File.expand_path("animations/#{name}", __dir__)
       unless Dir.exist?(dir)
-        Claudine.logger.warn "AnimationManager: switch_set('#{name}') ignored — unknown set"
+        Claudine.logger.warn("AnimationManager: switch_set('#{name}') ignored — unknown set")
         return false
       end
       @registry = load_set(name)
       @set = name
       reset
-      Claudine.logger.info "AnimationManager: switched to set '#{name}'"
+      Claudine.logger.info("AnimationManager: switched to set '#{name}'")
       true
     end
 
-    # A small runtime snapshot for the admin status panel. Read on the render
-    # thread by the Runner (so it's self-consistent); `now` is the loop time.
+    # A small runtime snapshot for the admin status panel.
+    # Read on the render thread by the Runner (so it's self-consistent); `now` is the loop time.
     def status(now)
       {
         set: @set,
@@ -119,9 +103,7 @@ module Claudine
     end
 
     # Clears all animation state (current, background, overlay, pending, idle).
-    # Called by the Runner when output is suspended because every source
-    # integration is off: a later resume then starts blank and waits for the
-    # next event rather than replaying the last loop.
+    # Called by the Runner when output is suspended because every source integration is off: a later resume then starts blank and waits for the next event rather than replaying the last loop.
     def reset
       @current = nil
       @activated = nil
@@ -142,34 +124,31 @@ module Claudine
         @pending = nil
       end
 
-      # A finished transient overlay hands back to the working loop, or — for a
-      # one-shot manual trigger with no background — turns the cube off (so a
-      # triggered animation plays once instead of looping).
+      # A finished transient overlay hands back to the working loop, or — for a one-shot manual trigger with no background — turns the cube off (so a triggered animation plays once instead of looping).
       if @overlay && t >= @overlay_until
         if @background
           @current = @background
           @activated = @background_activated
           @overlay = false
           @oneshot = false
-          Claudine.logger.debug "AnimationManager: overlay done → resume background #{@current.class.name}"
+          Claudine.logger.debug("AnimationManager: overlay done → resume background #{@current.class.name}")
         elsif @oneshot
           panel.clear # blank the buffer, else the last frame stays lit
           @current = nil
           @overlay = false
           @oneshot = false
-          Claudine.logger.debug "AnimationManager: one-shot trigger done → cube off"
+          Claudine.logger.debug("AnimationManager: one-shot trigger done → cube off")
         end
       end
 
       enter_idle(t, panel) if idle_due?(t)
 
-      # The idle animation plays once; when its lifetime ends, turn the cube off
-      # and stop rendering (the blank frame keeps being pushed by the Runner).
+      # The idle animation plays once; when its lifetime ends, turn the cube off and stop rendering (the blank frame keeps being pushed by the Runner).
       if @idle_off_at && t >= @idle_off_at
         panel.clear
         @current = nil
         @idle_off_at = nil
-        Claudine.logger.info "AnimationManager: idle animation done → cube off"
+        Claudine.logger.info("AnimationManager: idle animation done → cube off")
       end
 
       return unless @current
@@ -179,8 +158,7 @@ module Claudine
 
     private
 
-    # Coarse runtime state for #status (a boundary anim showing itself reads as
-    # :showing; :off is added by the Runner when no source is enabled).
+    # Coarse runtime state for #status (a boundary anim showing itself reads as :showing; :off is added by the Runner when no source is enabled).
     def runtime_state
       return :blank if @current.nil?
       return :idle if @is_idle
@@ -190,24 +168,22 @@ module Claudine
       :showing
     end
 
-    # Event type → intention (via profile) → intention the set actually provides
-    # (via the fallback chain). Returns nil (and logs) if either step fails.
+    # Event type → intention (via profile) → intention the set actually provides (via the fallback chain).
+    # Returns nil (and logs) if either step fails.
     def resolve(event_type)
       intention = @profile[event_type]
-      # A source may also push an intention *directly* (e.g. the admin "trigger"
-      # buttons): if the profile doesn't know the type but it is itself a known
-      # intention, use it as-is.
+      # A source may also push an intention *directly* (e.g. the admin "trigger" buttons): if the profile doesn't know the type but it is itself a known intention, use it as-is.
       intention = event_type if intention.nil? && Intentions.known?(event_type)
       if intention.nil?
-        Claudine.logger.warn "AnimationManager: event #{event_type} not in profile — ignored"
+        Claudine.logger.warn("AnimationManager: event #{event_type} not in profile — ignored")
         return nil
       end
       resolved = Intentions.resolve(intention, @registry.keys)
       if resolved.nil?
-        Claudine.logger.warn "AnimationManager: set '#{@set}' has no animation for :#{intention} (nor fallback)"
+        Claudine.logger.warn("AnimationManager: set '#{@set}' has no animation for :#{intention} (nor fallback)")
         return nil
       end
-      Claudine.logger.debug "AnimationManager: #{event_type} → :#{intention} (fallback → :#{resolved})" if resolved != intention
+      Claudine.logger.debug("AnimationManager: #{event_type} → :#{intention} (fallback → :#{resolved})") if resolved != intention
       resolved
     end
 
@@ -222,14 +198,13 @@ module Claudine
       @min_duration = dur
 
       if payload && payload[:once]
-        # Manual trigger (admin preview): play once as an overlay whatever the
-        # intention's kind, then revert to the background loop or, if none,
-        # blank. It never becomes the background itself.
+        # Manual trigger (admin preview): play once as an overlay whatever the intention's kind, then revert to the background loop or, if none, blank.
+        # It never becomes the background itself.
         d = klass.const_defined?(:DURATION) ? klass::DURATION : dur
         @overlay = true
         @oneshot = true
         @overlay_until = t + d
-        Claudine.logger.info "AnimationManager: trigger :#{intention} → #{klass.name} (one-shot, #{d}s)"
+        Claudine.logger.info("AnimationManager: trigger :#{intention} → #{klass.name} (one-shot, #{d}s)")
         return
       end
       @oneshot = false
@@ -252,7 +227,7 @@ module Claudine
         @overlay = true
         @overlay_until = t + dur
       end
-      Claudine.logger.info "AnimationManager: :#{intention} → #{klass.name} (#{Intentions.kind(intention)}, min #{dur}s)"
+      Claudine.logger.info("AnimationManager: :#{intention} → #{klass.name} (#{Intentions.kind(intention)}, min #{dur}s)")
     end
 
     def idle_due?(t)
@@ -271,13 +246,13 @@ module Claudine
         @min_duration = klass.const_defined?(:MIN_DURATION) ? klass::MIN_DURATION : Settings::MIN_ANIMATION_DURATION
         # Plays once: schedule the cube to turn off after the idle's lifetime.
         @idle_off_at = klass.const_defined?(:DURATION) ? t + klass::DURATION : nil
-        Claudine.logger.info "AnimationManager: idle after #{Settings::IDLE_TIMEOUT}s → #{klass.name}"
+        Claudine.logger.info("AnimationManager: idle after #{Settings::IDLE_TIMEOUT}s → #{klass.name}")
       else
         @current = nil
         @activated = t
         @idle_off_at = nil
         panel.clear
-        Claudine.logger.info "AnimationManager: idle after #{Settings::IDLE_TIMEOUT}s (no :sleep in set '#{@set}') → panel cleared"
+        Claudine.logger.info("AnimationManager: idle after #{Settings::IDLE_TIMEOUT}s (no :sleep in set '#{@set}') → panel cleared")
       end
       @is_idle = true
       @background = nil # going idle ends any working state
@@ -321,12 +296,12 @@ module Claudine
       end
 
       unknown = registry.keys.reject { |i| Intentions.known?(i) }
-      Claudine.logger.warn "AnimationManager: set '#{set}' has unknown intentions #{unknown.inspect}" unless unknown.empty?
+      Claudine.logger.warn("AnimationManager: set '#{set}' has unknown intentions #{unknown.inspect}") unless unknown.empty?
       missing_core = Intentions::CORE - registry.keys
-      Claudine.logger.warn "AnimationManager: set '#{set}' is missing core intentions #{missing_core.inspect}" unless missing_core.empty?
+      Claudine.logger.warn("AnimationManager: set '#{set}' is missing core intentions #{missing_core.inspect}") unless missing_core.empty?
 
       variant_total = registry.values.sum(&:size)
-      Claudine.logger.info "AnimationManager: loaded set '#{set}' with #{registry.size} intention(s), #{variant_total} variation(s)"
+      Claudine.logger.info("AnimationManager: loaded set '#{set}' with #{registry.size} intention(s), #{variant_total} variation(s)")
       registry
     end
 

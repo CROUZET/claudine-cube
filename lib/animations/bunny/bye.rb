@@ -5,10 +5,10 @@ require_relative "welcome"
 module Claudine
   module Animations
     module Bunny
-      # End of session: the bunnies fall asleep. They start lit up (ears
-      # up) then the ears lower, the eyes close, and the whole
-      # cube (bunnies + top frame) fades out progressively from start to
-      # finish. COLD rainbow. "Sleep" mirror of the wake-up (session_start).
+      # End of session: the bunnies fall asleep.
+      # They start lit up (ears up) then the ears lower, the eyes close, and the whole cube (bunnies + top frame) fades out progressively from start to finish.
+      # COLD rainbow.
+      # "Sleep" mirror of the wake-up (session_start).
       class Bye < Welcome
         HUE0 = 0.25 # cold: yellow-green -> ... -> violet
         HUE1 = 0.85
@@ -22,6 +22,7 @@ module Claudine
         def render(t, panel)
           panel.clear
           fade = [1.0 - (t / DUR), 0.0].max # progressive fade all along
+
           return if fade <= 0.0 # asleep: cube off
 
           ear_top = 7 - ([t / SINK, 1.0].min * 3).round # ears 7 -> 4

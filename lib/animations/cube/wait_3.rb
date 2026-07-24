@@ -5,12 +5,9 @@ require_relative "_base"
 module Claudine
   module Animations
     module Cube
-      # Wait (inverse variant of Wait2): only the TWO OUTER
-      # square rings of each face blink (the frame: d=0 and d=1), the 4x4
-      # core staying off.
-      # Signature: fast, crisp square blinking of a bright frame at the border
-      # of each face. The manager draws at random between Wait,
-      # Wait2 (core) and Wait3 (frame).
+      # Wait (inverse variant of Wait2): only the TWO OUTER square rings of each face blink (the frame: d=0 and d=1), the 4x4 core staying off.
+      # Signature: fast, crisp square blinking of a bright frame at the border of each face.
+      # The manager draws at random between Wait, Wait2 (core) and Wait3 (frame).
       class Wait3 < CubeBase
         MIN_DURATION = 0.9
         RATE = 3.0 # blinks per second (approx)

@@ -11,13 +11,10 @@ require_relative "../../config/settings"
 
 module Claudine
   module Connectors
-    # Control-plane HTTP server (WEBrick) on localhost. Serves the admin page and
-    # a tiny JSON API to tune the cube live.
-    #
-    # It writes to a shared Config; the Runner observes Config each frame and
-    # pushes the value onto the Panel (see lib/runner.rb). This server is NOT an
-    # event source — it never touches the render/animation path (cf. CLAUDE.md:
-    # adding a control never touches the render path).
+    # Control-plane HTTP server (WEBrick) on localhost.
+    # Serves the admin page and a tiny JSON API to tune the cube live.
+    # It writes to a shared Config; the Runner observes Config each frame and pushes the value onto the Panel (see lib/runner.rb).
+    # This server is NOT an event source — it never touches the render/animation path (cf. CLAUDE.md: adding a control never touches the render path).
     #
     # Routes:
     #   GET  /                → the admin page (self-contained HTML)
@@ -30,8 +27,7 @@ module Claudine
     class AdminServer
       INDEX = File.expand_path("admin/index.html", __dir__)
 
-      # `bus` (optional) lets the trigger buttons push an intention event; when
-      # nil, POST /api/trigger is unavailable (503).
+      # `bus` (optional) lets the trigger buttons push an intention event; when nil, POST /api/trigger is unavailable (503).
       def initialize(config:, status: Status.new, bus: nil, port: Settings::ADMIN_PORT)
         @config = config
         @status = status
@@ -49,13 +45,13 @@ module Claudine
         mount_routes
         @thread = Thread.new { @server.start }
         @thread.report_on_exception = true
-        Claudine.logger.info "AdminServer: listening on http://#{Settings::LOCAL_HOST}:#{@port}"
+        Claudine.logger.info("AdminServer: listening on http://#{Settings::LOCAL_HOST}:#{@port}")
       end
 
       def stop
         @server&.shutdown
         @thread&.join
-        Claudine.logger.info "AdminServer: stopped"
+        Claudine.logger.info("AdminServer: stopped")
       end
 
       private
@@ -102,7 +98,7 @@ module Claudine
         res["Content-Type"] = "text/html; charset=utf-8"
         res.body = File.read(INDEX)
       rescue StandardError => e
-        Claudine.logger.error "AdminServer: cannot read #{INDEX} (#{e.message})"
+        Claudine.logger.error("AdminServer: cannot read #{INDEX} (#{e.message})")
         res.status = 500
       end
 
@@ -154,8 +150,7 @@ module Claudine
           res.status = 400
           return
         end
-        # `once: true` → the manager plays it a single time (overlay), never as a
-        # looping background, then reverts to the working loop or blanks.
+        # `once: true` → the manager plays it a single time (overlay), never as a looping background, then reverts to the working loop or blanks.
         @bus.push(Claudine::Event.new(type: name.to_sym, payload: { once: true }))
         res.status = 204
       rescue JSON::ParserError

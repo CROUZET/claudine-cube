@@ -5,8 +5,8 @@ require_relative "_base"
 module Claudine
   module Animations
     module Cube
-      # A subagent starts: a violet dot orbits fast around the cube
-      # (central band), with a trail. Signature: a dot turning (orbit).
+      # A subagent starts: a violet dot orbits fast around the cube (central band), with a trail.
+      # Signature: a dot turning (orbit).
       class Fork < CubeBase
         MIN_DURATION = 0.6 # short lock (= default, made explicit)
         SPEED = 30.0 # columns per second

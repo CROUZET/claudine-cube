@@ -4,8 +4,8 @@ require_relative "test_helper"
 require_relative "../lib/event"
 require_relative "../lib/animation_manager"
 
-# The two-layer model (background loop + one-shot overlays), the status snapshot,
-# hot theme swap, direct-intention triggers, and one-shot play-once. No hardware.
+# The two-layer model (background loop + one-shot overlays), the status snapshot, hot theme swap, direct-intention triggers, and one-shot play-once.
+# No hardware.
 class AnimationManagerTest < Minitest::Test
   THINK = %w[Think Think2].freeze # :think has random variants
 

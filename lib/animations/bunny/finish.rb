@@ -5,12 +5,11 @@ require_relative "_base"
 module Claudine
   module Animations
     module Bunny
-      # After a tool: a bunny on each of the 4 lateral faces does a
-      # little dance (left/right hip sway), and the top reuses the 8 blinking
-      # corner pixels of pre_tool. All of it fades out from start to
-      # finish. Yellow (end event -> yellow). Short overlay.
-      # Signature: bunnies dancing, top corners blinking, then everything
-      # fades out.
+      # After a tool: a bunny on each of the 4 lateral faces does a little dance (left/right hip sway), and the top reuses the 8 blinking corner pixels of pre_tool.
+      # All of it fades out from start to finish.
+      # Yellow (end event -> yellow).
+      # Short overlay.
+      # Signature: bunnies dancing, top corners blinking, then everything fades out.
       class Finish < BunnyBase
         COLOR = [255, 200, 0].freeze # yellow (end)
         DUR = 1.6 # duration of the dance + fade

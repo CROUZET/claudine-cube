@@ -8,15 +8,13 @@ require_relative "status"
 
 module Claudine
   # Fixed-cadence render loop.
-  # Every frame: reflects the live Config brightness onto the panel, drains the
-  # event bus, calls manager.render(t, panel), then panel.show. Measures elapsed
-  # real time to hold the requested FPS. Catches Ctrl-C to blank the panel
-  # cleanly on shutdown.
+  # Every frame: reflects the live Config brightness onto the panel, drains the event bus, calls manager.render(t, panel), then panel.show.
+  # Measures elapsed real time to hold the requested FPS.
+  # Catches Ctrl-C to blank the panel cleanly on shutdown.
   class Runner
     attr_reader :bus
 
-    def initialize(manager:, bus: EventBus.new, fps: Settings::FPS,
-                   config: Config.new, status: Status.new)
+    def initialize(manager:, bus: EventBus.new, fps: Settings::FPS, config: Config.new, status: Status.new)
       @manager = manager
       @bus = bus
       @fps = fps
@@ -28,11 +26,11 @@ module Claudine
 
     def start
       panel = Panel.new(brightness: @config.brightness)
-      Claudine.logger.info "Runner: started (#{@fps} fps)"
+      Claudine.logger.info("Runner: started (#{@fps} fps)")
       begin
         run_loop(panel)
       rescue Interrupt
-        Claudine.logger.info "Runner: interrupted (Ctrl-C)"
+        Claudine.logger.info("Runner: interrupted (Ctrl-C)")
       ensure
         panel.clear
         panel.show
@@ -61,9 +59,8 @@ module Claudine
           @bus.drain.each { |event| @manager.handle(event, t) }
           @manager.render(t, panel)
         else
-          # No source is driving the cube → turn it off. Reset once on the
-          # on→off transition so a later resume starts blank, and drop any
-          # already-queued events so they don't replay on resume.
+          # No source is driving the cube → turn it off.
+          # Reset once on the on→off transition so a later resume starts blank, and drop any already-queued events so they don't replay on resume.
           @manager.reset if @sources_active
           @bus.drain
           panel.clear
@@ -88,8 +85,8 @@ module Claudine
       Process.clock_gettime(Process::CLOCK_MONOTONIC)
     end
 
-    # Publishes a runtime snapshot for the admin status panel. `:off` overrides
-    # the manager's state when no source is driving the cube (it's blanked).
+    # Publishes a runtime snapshot for the admin status panel.
+    # `:off` overrides the manager's state when no source is driving the cube (it's blanked).
     def publish_status(t, active)
       snap = @manager.status(t).merge(
         uptime_s: t.round,

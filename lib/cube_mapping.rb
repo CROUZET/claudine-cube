@@ -11,22 +11,19 @@
 #  (64 LEDs per face: face F occupies indices 64*F .. 64*F+63)
 #
 #  Path WITHIN each side face (faces 0..3), identical:
-#     origin BOTTOM-LEFT corner, climb a whole column
-#     (row 0 -> 7), then next column to the right.
+#     origin BOTTOM-LEFT corner, climb a whole column (row 0 -> 7), then next column to the right.
 #       index_local = col * 8 + row
 #     with row = 0 at the bottom, col = 0 on the left.
 #
 #  Path of the TOP face (face 4):
-#     origin TOP-LEFT corner, run through a whole row
-#     to the right (col 0 -> 7), then the row below.
+#     origin TOP-LEFT corner, run through a whole row to the right (col 0 -> 7), then the row below.
 #       index_local = (7 - row) * 8 + col
 #     with row = 0 at the bottom, col = 0 on the left (same logical frame).
 #
 #  LOGICAL COORDINATE CONVENTION (identical for all faces):
 #     - x = column, 0 = left  .. 7 = right
 #     - y = row,    0 = bottom .. 7 = top
-#   This way an animation can reason in (face, x, y) without
-#   worrying about the physical wiring direction: it is all absorbed here.
+#   This way an animation can reason in (face, x, y) without worrying about the physical wiring direction: it is all absorbed here.
 # ============================================================
 
 module CubeMapping

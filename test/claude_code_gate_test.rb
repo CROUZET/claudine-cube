@@ -9,8 +9,8 @@ require_relative "../lib/event_bus"
 require_relative "../lib/config"
 require_relative "../lib/connectors/claude_code"
 
-# The ClaudeCode connector honors the integration gate: when the source is off
-# in Config, POSTs still get a 204 but are dropped instead of pushed. No hardware.
+# The ClaudeCode connector honors the integration gate: when the source is off in Config, POSTs still get a 204 but are dropped instead of pushed.
+# No hardware.
 class ClaudeCodeGateTest < Minitest::Test
   def setup
     @dir = Dir.mktmpdir

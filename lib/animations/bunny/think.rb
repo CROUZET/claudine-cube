@@ -5,11 +5,10 @@ require_relative "_base"
 module Claudine
   module Animations
     module Bunny
-      # "Thinking" (looping background): bunnies hop in a line around the
-      # cube, along the ring of the 4 lateral faces, at different jump
-      # heights. On the highest jumps, their head overflows onto the top
-      # along the edge they cross. Solid light blue (working state). Loops
-      # seamlessly.
+      # "Thinking" (looping background): bunnies hop in a line around the cube, along the ring of the 4 lateral faces, at different jump heights.
+      # On the highest jumps, their head overflows onto the top along the edge they cross.
+      # Solid light blue (working state).
+      # Loops seamlessly.
       # Signature: small light-blue bunnies hopping around the cube.
       class Think < BunnyBase
         MIN_DURATION = 0.6
@@ -19,8 +18,9 @@ module Claudine
         HOP_H = [3.0, 5.0, 4.0].freeze # jump height per bunny (the top can go out)
         NB = HOP_H.size # number of staggered bunnies around the cube
 
-        # Profile bunny sprite (increasing dx = walk direction). dy = row,
-        # 0 = paws. Shape provided by the user.
+        # Profile bunny sprite (increasing dx = walk direction).
+        # dy = row, 0 = paws.
+        # Shape provided by the user.
         #   . . # . .
         #   . . . # .
         #   . . . # #
@@ -51,9 +51,7 @@ module Claudine
 
         private
 
-        # Places a pixel on the lateral ring; if it goes past the top (y >= 8),
-        # it overflows onto the top along the edge (top_edge_px), the overflow
-        # row giving the perimeter ring (8 -> edge, 9+ -> interior).
+        # Places a pixel on the lateral ring; if it goes past the top (y >= 8), it overflows onto the top along the edge (top_edge_px), the overflow row giving the perimeter ring (8 -> edge, 9+ -> interior).
         def plot(panel, col, yy, rgb)
           yi = yy.to_i
           if yi <= 7

@@ -4,10 +4,8 @@
 # JetBrains IDE
 .idea/
 
-# Claude Code : on ignore les settings locaux (personnels), mais on commit
-# les settings projet (dont les hooks) et le modèle d'exemple.
+# Claude Code : Ignore local settings; except hook sample settings
 .claude/*
-!.claude/settings.json
 !.claude/settings.json.sample
 
 # Ruby / Bundler

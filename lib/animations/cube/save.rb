@@ -5,8 +5,7 @@ require_relative "_base"
 module Claudine
   module Animations
     module Cube
-      # Before compaction: a checkerboard of 2x2 squares on the 5 faces, which
-      # inverts at regular intervals (the lit and unlit squares swap places).
+      # Before compaction: a checkerboard of 2x2 squares on the 5 faces, which inverts at regular intervals (the lit and unlit squares swap places).
       # Signature: a blinking checkerboard alternating over the whole cube.
       class Save < CubeBase
         MIN_DURATION = 1.0

@@ -5,12 +5,12 @@ require_relative "_base"
 module Claudine
   module Animations
     module Bunny
-      # Before a tool: a bunny plays on the 4 lateral faces. Front (1): it
-      # crosses by jumping (left -> right -> left) then dances in place
-      # (slight leaning squash left / center / right / center). Back (3):
-      # same, mirrored (symmetry). Right (2) + left (4): the same animation
-      # reversed in time (dance then jumps), 4 mirroring 2.
-      # Bluish white (start event -> light color). Short overlay.
+      # Before a tool: a bunny plays on the 4 lateral faces.
+      # Front (1): it crosses by jumping (left -> right -> left) then dances in place (slight leaning squash left / center / right / center).
+      # Back (3): same, mirrored (symmetry).
+      # Right (2) + left (4): the same animation reversed in time (dance then jumps), 4 mirroring 2.
+      # Bluish white (start event -> light color).
+      # Short overlay.
       # Signature: bunnies jumping then dancing all around the facade.
       class Start < BunnyBase
         COLOR = [210, 232, 255].freeze # bluish white (start)
@@ -24,14 +24,14 @@ module Claudine
         SQUASH = 0.15 # max vertical squash during the dance (slight)
         BLINK = 0.25 # half-period of the top blinking (s)
 
-        # Top: 8 pixels (row x column -> x,y), 2 along the diagonal of
-        # each corner, that blink in rhythm.
+        # Top: 8 pixels (row x column -> x,y), 2 along the diagonal of each corner, that blink in rhythm.
         TOP_DOTS = [
           [1, 1], [2, 2], [5, 5], [6, 6],   # main diagonal
           [6, 1], [5, 2], [2, 5], [1, 6],   # anti-diagonal
         ].freeze
 
-        # Bunny sprite (dx, dy ; 0 = paws). Shape provided by the user.
+        # Bunny sprite (dx, dy ; 0 = paws).
+        # Shape provided by the user.
         #   # . . #
         #   # . . #
         #   # # # #

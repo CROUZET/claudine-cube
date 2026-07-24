@@ -6,25 +6,21 @@ require_relative "logger"
 
 module Claudine
   # Single source of truth for the live-tunable settings, persisted to ~/.claudine.
-  #
-  # The admin server (a control-plane connector) writes here; the Runner reads
-  # `#brightness` at the top of each frame and pushes it onto the Panel. A float
-  # read on the render thread + a guarded write on the admin thread is safe under
-  # the GIL; a Mutex guards the in-memory value and the file write.
-  #
-  # v1 holds only :brightness. Adding a knob later (theme, integrations) = a new
-  # key here + an endpoint + a UI control; the observe-in-the-loop mechanism is
-  # already in place. Unknown keys already in the file are preserved on write.
+  # The admin server (a control-plane connector) writes here; the Runner reads `#brightness` at the top of each frame and pushes it onto the Panel.
+  # A float read on the render thread + a guarded write on the admin thread is safe under the GIL; a Mutex guards the in-memory value and the file write.
+  # v1 holds only :brightness.
+  # Adding a knob later (theme, integrations) = a new key here + an endpoint + a UI control; the observe-in-the-loop mechanism is already in place.
+  # Unknown keys already in the file are preserved on write.
   class Config
     PATH = File.join(Dir.home, ".claudine")
 
-    # Above this factor, a brightness setting is a volatile *session boost*
-    # (applied live, never persisted). Single source of truth in Settings.
+    # Above this factor, a brightness setting is a volatile *session boost* (applied live, never persisted).
+    # Single source of truth in Settings.
     BOOST_CEILING = Settings::BRIGHTNESS_BOOST_CEILING
 
-    # Source integrations and their default state (all on). Turning one off gates
-    # that source's event ingestion (the connector still answers, it just doesn't
-    # push) — the render path is untouched. Only `claude_code` exists today.
+    # Source integrations and their default state (all on).
+    # Turning one off gates that source's event ingestion (the connector still answers, it just doesn't push) — the render path is untouched.
+    # Only `claude_code` exists today.
     DEFAULT_INTEGRATIONS = { "claude_code" => true }.freeze
 
     def initialize(path: PATH)
@@ -33,16 +29,16 @@ module Claudine
       @brightness = load_brightness
       @integrations = load_integrations
       @theme = load_theme
-      Claudine.logger.info "Config: brightness=#{@brightness} (source: #{@source}), theme=#{@theme}, integrations=#{@integrations}"
+      Claudine.logger.info("Config: brightness=#{@brightness} (source: #{@source}), theme=#{@theme}, integrations=#{@integrations}")
     end
 
     def brightness
       @mutex.synchronize { @brightness }
     end
 
-    # Sets the working brightness. Clamped to [0, 1]. Persisted only when within
-    # the safe ceiling; a higher value is a volatile session boost (not written),
-    # so it is never auto-restored on the next boot.
+    # Sets the working brightness.
+    # Clamped to [0, 1].
+    # Persisted only when within the safe ceiling; a higher value is a volatile session boost (not written), so it is never auto-restored on the next boot.
     def brightness=(value)
       v = value.to_f.clamp(0.0, 1.0)
       @mutex.synchronize do
@@ -50,7 +46,7 @@ module Claudine
         if v <= BOOST_CEILING
           persist_key("brightness", v)
         else
-          Claudine.logger.info "Config: brightness #{v} > #{BOOST_CEILING} → session boost (not persisted)"
+          Claudine.logger.info("Config: brightness #{v} > #{BOOST_CEILING} → session boost (not persisted)")
         end
       end
     end
@@ -74,13 +70,14 @@ module Claudine
       on
     end
 
-    # True if at least one source integration is on. When all sources are off,
-    # nothing drives the cube, so the render loop blanks it (see Runner).
+    # True if at least one source integration is on.
+    # When all sources are off, nothing drives the cube, so the render loop blanks it (see Runner).
     def any_integration_enabled?
       @mutex.synchronize { @integrations.values.any? }
     end
 
-    # Active animation set. The Runner reloads the manager when this changes.
+    # Active animation set.
+    # The Runner reloads the manager when this changes.
     def theme
       @mutex.synchronize { @theme }
     end
@@ -94,7 +91,7 @@ module Claudine
     end
 
     def to_state
-      { brightness: brightness, boost_ceiling: BOOST_CEILING, theme: theme, integrations: integrations }
+      { brightness:, boost_ceiling: BOOST_CEILING, theme:, integrations: }
     end
 
     def integrations
@@ -103,9 +100,7 @@ module Claudine
 
     private
 
-    # Precedence: ENV (explicit dev override, honored as-is — may exceed the
-    # ceiling since it is a deliberate act) > ~/.claudine (clamped to the ceiling
-    # as a defense against a hand-edited file) > Settings default.
+    # Precedence: ENV (explicit dev override, honored as-is — may exceed the ceiling since it is a deliberate act) > ~/.claudine (clamped to the ceiling as a defense against a hand-edited file) > Settings default.
     def load_brightness
       if (env = ENV.fetch("CLAUDINE_BRIGHTNESS", nil))
         @source = "ENV"
@@ -120,9 +115,8 @@ module Claudine
       Settings::BRIGHTNESS
     end
 
-    # Precedence: CLAUDINE_ANIMATION_SET (ENV) > ~/.claudine > default. Not
-    # validated here (Config doesn't know the animation dirs); the admin server
-    # rejects unknown sets, and claudine.rb falls back to the default at boot.
+    # Precedence: CLAUDINE_ANIMATION_SET (ENV) > ~/.claudine > default.
+    # Not validated here (Config doesn't know the animation dirs); the admin server rejects unknown sets, and claudine.rb falls back to the default at boot.
     def load_theme
       env = ENV.fetch("CLAUDINE_ANIMATION_SET", nil)
       return env if env && !env.empty?
@@ -133,8 +127,8 @@ module Claudine
       Settings::DEFAULT_ANIMATION_SET
     end
 
-    # Defaults (all on) overlaid with whatever the file stored; unknown/future
-    # keys in the file are preserved. Values are coerced to booleans.
+    # Defaults (all on) overlaid with whatever the file stored; unknown/future keys in the file are preserved.
+    # Values are coerced to booleans.
     def load_integrations
       base = DEFAULT_INTEGRATIONS.dup
       stored = read_file["integrations"]
@@ -148,10 +142,10 @@ module Claudine
       data = JSON.parse(File.read(@path))
       data.is_a?(Hash) ? data : {}
     rescue JSON::ParserError => e
-      Claudine.logger.warn "Config: #{@path} is not valid JSON (#{e.message}) — using defaults"
+      Claudine.logger.warn("Config: #{@path} is not valid JSON (#{e.message}) — using defaults")
       {}
     rescue StandardError => e
-      Claudine.logger.warn "Config: cannot read #{@path} (#{e.class}: #{e.message}) — using defaults"
+      Claudine.logger.warn("Config: cannot read #{@path} (#{e.class}: #{e.message}) — using defaults")
       {}
     end
 
@@ -164,7 +158,7 @@ module Claudine
       File.write(tmp, "#{JSON.pretty_generate(data)}\n")
       File.rename(tmp, @path)
     rescue StandardError => e
-      Claudine.logger.warn "Config: cannot write #{@path} (#{e.class}: #{e.message})"
+      Claudine.logger.warn("Config: cannot write #{@path} (#{e.class}: #{e.message})")
     end
   end
 end
